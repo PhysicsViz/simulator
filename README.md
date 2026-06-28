@@ -16,6 +16,34 @@ npm run dev
 
 Then open the Vite URL shown in the terminal.
 
+## Build
+
+```bash
+npm run build
+```
+
+The production build is written to `dist/`.
+
+## GitHub Pages
+
+This project is configured to render correctly from GitHub Pages project URLs such as:
+
+```text
+https://your-user.github.io/your-repository/
+```
+
+The important setting is `base: './'` in `vite.config.js`, which makes built CSS and JavaScript assets use relative paths instead of assuming the site is hosted at a domain root.
+
+To deploy with the included workflow:
+
+1. Push the repository to GitHub.
+2. Open the repository settings.
+3. Go to **Pages**.
+4. Set **Build and deployment** to **GitHub Actions**.
+5. Push to the `main` branch, or run the `Deploy to GitHub Pages` workflow manually.
+
+The workflow installs dependencies with `npm ci`, runs `npm run build`, and publishes `dist/`.
+
 ## Project Goal
 
 This project supports a master thesis about AI-assisted development of interactive JavaScript animations for introductory physics education. The app is designed to look and behave like a small educational simulation tool rather than a raw canvas prototype.
