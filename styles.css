@@ -1,10 +1,30 @@
+/* styles.css — shared design tokens, base styles, and common components (app bar, panels, buttons, inputs). */
+
 :root {
   color-scheme: light dark;
-  --background: #f6f7f9;
+  --background: #f2f4f8;
   --foreground: #1c2026;
   --muted: #5e6673;
   --panel: #ffffff;
   --border: #d8dde6;
+  --accent: #1976d2;
+  --accent-strong: #125ba3;
+  --accent-contrast: #ffffff;
+  --shadow: 0 1px 2px rgba(16, 24, 40, 0.05), 0 4px 16px rgba(16, 24, 40, 0.06);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0e1116;
+    --foreground: #eef1f6;
+    --muted: #a8b0bd;
+    --panel: #161b22;
+    --border: #2c333d;
+    --accent: #4595e0;
+    --accent-strong: #6cabe8;
+    --accent-contrast: #0e1116;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 16px rgba(0, 0, 0, 0.35);
+  }
 }
 
 * {
@@ -21,50 +41,118 @@ body {
   color: var(--foreground);
 }
 
-.page {
-  min-height: 100vh;
-  display: grid;
-  place-items: center;
-  padding: 24px;
-}
-
-.placeholder {
-  width: min(100%, 560px);
-  padding: 40px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
+.app-bar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 22px;
   background: var(--panel);
+  border-bottom: 1px solid var(--border);
 }
 
-.eyebrow {
-  margin: 0 0 12px;
-  color: var(--muted);
-  font-size: 0.78rem;
+.app-bar .brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
   font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-size: 1rem;
+  color: var(--foreground);
+  text-decoration: none;
+  white-space: nowrap;
 }
 
-h1 {
-  margin: 0;
-  font-size: clamp(2rem, 8vw, 4.5rem);
-  line-height: 1;
-  letter-spacing: 0;
+.app-bar .brand svg {
+  display: block;
+  color: var(--accent);
 }
 
-.summary {
-  margin: 20px 0 0;
+.app-bar .crumb {
   color: var(--muted);
-  font-size: 1.05rem;
-  line-height: 1.6;
+  font-size: 0.92rem;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #101318;
-    --foreground: #eef1f6;
-    --muted: #a8b0bd;
-    --panel: #171b22;
-    --border: #2c333d;
-  }
+.app-bar .crumb::before {
+  content: "/ ";
+  color: var(--border);
+}
+
+.app-bar .spacer {
+  margin-left: auto;
+}
+
+.badge {
+  padding: 3px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  box-shadow: var(--shadow);
+}
+
+.panel h2 {
+  margin: 0 0 12px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+button {
+  font: inherit;
+  padding: 7px 13px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--panel);
+  color: var(--foreground);
+  cursor: pointer;
+  transition: border-color 0.12s, background 0.12s;
+}
+
+button:hover {
+  border-color: var(--muted);
+}
+
+button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-contrast);
+  font-weight: 600;
+}
+
+button.primary:hover {
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+}
+
+button.active {
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+input[type="number"] {
+  font: inherit;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--background);
+  color: var(--foreground);
+}
+
+input[type="range"] {
+  accent-color: var(--accent);
 }

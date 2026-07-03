@@ -1,0 +1,421 @@
+<!doctype html>
+<!--
+  index.html — Projectile motion exercise page.
+  Layout: scene panel (canvas + legend), side column (transport + parameters),
+  formula panel below with numeric substitution. Text filled by main.js (FR/EN).
+  Scripts are classic (non-module) tags so the page works when opened via file://.
+-->
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Tir parabolique — Physics Simulator</title>
+    <link rel="stylesheet" href="../../../styles.css">
+    <style>
+      .exercise-page {
+        max-width: 1240px;
+        margin: 0 auto;
+        padding: 18px 24px 48px;
+      }
+
+      .assumption {
+        margin: 0 0 16px;
+        color: var(--muted);
+        font-size: 0.9rem;
+        line-height: 1.5;
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 300px;
+        gap: 16px;
+        align-items: stretch;
+      }
+
+      @media (max-width: 960px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .scene-panel {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .scene-panel canvas {
+        display: block;
+        width: 100%;
+        flex: 1;
+        min-height: 420px;
+        border-radius: 6px;
+        cursor: grab;
+        touch-action: none;
+      }
+
+      .scene-panel canvas:active {
+        cursor: grabbing;
+      }
+
+      .zoom-controls {
+        position: absolute;
+        top: 26px;
+        left: 26px;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+      }
+
+      .zoom-controls button {
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        font-size: 1.05rem;
+        line-height: 1;
+      }
+
+      .legend {
+        display: flex;
+        gap: 18px;
+        flex-wrap: wrap;
+        margin-top: 10px;
+        font-size: 0.85rem;
+        color: var(--muted);
+      }
+
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .legend-swatch {
+        display: inline-block;
+        width: 22px;
+        height: 0;
+        border-top: 3px solid currentColor;
+      }
+
+      .legend-swatch.weight { color: #d32f2f; }
+      .legend-swatch.velocity { color: var(--foreground); border-top-style: dashed; }
+      .legend-swatch.acceleration { color: var(--foreground); border-top-style: dotted; }
+
+      .side {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .side .control-panel {
+        flex: 1;
+      }
+
+      #time_display {
+        margin: 0 0 10px;
+        font-size: 1.45rem;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+      }
+
+      #timeline {
+        width: 100%;
+        margin-bottom: 12px;
+      }
+
+      .transport-buttons {
+        display: flex;
+        gap: 6px;
+        margin-bottom: 14px;
+      }
+
+      .transport-buttons button {
+        padding: 7px 10px;
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+      }
+
+      #play_pause_button {
+        flex: 1;
+        min-width: 84px;
+      }
+
+      .speed-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .speed-row .speed-label {
+        color: var(--muted);
+        font-size: 0.82rem;
+      }
+
+      #speed_buttons {
+        display: flex;
+        gap: 5px;
+      }
+
+      #speed_buttons button {
+        padding: 4px 9px;
+        font-size: 0.85rem;
+      }
+
+      .parameter-row {
+        margin-bottom: 14px;
+      }
+
+      .parameter-row:last-child {
+        margin-bottom: 0;
+      }
+
+      .parameter-row label {
+        display: block;
+        font-size: 0.88rem;
+        margin-bottom: 4px;
+      }
+
+      .parameter-row input[type="range"] {
+        width: 100%;
+      }
+
+      .value-wrap {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .value-wrap input[type="number"] {
+        width: 92px;
+      }
+
+      .value-wrap .unit {
+        color: var(--muted);
+        font-size: 0.85rem;
+      }
+
+      .formula-panel {
+        margin-top: 16px;
+      }
+
+      .formula-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 12px;
+      }
+
+      .formula-card {
+        padding: 12px 14px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--background);
+      }
+
+      .formula-card .name {
+        display: block;
+        color: var(--muted);
+        font-size: 0.78rem;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+      }
+
+      .formula-card .math {
+        font-family: "Cambria Math", Cambria, Georgia, serif;
+        font-size: 1.02rem;
+        margin-bottom: 6px;
+      }
+
+      .formula-card .sub {
+        font-size: 0.88rem;
+        color: var(--muted);
+        font-variant-numeric: tabular-nums;
+        overflow-wrap: anywhere;
+      }
+
+      .formula-card .result {
+        font-weight: 700;
+        color: var(--accent);
+        white-space: nowrap;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="app-bar">
+      <a class="brand" href="../../../index.html">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M3 20 Q 12 -6 21 20" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+          <circle cx="16.7" cy="12.5" r="2.4" fill="currentColor"/>
+        </svg>
+        Physics Simulator
+      </a>
+      <span class="crumb" data-i18n="page_title"></span>
+      <span class="spacer"></span>
+      <button id="language_toggle" type="button">EN</button>
+    </header>
+
+    <main class="exercise-page">
+      <p class="assumption" data-i18n="assumption"></p>
+
+      <!-- GAME MODE (experimental) — mount point; to remove the feature delete the
+           two GAME MODE blocks in this file, game.js, its test file, and the two
+           lines marked "Game mode hook" in main.js -->
+      <div id="game_mode_mount"></div>
+
+      <div class="layout">
+        <section class="panel scene-panel">
+          <canvas id="simulation_canvas" width="920" height="540"></canvas>
+          <div class="zoom-controls">
+            <button id="zoom_in_button" type="button">+</button>
+            <button id="zoom_out_button" type="button">−</button>
+            <button id="zoom_fit_button" type="button">⌖</button>
+          </div>
+          <div class="legend">
+            <span class="legend-item"><span class="legend-swatch weight"></span><span data-i18n="legend_weight"></span></span>
+            <span class="legend-item"><span class="legend-swatch velocity"></span><span data-i18n="legend_velocity"></span></span>
+            <span class="legend-item"><span class="legend-swatch acceleration"></span><span data-i18n="legend_acceleration"></span></span>
+          </div>
+        </section>
+
+        <div class="side">
+          <section class="panel transport-panel">
+            <h2 data-i18n="transport_title"></h2>
+            <p id="time_display">t = 0,00 s</p>
+            <input id="timeline" type="range" min="0" max="1" step="0.01" value="0">
+            <div class="transport-buttons">
+              <button id="reset_button" type="button" data-i18n="reset"></button>
+              <button id="step_back_button" type="button" data-i18n="step_back"></button>
+              <button id="play_pause_button" type="button" class="primary"></button>
+              <button id="step_forward_button" type="button" data-i18n="step_forward"></button>
+            </div>
+            <div class="speed-row">
+              <span class="speed-label" data-i18n="speed_label"></span>
+              <span id="speed_buttons"></span>
+            </div>
+          </section>
+
+          <section class="panel control-panel">
+            <h2 data-i18n="controls_title"></h2>
+            <div id="parameter_rows"></div>
+          </section>
+        </div>
+      </div>
+
+      <section class="panel formula-panel">
+        <h2 data-i18n="formulas_title"></h2>
+        <div class="formula-grid">
+          <div class="formula-card">
+            <span class="name" data-i18n="formula_x"></span>
+            <div class="math">x(t) = x₀ + v₀ₓ·t</div>
+            <div class="sub"><span id="sub_x"></span> = <span class="result" id="res_x"></span></div>
+          </div>
+          <div class="formula-card">
+            <span class="name" data-i18n="formula_y"></span>
+            <div class="math">y(t) = y₀ + v₀y·t + ½·a·t² <small>(a = −g)</small></div>
+            <div class="sub"><span id="sub_y"></span> = <span class="result" id="res_y"></span></div>
+          </div>
+          <div class="formula-card">
+            <span class="name" data-i18n="formula_vx"></span>
+            <div class="math">vₓ(t) = v₀ₓ = v₀·cos θ</div>
+            <div class="sub"><span id="sub_vx"></span> = <span class="result" id="res_vx"></span></div>
+          </div>
+          <div class="formula-card">
+            <span class="name" data-i18n="formula_vy"></span>
+            <div class="math">v_y(t) = v₀y + a·t <small>(v₀y = v₀·sin θ)</small></div>
+            <div class="sub"><span id="sub_vy"></span> = <span class="result" id="res_vy"></span></div>
+          </div>
+          <div class="formula-card">
+            <span class="name" data-i18n="formula_weight"></span>
+            <div class="math">P = m·g</div>
+            <div class="sub"><span id="sub_weight"></span> = <span class="result" id="res_weight"></span></div>
+          </div>
+          <div class="formula-card">
+            <span class="name" data-i18n="formula_flight_time"></span>
+            <div class="math">t_vol = (v₀y + √(v₀y² + 2·g·y₀)) / g</div>
+            <div class="sub"><span id="sub_flight_time"></span> = <span class="result" id="res_flight_time"></span></div>
+          </div>
+          <div class="formula-card">
+            <span class="name" data-i18n="formula_max_height"></span>
+            <div class="math">h_max = y₀ + v₀y² / (2·g)</div>
+            <div class="sub"><span id="sub_max_height"></span> = <span class="result" id="res_max_height"></span></div>
+          </div>
+          <div class="formula-card">
+            <span class="name" data-i18n="formula_range"></span>
+            <div class="math">d = x(t_vol) = v₀ₓ·t_vol</div>
+            <div class="sub"><span id="sub_range"></span> = <span class="result" id="res_range"></span></div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="../../assets/js/canvas_draw.js"></script>
+    <script src="calcul.js"></script>
+    <script src="main.js"></script>
+
+    <!-- GAME MODE (experimental) — styles + script; see removal note at the mount point -->
+    <style>
+      .game-mode .formula-panel,
+      .game-mode #timeline,
+      .game-mode #step_back_button,
+      .game-mode #step_forward_button {
+        display: none;
+      }
+
+      .mode-tabs {
+        display: flex;
+        gap: 6px;
+        margin: 0 0 14px;
+      }
+
+      .game-panel {
+        margin-top: 16px;
+      }
+
+      .game-panel .panel-head {
+        display: flex;
+        align-items: baseline;
+        gap: 14px;
+        flex-wrap: wrap;
+        margin-bottom: 12px;
+      }
+
+      .game-panel .panel-head h2 {
+        margin: 0;
+      }
+
+      .game-panel .panel-head button {
+        margin-left: auto;
+      }
+
+      .game-panel .game-hint {
+        color: var(--muted);
+        font-size: 0.85rem;
+      }
+
+      .game-value {
+        font-size: 1.35rem;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+        color: var(--accent);
+      }
+
+      .game-target-value {
+        font-size: 0.98rem;
+        font-weight: 600;
+      }
+
+      .game-sub {
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 0.8rem;
+      }
+
+      .game-sub:empty {
+        display: none;
+      }
+    </style>
+    <script src="game.js"></script>
+  </body>
+</html>

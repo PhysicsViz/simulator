@@ -1,21 +1,260 @@
 <!doctype html>
-<html lang="en">
+<!--
+  index.html — Home page: app shell listing every simulation, grouped by theme.
+  FR/EN toggle persisted in localStorage (shared with exercise pages).
+-->
+<html lang="fr">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Simulator</title>
-    <meta name="description" content="Placeholder page for the simulator project.">
+    <title>Physics Simulator</title>
+    <meta name="description" content="Simulations interactives de physique — Physique 1, BAC1 ingénieur civil.">
     <link rel="stylesheet" href="styles.css">
+    <style>
+      .home {
+        max-width: 1060px;
+        margin: 0 auto;
+        padding: 40px 24px 64px;
+      }
+
+      .hero h1 {
+        margin: 0;
+        font-size: clamp(1.9rem, 5vw, 2.9rem);
+        letter-spacing: -0.02em;
+        line-height: 1.1;
+      }
+
+      .hero p {
+        margin: 14px 0 0;
+        max-width: 640px;
+        color: var(--muted);
+        font-size: 1.05rem;
+        line-height: 1.65;
+      }
+
+      .theme-section {
+        margin-top: 44px;
+      }
+
+      .theme-section > h2 {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin: 0 0 16px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      .theme-section > h2::after {
+        content: "";
+        flex: 1;
+        height: 1px;
+        background: var(--border);
+      }
+
+      .card-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 16px;
+      }
+
+      .card {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding: 20px;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        box-shadow: var(--shadow);
+        text-decoration: none;
+        color: var(--foreground);
+        transition: transform 0.14s, border-color 0.14s;
+      }
+
+      .card:hover {
+        transform: translateY(-2px);
+        border-color: var(--accent);
+      }
+
+      .card .icon {
+        width: 44px;
+        height: 44px;
+        display: grid;
+        place-items: center;
+        border-radius: 10px;
+        background: color-mix(in srgb, var(--accent) 12%, transparent);
+        color: var(--accent);
+      }
+
+      .card h3 {
+        margin: 0;
+        font-size: 1.15rem;
+      }
+
+      .card p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.92rem;
+        line-height: 1.55;
+        flex: 1;
+      }
+
+      .tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .tag {
+        padding: 2px 9px;
+        border-radius: 999px;
+        background: color-mix(in srgb, var(--accent) 10%, transparent);
+        color: var(--accent);
+        font-size: 0.74rem;
+        font-weight: 600;
+      }
+
+      .card .open {
+        color: var(--accent);
+        font-size: 0.9rem;
+        font-weight: 600;
+      }
+
+      .card.upcoming {
+        border-style: dashed;
+        box-shadow: none;
+        opacity: 0.75;
+      }
+
+      .card.upcoming:hover {
+        transform: none;
+        border-color: var(--border);
+      }
+
+      .home-footer {
+        margin-top: 56px;
+        padding-top: 18px;
+        border-top: 1px solid var(--border);
+        color: var(--muted);
+        font-size: 0.85rem;
+      }
+    </style>
   </head>
   <body>
-    <main class="page">
-      <section class="placeholder" aria-labelledby="title">
-        <p class="eyebrow">GitHub Pages is ready</p>
-        <h1 id="title">Physics Simulator</h1>
-        <p class="summary">
-          This is a temporary placeholder page.
-        </p>
+    <header class="app-bar">
+      <a class="brand" href="index.html">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M3 20 Q 12 -6 21 20" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+          <circle cx="16.7" cy="12.5" r="2.4" fill="currentColor"/>
+        </svg>
+        Physics Simulator
+      </a>
+      <span class="spacer"></span>
+      <span class="badge" data-i18n="course_badge"></span>
+      <button id="language_toggle" type="button">EN</button>
+    </header>
+
+    <main class="home">
+      <section class="hero">
+        <h1 data-i18n="hero_title"></h1>
+        <p data-i18n="hero_text"></p>
       </section>
+
+      <section class="theme-section">
+        <h2 data-i18n="theme_mechanics"></h2>
+        <div class="card-grid">
+          <a class="card" href="src/mechanics/projectile-motion/index.html">
+            <span class="icon">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M2 21 Q 12 -8 22 21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <circle cx="17.2" cy="12" r="2.2" fill="currentColor"/>
+                <path d="M2 21 H 22" stroke="currentColor" stroke-width="1.2" opacity="0.4"/>
+              </svg>
+            </span>
+            <h3 data-i18n="ex_projectile_name"></h3>
+            <p data-i18n="ex_projectile_desc"></p>
+            <span class="tags">
+              <span class="tag" data-i18n="tag_kinematics"></span>
+              <span class="tag" data-i18n="tag_range"></span>
+              <span class="tag" data-i18n="tag_vectors"></span>
+            </span>
+            <span class="open" data-i18n="open_simulation"></span>
+          </a>
+
+          <div class="card upcoming">
+            <span class="icon">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M3 20 L 20 9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path d="M3 20 H 21" stroke="currentColor" stroke-width="1.2" opacity="0.4"/>
+                <rect x="10" y="9.2" width="5.4" height="5.4" rx="1" fill="currentColor" transform="rotate(-33 12.7 11.9)"/>
+              </svg>
+            </span>
+            <h3 data-i18n="ex_incline_name"></h3>
+            <p data-i18n="ex_incline_desc"></p>
+            <span class="open" data-i18n="coming_soon"></span>
+          </div>
+        </div>
+      </section>
+
+      <footer class="home-footer">
+        <span data-i18n="footer_text"></span>
+      </footer>
     </main>
+
+    <script>
+      /* Home page i18n: fill data-i18n elements, FR/EN toggle persisted in localStorage. */
+      (() => {
+          const strings = {
+              course_badge: { fr: "Physique 1 — BAC1 ingénieur civil", en: "Physics 1 — 1st-year engineering" },
+              hero_title: { fr: "Comprendre la physique en manipulant", en: "Understand physics by experimenting" },
+              hero_text: {
+                  fr: "Chaque simulation montre le phénomène, les forces appliquées à l'objet et les formules avec leurs valeurs en temps réel. Modifiez les paramètres, pilotez le temps, observez.",
+                  en: "Each simulation shows the phenomenon, the forces applied to the object, and the formulas with their live values. Change the parameters, control time, observe.",
+              },
+              theme_mechanics: { fr: "Mécanique", en: "Mechanics" },
+              ex_projectile_name: { fr: "Tir parabolique", en: "Projectile motion" },
+              ex_projectile_desc: {
+                  fr: "Un projectile lancé avec une vitesse initiale v₀ sous un angle θ, soumis uniquement à son poids. Trajectoire, bilan des forces et équations horaires en direct.",
+                  en: "A projectile launched with initial speed v₀ at angle θ, subject only to its weight. Trajectory, free-body diagram and equations of motion, live.",
+              },
+              tag_kinematics: { fr: "Cinématique", en: "Kinematics" },
+              tag_range: { fr: "Portée", en: "Range" },
+              tag_vectors: { fr: "Vecteurs", en: "Vectors" },
+              open_simulation: { fr: "Ouvrir la simulation →", en: "Open simulation →" },
+              ex_incline_name: { fr: "Plan incliné", en: "Inclined plane" },
+              ex_incline_desc: {
+                  fr: "Un bloc sur un plan incliné : poids, réaction normale et frottement.",
+                  en: "A block on an inclined plane: weight, normal force and friction.",
+              },
+              coming_soon: { fr: "À venir", en: "Coming soon" },
+              footer_text: {
+                  fr: "Mémoire — enseignement de la physique · Arnaud Gheysens",
+                  en: "Master's thesis — physics teaching · Arnaud Gheysens",
+              },
+          };
+
+          let current_language = localStorage.getItem("simulator_language") || "fr";
+
+          /* applyLanguage: swap every data-i18n element and persist the choice */
+          function applyLanguage(language) {
+              current_language = language;
+              localStorage.setItem("simulator_language", language);
+              document.documentElement.lang = language;
+              for (const element of document.querySelectorAll("[data-i18n]")) {
+                  element.textContent = strings[element.dataset.i18n][language];
+              }
+              document.getElementById("language_toggle").textContent = language === "fr" ? "EN" : "FR";
+          }
+
+          document.getElementById("language_toggle").addEventListener("click", () => {
+              applyLanguage(current_language === "fr" ? "en" : "fr");
+          });
+          applyLanguage(current_language);
+      })();
+    </script>
   </body>
 </html>
