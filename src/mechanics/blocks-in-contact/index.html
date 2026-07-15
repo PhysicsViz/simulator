@@ -1,15 +1,15 @@
 <!doctype html>
 <!--
-  index.html — Projectile motion exercise page.
+  index.html — Blocks-in-contact exercise page (mechanics theme).
   Layout: scene panel (canvas + legend), side column (transport + parameters),
-  formula panel below with numeric substitution. Text filled by main.js (FR/EN).
+  formula and graph panels below. Text filled by main.js (FR/EN).
   Scripts are classic (non-module) tags so the page works when opened via file://.
 -->
 <html lang="fr">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Tir parabolique — Physics Simulator</title>
+    <title>Blocs en contact — Physics Simulator</title>
     <link rel="stylesheet" href="../../../styles.css">
     <style>
       .exercise-page {
@@ -97,6 +97,8 @@
         border-top: 3px solid currentColor;
       }
 
+      .legend-swatch.applied { color: #1976d2; }
+      .legend-swatch.contact { color: #43a047; }
       .legend-swatch.weight { color: #d32f2f; }
       .legend-swatch.velocity { color: var(--foreground); border-top-style: dashed; }
       .legend-swatch.acceleration { color: var(--foreground); border-top-style: dotted; }
@@ -176,8 +178,28 @@
         margin-bottom: 4px;
       }
 
+      .parameter-row.parameter-toggle {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .parameter-row.parameter-toggle label {
+        margin-bottom: 0;
+      }
+
+      .parameter-row input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+        accent-color: var(--accent);
+      }
+
       .parameter-row input[type="range"] {
         width: 100%;
+      }
+
+      .parameter-row input:disabled {
+        opacity: 0.45;
       }
 
       .value-wrap {
@@ -198,32 +220,6 @@
       .formula-panel,
       .graphs-panel {
         margin-top: 16px;
-      }
-
-      .graph-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 12px;
-      }
-
-      .graph-grid figure {
-        margin: 0;
-      }
-
-      .graph-grid canvas {
-        display: block;
-        width: 100%;
-        height: 210px;
-        border: 1px solid var(--border);
-        border-radius: 8px;
-        background: var(--background);
-      }
-
-      .graph-grid figcaption {
-        margin-top: 6px;
-        text-align: center;
-        color: var(--muted);
-        font-size: 0.82rem;
       }
 
       .formula-grid {
@@ -269,6 +265,32 @@
         color: var(--accent);
         white-space: nowrap;
       }
+
+      .graph-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 12px;
+      }
+
+      .graph-grid figure {
+        margin: 0;
+      }
+
+      .graph-grid canvas {
+        display: block;
+        width: 100%;
+        height: 210px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--background);
+      }
+
+      .graph-grid figcaption {
+        margin-top: 6px;
+        text-align: center;
+        color: var(--muted);
+        font-size: 0.82rem;
+      }
     </style>
   </head>
   <body>
@@ -289,7 +311,7 @@
       <p class="assumption" data-i18n="assumption"></p>
 
       <!-- GAME MODE (experimental) — mount point; to remove the feature delete the
-           two GAME MODE blocks in this file, game.js, its test file, and the two
+           two GAME MODE blocks in this file, game.js, its test file, and the
            lines marked "Game mode hook" in main.js -->
       <div id="game_mode_mount"></div>
 
@@ -302,6 +324,8 @@
             <button id="zoom_fit_button" type="button">⌖</button>
           </div>
           <div class="legend">
+            <span class="legend-item"><span class="legend-swatch applied"></span><span data-i18n="legend_applied"></span></span>
+            <span class="legend-item"><span class="legend-swatch contact"></span><span data-i18n="legend_contact"></span></span>
             <span class="legend-item"><span class="legend-swatch weight"></span><span data-i18n="legend_weight"></span></span>
             <span class="legend-item"><span class="legend-swatch velocity"></span><span data-i18n="legend_velocity"></span></span>
             <span class="legend-item"><span class="legend-swatch acceleration"></span><span data-i18n="legend_acceleration"></span></span>
@@ -336,59 +360,39 @@
         <h2 data-i18n="formulas_title"></h2>
         <div class="formula-grid">
           <div class="formula-card">
-            <span class="name" data-i18n="formula_u0"></span>
-            <div class="math">u₀ = ‖v⃗₀‖·cos θ</div>
-            <div class="sub"><span id="sub_u0"></span> = <span class="result" id="res_u0"></span></div>
+            <span class="name" data-i18n="formula_accel"></span>
+            <div class="math">a = F / (m_A + m_B)</div>
+            <div class="sub"><span id="sub_accel"></span> = <span class="result" id="res_accel"></span></div>
           </div>
           <div class="formula-card">
-            <span class="name" data-i18n="formula_v0"></span>
-            <div class="math">v₀ = ‖v⃗₀‖·sin θ</div>
-            <div class="sub"><span id="sub_v0"></span> = <span class="result" id="res_v0"></span></div>
+            <span class="name" data-i18n="formula_contact"></span>
+            <div class="math" id="math_contact">F A→B = F B→A = m_A·a</div>
+            <div class="sub"><span id="sub_contact"></span> = <span class="result" id="res_contact"></span></div>
+          </div>
+          <div class="formula-card">
+            <span class="name" data-i18n="formula_net"></span>
+            <div class="math" id="math_net">ΣF_B = F − F A→B = m_B·a</div>
+            <div class="sub"><span id="sub_net"></span> = <span class="result" id="res_net"></span></div>
+          </div>
+          <div class="formula-card">
+            <span class="name" data-i18n="formula_swapped"></span>
+            <div class="math" id="math_swapped">F' contact = m_B·a</div>
+            <div class="sub"><span id="sub_swapped"></span> = <span class="result" id="res_swapped"></span></div>
+          </div>
+          <div class="formula-card">
+            <span class="name" data-i18n="formula_vertical"></span>
+            <div class="math">ΣF_y = 0 ⇒ N = m·g</div>
+            <div class="sub"><span id="sub_vertical"></span> = <span class="result" id="res_vertical"></span></div>
           </div>
           <div class="formula-card">
             <span class="name" data-i18n="formula_x"></span>
-            <div class="math">x(t) = u₀·t + x₀</div>
+            <div class="math">x(t) = a·t²/2 + x₀ <small>(x₀ = 0, v₀ = 0)</small></div>
             <div class="sub"><span id="sub_x"></span> = <span class="result" id="res_x"></span></div>
           </div>
           <div class="formula-card">
-            <span class="name" data-i18n="formula_y"></span>
-            <div class="math">y(t) = −g·t²/2 + v₀·t + y₀</div>
-            <div class="sub"><span id="sub_y"></span> = <span class="result" id="res_y"></span></div>
-          </div>
-          <div class="formula-card">
-            <span class="name" data-i18n="formula_u"></span>
-            <div class="math">u(t) = u₀</div>
-            <div class="sub"><span id="sub_u"></span> = <span class="result" id="res_u"></span></div>
-          </div>
-          <div class="formula-card">
             <span class="name" data-i18n="formula_v"></span>
-            <div class="math">v(t) = −g·t + v₀</div>
+            <div class="math">v(t) = a·t</div>
             <div class="sub"><span id="sub_v"></span> = <span class="result" id="res_v"></span></div>
-          </div>
-          <div class="formula-card">
-            <span class="name" data-i18n="formula_a"></span>
-            <div class="math">aₓ = 0 ; a_y = −g</div>
-            <div class="sub"><span id="sub_a"></span> · <span class="result" id="res_a"></span></div>
-          </div>
-          <div class="formula-card">
-            <span class="name" data-i18n="formula_weight"></span>
-            <div class="math">P = m·g</div>
-            <div class="sub"><span id="sub_weight"></span> = <span class="result" id="res_weight"></span></div>
-          </div>
-          <div class="formula-card">
-            <span class="name" data-i18n="formula_flight_time"></span>
-            <div class="math">t_vol = (v₀ + √(v₀² + 2·g·y₀)) / g</div>
-            <div class="sub"><span id="sub_flight_time"></span> = <span class="result" id="res_flight_time"></span></div>
-          </div>
-          <div class="formula-card">
-            <span class="name" data-i18n="formula_max_height"></span>
-            <div class="math">h_max = y₀ + v₀² / (2·g)</div>
-            <div class="sub"><span id="sub_max_height"></span> = <span class="result" id="res_max_height"></span></div>
-          </div>
-          <div class="formula-card">
-            <span class="name" data-i18n="formula_range"></span>
-            <div class="math">d = x(t_vol) = u₀·t_vol</div>
-            <div class="sub"><span id="sub_range"></span> = <span class="result" id="res_range"></span></div>
           </div>
         </div>
       </section>
@@ -397,16 +401,16 @@
         <h2 data-i18n="graphs_title"></h2>
         <div class="graph-grid">
           <figure>
-            <canvas id="graph_positions" width="400" height="210"></canvas>
-            <figcaption data-i18n="graph_positions"></figcaption>
+            <canvas id="graph_position" width="400" height="210"></canvas>
+            <figcaption data-i18n="graph_position"></figcaption>
           </figure>
           <figure>
-            <canvas id="graph_velocities" width="400" height="210"></canvas>
-            <figcaption data-i18n="graph_velocities"></figcaption>
+            <canvas id="graph_velocity" width="400" height="210"></canvas>
+            <figcaption data-i18n="graph_velocity"></figcaption>
           </figure>
           <figure>
-            <canvas id="graph_accelerations" width="400" height="210"></canvas>
-            <figcaption data-i18n="graph_accelerations"></figcaption>
+            <canvas id="graph_acceleration" width="400" height="210"></canvas>
+            <figcaption data-i18n="graph_acceleration"></figcaption>
           </figure>
         </div>
       </section>

@@ -1,15 +1,15 @@
 <!doctype html>
 <!--
-  index.html — Projectile motion exercise page.
+  index.html — RC-circuit exercise page (electricity theme).
   Layout: scene panel (canvas + legend), side column (transport + parameters),
-  formula panel below with numeric substitution. Text filled by main.js (FR/EN).
+  formula and graph panels below. Text filled by main.js (FR/EN).
   Scripts are classic (non-module) tags so the page works when opened via file://.
 -->
 <html lang="fr">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Tir parabolique — Physics Simulator</title>
+    <title>Circuit RC — Physics Simulator</title>
     <link rel="stylesheet" href="../../../styles.css">
     <style>
       .exercise-page {
@@ -97,9 +97,9 @@
         border-top: 3px solid currentColor;
       }
 
-      .legend-swatch.weight { color: #d32f2f; }
-      .legend-swatch.velocity { color: var(--foreground); border-top-style: dashed; }
-      .legend-swatch.acceleration { color: var(--foreground); border-top-style: dotted; }
+      .legend-swatch.high { color: #d32f2f; }
+      .legend-swatch.low { color: #1976d2; }
+      .legend-swatch.dots { color: #fbc02d; border-top-style: dotted; border-top-width: 4px; }
 
       .side {
         display: flex;
@@ -176,8 +176,28 @@
         margin-bottom: 4px;
       }
 
+      .parameter-row.parameter-toggle {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .parameter-row.parameter-toggle label {
+        margin-bottom: 0;
+      }
+
+      .parameter-row input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+        accent-color: var(--accent);
+      }
+
       .parameter-row input[type="range"] {
         width: 100%;
+      }
+
+      .parameter-row input:disabled {
+        opacity: 0.45;
       }
 
       .value-wrap {
@@ -198,32 +218,6 @@
       .formula-panel,
       .graphs-panel {
         margin-top: 16px;
-      }
-
-      .graph-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 12px;
-      }
-
-      .graph-grid figure {
-        margin: 0;
-      }
-
-      .graph-grid canvas {
-        display: block;
-        width: 100%;
-        height: 210px;
-        border: 1px solid var(--border);
-        border-radius: 8px;
-        background: var(--background);
-      }
-
-      .graph-grid figcaption {
-        margin-top: 6px;
-        text-align: center;
-        color: var(--muted);
-        font-size: 0.82rem;
       }
 
       .formula-grid {
@@ -269,6 +263,32 @@
         color: var(--accent);
         white-space: nowrap;
       }
+
+      .graph-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 12px;
+      }
+
+      .graph-grid figure {
+        margin: 0;
+      }
+
+      .graph-grid canvas {
+        display: block;
+        width: 100%;
+        height: 210px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--background);
+      }
+
+      .graph-grid figcaption {
+        margin-top: 6px;
+        text-align: center;
+        color: var(--muted);
+        font-size: 0.82rem;
+      }
     </style>
   </head>
   <body>
@@ -289,7 +309,7 @@
       <p class="assumption" data-i18n="assumption"></p>
 
       <!-- GAME MODE (experimental) — mount point; to remove the feature delete the
-           two GAME MODE blocks in this file, game.js, its test file, and the two
+           two GAME MODE blocks in this file, game.js, its test file, and the
            lines marked "Game mode hook" in main.js -->
       <div id="game_mode_mount"></div>
 
@@ -302,9 +322,9 @@
             <button id="zoom_fit_button" type="button">⌖</button>
           </div>
           <div class="legend">
-            <span class="legend-item"><span class="legend-swatch weight"></span><span data-i18n="legend_weight"></span></span>
-            <span class="legend-item"><span class="legend-swatch velocity"></span><span data-i18n="legend_velocity"></span></span>
-            <span class="legend-item"><span class="legend-swatch acceleration"></span><span data-i18n="legend_acceleration"></span></span>
+            <span class="legend-item"><span class="legend-swatch high"></span><span data-i18n="legend_high"></span></span>
+            <span class="legend-item"><span class="legend-swatch low"></span><span data-i18n="legend_low"></span></span>
+            <span class="legend-item"><span class="legend-swatch dots"></span><span data-i18n="legend_dots"></span></span>
           </div>
         </section>
 
@@ -336,59 +356,49 @@
         <h2 data-i18n="formulas_title"></h2>
         <div class="formula-grid">
           <div class="formula-card">
-            <span class="name" data-i18n="formula_u0"></span>
-            <div class="math">u₀ = ‖v⃗₀‖·cos θ</div>
-            <div class="sub"><span id="sub_u0"></span> = <span class="result" id="res_u0"></span></div>
+            <span class="name" data-i18n="formula_tau"></span>
+            <div class="math">τ = R·C <small>(Ω × F = s)</small></div>
+            <div class="sub"><span id="sub_tau"></span> = <span class="result" id="res_tau"></span></div>
           </div>
           <div class="formula-card">
-            <span class="name" data-i18n="formula_v0"></span>
-            <div class="math">v₀ = ‖v⃗₀‖·sin θ</div>
-            <div class="sub"><span id="sub_v0"></span> = <span class="result" id="res_v0"></span></div>
+            <span class="name" data-i18n="formula_voltage"></span>
+            <div class="math" id="math_voltage">u_C(t) = E·(1 − e^(−t/τ))</div>
+            <div class="sub"><span id="sub_voltage"></span> = <span class="result" id="res_voltage"></span></div>
           </div>
           <div class="formula-card">
-            <span class="name" data-i18n="formula_x"></span>
-            <div class="math">x(t) = u₀·t + x₀</div>
-            <div class="sub"><span id="sub_x"></span> = <span class="result" id="res_x"></span></div>
+            <span class="name" data-i18n="formula_current"></span>
+            <div class="math">i(t) = ±(E/R)·e^(−t/τ)</div>
+            <div class="sub"><span id="sub_current"></span> = <span class="result" id="res_current"></span></div>
           </div>
           <div class="formula-card">
-            <span class="name" data-i18n="formula_y"></span>
-            <div class="math">y(t) = −g·t²/2 + v₀·t + y₀</div>
-            <div class="sub"><span id="sub_y"></span> = <span class="result" id="res_y"></span></div>
+            <span class="name" data-i18n="formula_charge"></span>
+            <div class="math">q = C·u_C</div>
+            <div class="sub"><span id="sub_charge"></span> = <span class="result" id="res_charge"></span></div>
           </div>
           <div class="formula-card">
-            <span class="name" data-i18n="formula_u"></span>
-            <div class="math">u(t) = u₀</div>
-            <div class="sub"><span id="sub_u"></span> = <span class="result" id="res_u"></span></div>
+            <span class="name" data-i18n="formula_at_tau"></span>
+            <div class="math">e^(−1) = 0,368</div>
+            <div class="sub"><span id="sub_at_tau"></span> = <span class="result" id="res_at_tau"></span></div>
           </div>
           <div class="formula-card">
-            <span class="name" data-i18n="formula_v"></span>
-            <div class="math">v(t) = −g·t + v₀</div>
-            <div class="sub"><span id="sub_v"></span> = <span class="result" id="res_v"></span></div>
+            <span class="name" data-i18n="formula_five_tau"></span>
+            <div class="math">t = 5·τ ⇒ e^(−5) ≈ 0,007</div>
+            <div class="sub"><span id="sub_five_tau"></span> = <span class="result" id="res_five_tau"></span></div>
           </div>
           <div class="formula-card">
-            <span class="name" data-i18n="formula_a"></span>
-            <div class="math">aₓ = 0 ; a_y = −g</div>
-            <div class="sub"><span id="sub_a"></span> · <span class="result" id="res_a"></span></div>
+            <span class="name" data-i18n="formula_mesh"></span>
+            <div class="math" id="math_mesh">E = u_R + u_C</div>
+            <div class="sub"><span id="sub_mesh"></span> <span class="result" id="res_mesh"></span></div>
           </div>
           <div class="formula-card">
-            <span class="name" data-i18n="formula_weight"></span>
-            <div class="math">P = m·g</div>
-            <div class="sub"><span id="sub_weight"></span> = <span class="result" id="res_weight"></span></div>
+            <span class="name" data-i18n="formula_stored"></span>
+            <div class="math">E_C = ½·C·u_C²</div>
+            <div class="sub"><span id="sub_stored"></span> = <span class="result" id="res_stored"></span></div>
           </div>
           <div class="formula-card">
-            <span class="name" data-i18n="formula_flight_time"></span>
-            <div class="math">t_vol = (v₀ + √(v₀² + 2·g·y₀)) / g</div>
-            <div class="sub"><span id="sub_flight_time"></span> = <span class="result" id="res_flight_time"></span></div>
-          </div>
-          <div class="formula-card">
-            <span class="name" data-i18n="formula_max_height"></span>
-            <div class="math">h_max = y₀ + v₀² / (2·g)</div>
-            <div class="sub"><span id="sub_max_height"></span> = <span class="result" id="res_max_height"></span></div>
-          </div>
-          <div class="formula-card">
-            <span class="name" data-i18n="formula_range"></span>
-            <div class="math">d = x(t_vol) = u₀·t_vol</div>
-            <div class="sub"><span id="sub_range"></span> = <span class="result" id="res_range"></span></div>
+            <span class="name" data-i18n="formula_half"></span>
+            <div class="math">E_R(∞) = E_C(∞) = ½·C·E²</div>
+            <div class="sub"><span id="sub_half"></span> → <span class="result" id="res_half"></span></div>
           </div>
         </div>
       </section>
@@ -397,16 +407,16 @@
         <h2 data-i18n="graphs_title"></h2>
         <div class="graph-grid">
           <figure>
-            <canvas id="graph_positions" width="400" height="210"></canvas>
-            <figcaption data-i18n="graph_positions"></figcaption>
+            <canvas id="graph_voltage" width="400" height="210"></canvas>
+            <figcaption data-i18n="graph_voltage"></figcaption>
           </figure>
           <figure>
-            <canvas id="graph_velocities" width="400" height="210"></canvas>
-            <figcaption data-i18n="graph_velocities"></figcaption>
+            <canvas id="graph_current" width="400" height="210"></canvas>
+            <figcaption data-i18n="graph_current"></figcaption>
           </figure>
           <figure>
-            <canvas id="graph_accelerations" width="400" height="210"></canvas>
-            <figcaption data-i18n="graph_accelerations"></figcaption>
+            <canvas id="graph_energy" width="400" height="210"></canvas>
+            <figcaption data-i18n="graph_energy"></figcaption>
           </figure>
         </div>
       </section>
