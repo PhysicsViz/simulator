@@ -65,16 +65,21 @@ npx serve .
 node --test
 ```
 
+Open the URL printed by `serve` (normally `http://localhost:3000`). Exercise
+links use trailing-slash directory URLs when served, while the home page expands
+them to `index.html` when opened directly over `file://`.
+
 **Requirements:** Node.js ≥ 20 (tests only; the site itself runs in any modern browser).
 
 ## Project Structure
 
 ```
+index.html             # home page and exercise catalogue
+styles.css             # shared site styles
+package.json           # project metadata and test command
 src/
   assets/
-    images/          # shared images
-    graphs/          # shared graphs
-    js/              # shared visual/rendering code (canvas helpers, vectors, grid)
+    js/                # shared canvas, camera, and graph helpers
   <theme>/
     <exercise>/
       index.html     # exercise page (layout + styles)
@@ -84,7 +89,8 @@ src/
 test/
   <theme>/
     <exercise>/
-      main.test.js   # unit tests for calcul.js
+      main.test.js   # calculation/unit tests
+      game.test.js   # game-mode tests
 .github/workflows/
   ci.yml             # runs node --test on every push and pull request
 ```
