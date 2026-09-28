@@ -16,8 +16,8 @@
     const strings = {
         page_title: { fr: "Pendule", en: "Pendulum" },
         assumption: {
-            fr: "Hypothèses : tige rigide de masse négligeable (la corde reste tendue), frottements négligés, α = −(g/L)·sin θ sans approximation des petits angles (intégration numérique RK4). Forces appliquées : le poids P = m·g et la tension T de la tige.",
-            en: "Assumptions: rigid massless rod (the string stays taut), no friction, α = −(g/L)·sin θ without the small-angle approximation (RK4 numerical integration). Applied forces: the weight P = m·g and the rod tension T.",
+            fr: "Hypothèses : tige rigide de masse négligeable (la corde reste tendue), frottements négligés, α = −(g/L) sin(θ) sans approximation des petits angles (intégration numérique RK4). Forces appliquées : le poids P = m g et la tension T de la tige.",
+            en: "Assumptions: rigid massless rod (the string stays taut), no friction, α = −(g/L) sin(θ) without the small-angle approximation (RK4 numerical integration). Applied forces: the weight P = m g and the rod tension T.",
         },
         transport_title: { fr: "Simulation", en: "Simulation" },
         controls_title: { fr: "Paramètres", en: "Parameters" },
@@ -340,11 +340,11 @@
                 result: `θ = ${theta_text}`,
             },
             x: {
-                substitution: `${formatNumber(parameters.rod_length)} × sin ${formatOperand(theta_degrees)}°`,
+                substitution: `${formatNumber(parameters.rod_length)} × sin(${formatOperand(theta_degrees)}°)`,
                 result: `${formatNumber(calc.bobX(parameters.rod_length, state.angle))} m`,
             },
             y: {
-                substitution: `−${formatNumber(parameters.rod_length)} × cos ${formatOperand(theta_degrees)}°`,
+                substitution: `−${formatNumber(parameters.rod_length)} × cos(${formatOperand(theta_degrees)}°)`,
                 result: `${formatNumber(calc.bobY(parameters.rod_length, state.angle))} m`,
             },
             v: {
@@ -352,7 +352,7 @@
                 result: `${formatNumber(scene_values.speed)} m/s`,
             },
             a_theta: {
-                substitution: `−${formatNumber(g)} × sin ${formatOperand(theta_degrees)}°`,
+                substitution: `−${formatNumber(g)} × sin(${formatOperand(theta_degrees)}°)`,
                 result: `${formatNumber(scene_values.tangential_acceleration)} m/s²`,
             },
             a_r: {
@@ -360,11 +360,11 @@
                 result: `${formatNumber(-scene_values.radial_acceleration)} m/s²`,
             },
             tension: {
-                substitution: `${formatNumber(parameters.mass)} × (${formatNumber(g)} × cos ${formatOperand(theta_degrees)}° + ${formatNumber(parameters.rod_length)} × ${formatOperand(omega)}²)`,
+                substitution: `${formatNumber(parameters.mass)} × (${formatNumber(g)} × cos(${formatOperand(theta_degrees)}°) + ${formatNumber(parameters.rod_length)} × ${formatOperand(omega)}²)`,
                 result: `${formatNumber(scene_values.tension)} N`,
             },
             energy: {
-                substitution: `√(${formatOperand(parameters.initial_speed)}² + 2 × ${formatNumber(g)} × ${formatNumber(parameters.rod_length)} × (cos ${formatOperand(theta_degrees)}° − cos ${formatOperand(parameters.initial_angle_degrees)}°))`,
+                substitution: `√(${formatOperand(parameters.initial_speed)}² + 2 × ${formatNumber(g)} × ${formatNumber(parameters.rod_length)} × (cos(${formatOperand(theta_degrees)}°) − cos(${formatOperand(parameters.initial_angle_degrees)}°)))`,
                 result: `‖v‖ = ${formatNumber(energy_speed)} m/s`,
             },
             period: {

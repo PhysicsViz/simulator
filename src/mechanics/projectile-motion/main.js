@@ -16,8 +16,8 @@
     const strings = {
         page_title: { fr: "Tir parabolique", en: "Projectile motion" },
         assumption: {
-            fr: "Hypothèses : champ de pesanteur uniforme, frottements de l'air négligés, lancement depuis la hauteur h₀, masse fixée à m = 1 kg, axe y vers le haut. Mouvement horizontal = MRU, mouvement vertical = MRUA. La seule force appliquée est le poids P = m·g.",
-            en: "Assumptions: uniform gravity field, air resistance neglected, launch from height h₀, fixed mass m = 1 kg, y axis pointing up. Horizontal motion = uniform (MRU), vertical = uniformly accelerated (MRUA). The only applied force is the weight P = m·g.",
+            fr: "Hypothèses : champ de pesanteur uniforme, frottements de l'air négligés, lancement depuis la hauteur h₀, masse fixée à m = 1 kg, axe y vers le haut. Mouvement horizontal = MRU, mouvement vertical = MRUA. La seule force appliquée est le poids P = m g.",
+            en: "Assumptions: uniform gravity field, air resistance neglected, launch from height h₀, fixed mass m = 1 kg, y axis pointing up. Horizontal motion = uniform (MRU), vertical = uniformly accelerated (MRUA). The only applied force is the weight P = m g.",
         },
         transport_title: { fr: "Simulation", en: "Simulation" },
         controls_title: { fr: "Paramètres", en: "Parameters" },
@@ -297,7 +297,7 @@
         context.font = "12px system-ui, sans-serif";
         context.textAlign = "center";
         context.textBaseline = "top";
-        context.fillText(`P = m·g = ${formatNumber(weight)} N`, center_x, center_y + 82);
+        context.fillText(`P = m g = ${formatNumber(weight)} N`, center_x, center_y + 82);
         context.restore();
     }
 
@@ -314,11 +314,11 @@
         const v0 = calc.velocityY(speed, angle, g, 0);
         const cards = {
             u0: {
-                substitution: `${formatNumber(speed)} × cos ${angle_degrees}°`,
+                substitution: `${formatNumber(speed)} × cos(${angle_degrees}°)`,
                 result: `${formatNumber(u0)} m/s`,
             },
             v0: {
-                substitution: `${formatNumber(speed)} × sin ${angle_degrees}°`,
+                substitution: `${formatNumber(speed)} × sin(${angle_degrees}°)`,
                 result: `${formatNumber(v0)} m/s`,
             },
             x: {

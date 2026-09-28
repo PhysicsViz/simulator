@@ -17,8 +17,8 @@
     const strings = {
         page_title: { fr: "Mouvement circulaire uniforme", en: "Uniform circular motion" },
         assumption: {
-            fr: "Hypothèses : mouvement circulaire uniforme imposé — la norme de la vitesse est constante (ω = v/R, α = 0), départ en θ₀ = 0. L'accélération est purement radiale, a_r = v²/R dirigée vers le centre, et la force résultante vaut ΣF = m·v²/R. La nature de la force centripète (corde, frottement, gravitation…) dépend du contexte.",
-            en: "Assumptions: uniform circular motion imposed — the speed norm is constant (ω = v/R, α = 0), starting at θ₀ = 0. The acceleration is purely radial, a_r = v²/R toward the center, and the net force is ΣF = m·v²/R. The nature of the centripetal force (rope, friction, gravitation…) depends on the context.",
+            fr: "Hypothèses : mouvement circulaire uniforme imposé — la norme de la vitesse est constante (ω = v/R, α = 0), départ en θ₀ = 0. L'accélération est purement radiale, a_r = v²/R dirigée vers le centre, et la force résultante vaut ΣF = m v²/R. La nature de la force centripète (corde, frottement, gravitation…) dépend du contexte.",
+            en: "Assumptions: uniform circular motion imposed — the speed norm is constant (ω = v/R, α = 0), starting at θ₀ = 0. The acceleration is purely radial, a_r = v²/R toward the center, and the net force is ΣF = m v²/R. The nature of the centripetal force (rope, friction, gravitation…) depends on the context.",
         },
         transport_title: { fr: "Simulation", en: "Simulation" },
         controls_title: { fr: "Paramètres", en: "Parameters" },
@@ -287,11 +287,11 @@
                 result: `${formatNumber(calc.period(radius, speed))} s`,
             },
             x: {
-                substitution: `${formatNumber(radius)} × cos ${formatNumber(theta_degrees)}°`,
+                substitution: `${formatNumber(radius)} × cos(${formatNumber(theta_degrees)}°)`,
                 result: `${formatNumber(calc.positionX(radius, scene_values.angle))} m`,
             },
             y: {
-                substitution: `${formatNumber(radius)} × sin ${formatNumber(theta_degrees)}°`,
+                substitution: `${formatNumber(radius)} × sin(${formatNumber(theta_degrees)}°)`,
                 result: `${formatNumber(calc.positionY(radius, scene_values.angle))} m`,
             },
             v: {

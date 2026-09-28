@@ -156,3 +156,19 @@ input[type="number"] {
 input[type="range"] {
   accent-color: var(--accent);
 }
+
+@media (max-width: 600px) {
+  .badge {
+    display: none;
+  }
+}
+
+@media (pointer: coarse) {
+  .app-bar .brand {
+    min-height: 44px;
+  }
+
+  input[type="range"] {
+    min-height: 32px;
+  }
+}
