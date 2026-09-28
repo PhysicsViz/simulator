@@ -15,7 +15,7 @@ test.describe("index.html", () => {
         expect(page_errors).toEqual([]);
     });
 
-    test("every exercise card opens its simulation", async ({ page, hasTouch }) => {
+    test("every exercise card opens its simulation", { tag: "@important" }, async ({ page, hasTouch }) => {
         const page_errors = trackPageErrors(page);
         await page.goto(fileUrl("index.html"));
         const card_count = await page.locator("a.card").count();

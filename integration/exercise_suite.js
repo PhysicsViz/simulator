@@ -102,7 +102,7 @@ export function describeExercisePage({ page_path, parameter_key, parameter_value
             expect(page_errors, "no JS error, console error or failed file load").toEqual([]);
         });
 
-        test("layout fits the viewport width (no horizontal page scroll)", async ({ page }) => {
+        test("layout fits the viewport width (no horizontal page scroll)", { tag: "@important" }, async ({ page }) => {
             expect(await horizontalOverflow(page)).toBeLessThanOrEqual(0);
             const viewport_width = page.viewportSize().width;
             for (const selector of PANEL_SELECTORS) {
@@ -129,7 +129,7 @@ export function describeExercisePage({ page_path, parameter_key, parameter_value
             expect(await distinctColorCount(page, "#simulation_canvas")).toBeGreaterThan(3);
         });
 
-        test("slider and number input stay in sync and formulas update", async ({ page, isMobile }) => {
+        test("slider and number input stay in sync and formulas update", { tag: "@important" }, async ({ page, isMobile }) => {
             const number_input = page.locator(`#number_${parameter_key}`);
             const slider = page.locator(`#slider_${parameter_key}`);
             const substitution = page.locator(`#sub_${formula_id}`);
@@ -145,7 +145,7 @@ export function describeExercisePage({ page_path, parameter_key, parameter_value
             expect(await horizontalOverflow(page), `no overflow after edit (mobile: ${isMobile})`).toBeLessThanOrEqual(0);
         });
 
-        test("play advances time, pause freezes it, reset returns to t = 0", async ({ page, hasTouch }) => {
+        test("play advances time, pause freezes it, reset returns to t = 0", { tag: "@important" }, async ({ page, hasTouch }) => {
             const time_display = page.locator("#time_display");
             const initial_text = await time_display.textContent();
             const play_button = page.locator("#play_pause_button");
@@ -220,7 +220,7 @@ export function describeExercisePage({ page_path, parameter_key, parameter_value
             expect(too_small, `interactive elements under ${MINIMUM_TOUCH_TARGET}×${MINIMUM_TOUCH_TARGET} CSS px`).toEqual([]);
         });
 
-        test("game mode hides the answer and keeps the layout", async ({ page, hasTouch }) => {
+        test("game mode hides the answer and keeps the layout", { tag: "@important" }, async ({ page, hasTouch }) => {
             const tabs = page.locator(".mode-tabs button");
             test.skip(await tabs.count() === 0, "exercise has no game mode");
             await press(tabs.nth(1), hasTouch);

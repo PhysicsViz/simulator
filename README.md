@@ -41,6 +41,14 @@ npx playwright install chromium webkit firefox
 npm run test:integration
 ```
 
+To watch the key tests run (visible PC, iPad and iPhone windows, slowed down,
+recorded on video, HTML report at the end), or to pick tests interactively:
+
+```bash
+npm run test:integration:visual
+npm run test:integration:ui
+```
+
 ## Project structure
 
 ```
@@ -48,6 +56,7 @@ index.html
 styles.css
 package.json
 playwright.config.js               # integration test device profiles
+playwright.visual.config.js        # watchable run of the @important tests
 src/
   assets/js/                         # shared drawing, camera, and graph helpers
   mechanics/
