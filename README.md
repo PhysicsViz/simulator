@@ -26,10 +26,19 @@ npx serve .
 
 Then open the URL printed by `serve` (normally `http://localhost:3000`).
 
-Run the tests with Node.js 20 or newer:
+Run the unit tests with Node.js 20 or newer:
 
 ```bash
 npm test
+```
+
+Run the integration tests (Playwright, every page opened over `file://` on
+PC, tablet and phone profiles, portrait and landscape, Chromium/WebKit/Firefox):
+
+```bash
+npm install
+npx playwright install chromium webkit firefox
+npm run test:integration
 ```
 
 ## Project structure
@@ -38,6 +47,7 @@ npm test
 index.html
 styles.css
 package.json
+playwright.config.js               # integration test device profiles
 src/
   assets/js/                         # shared drawing, camera, and graph helpers
   mechanics/
@@ -52,6 +62,10 @@ test/mechanics/
   projectile-motion/
   pendulum/
   uniform-circular-motion/           # main and game tests per simulation
+integration/
+  exercise_suite.js                  # shared page checks for every device
+  home.spec.js                       # root page
+  mechanics/<exercise>/main.spec.js  # one spec per simulation
 .github/workflows/ci.yml
 ```
 
