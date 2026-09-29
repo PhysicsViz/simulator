@@ -26,6 +26,8 @@ npx serve .
 
 Then open the URL printed by `serve` (normally `http://localhost:3000`).
 
+See [TESTING.md](TESTING.md) for what each test suite checks, how it works and how to write new tests.
+
 Run the unit tests with Node.js 20 or newer:
 
 ```bash
