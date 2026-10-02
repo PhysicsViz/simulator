@@ -223,6 +223,23 @@
             <span class="open" data-i18n="open_simulation"></span>
           </a>
 
+          <a class="card" href="src/mechanics/loop-the-loop/">
+            <span class="icon">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M1.5 21 H 9 C 13 21 17.5 18 17.5 12.5 A 5.5 5.5 0 1 0 8.5 16.5 C 10 19.5 13 21 16 21 H 22.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="17.2" cy="9.8" r="2.1" fill="currentColor"/>
+              </svg>
+            </span>
+            <h3 data-i18n="ex_loop_name"></h3>
+            <p data-i18n="ex_loop_desc"></p>
+            <span class="tags">
+              <span class="tag" data-i18n="tag_energy"></span>
+              <span class="tag" data-i18n="tag_normal"></span>
+              <span class="tag" data-i18n="tag_clothoid"></span>
+            </span>
+            <span class="open" data-i18n="open_simulation"></span>
+          </a>
+
         </div>
       </section>
 
@@ -261,12 +278,19 @@
               tag_tension: { fr: "Tension", en: "Tension" },
               ex_circular_name: { fr: "Mouvement circulaire uniforme", en: "Uniform circular motion" },
               ex_circular_desc: {
-                  fr: "Un objet à vitesse constante sur un cercle : ω = v/R, accélération centripète v²/R, force résultante et période. Et un seau d'eau au-dessus du prof…",
-                  en: "An object at constant speed on a circle: ω = v/R, centripetal acceleration v²/R, net force and period. And a water bucket above the teacher…",
+                  fr: "Un objet à vitesse constante sur un cercle : ω = v/R, accélération centripète v²/R, force résultante et période.",
+                  en: "An object at constant speed on a circle: ω = v/R, centripetal acceleration v²/R, net force and period.",
               },
               tag_mcu: { fr: "MCU", en: "Uniform circular" },
               tag_centripetal: { fr: "Accélération centripète", en: "Centripetal acceleration" },
               tag_period: { fr: "Période", en: "Period" },
+              ex_loop_name: { fr: "Looping", en: "Loop-the-loop" },
+              ex_loop_desc: {
+                  fr: "Une bille lâchée d'une hauteur h fait un looping circulaire ou en clothoïde : énergie, réaction normale, hauteur minimale, décollage. Et un seau d'eau au-dessus du prof…",
+                  en: "A ball released from height h runs a circular or clothoid loop: energy, normal reaction, minimum height, take-off. And a water bucket above the teacher…",
+              },
+              tag_normal: { fr: "Réaction normale", en: "Normal reaction" },
+              tag_clothoid: { fr: "Clothoïde", en: "Clothoid" },
               open_simulation: { fr: "Ouvrir la simulation →", en: "Open simulation →" },
               footer_text: {
                   fr: "Arnaud Gheysens & Augustin Meurice",

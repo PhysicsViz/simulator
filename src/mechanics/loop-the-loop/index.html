@@ -1,6 +1,6 @@
 <!doctype html>
 <!--
-  index.html — Uniform circular motion exercise page.
+  index.html — Loop-the-loop exercise page (circular or clothoid loop).
   Layout: scene panel (canvas + legend), side column (transport + parameters),
   formula and graph panels below. Text filled by main.js (FR/EN).
   Scripts are classic (non-module) tags so the page works when opened via file://.
@@ -9,7 +9,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Mouvement circulaire uniforme — Physics Simulator</title>
+    <title>Looping — Physics Simulator</title>
     <link rel="stylesheet" href="../../../styles.css">
     <style>
       .exercise-page {
@@ -48,7 +48,7 @@
         display: block;
         width: 100%;
         flex: 1;
-        min-height: 420px;
+        min-height: 460px;
         border-radius: 6px;
         cursor: grab;
         touch-action: none;
@@ -97,9 +97,11 @@
         border-top: 3px solid currentColor;
       }
 
-      .legend-swatch.force { color: var(--foreground); border-top-width: 5px; }
+      .legend-swatch.weight { color: #d32f2f; }
+      .legend-swatch.normal { color: #2e7d32; }
       .legend-swatch.velocity { color: var(--foreground); border-top-style: dashed; }
       .legend-swatch.acceleration { color: var(--foreground); border-top-style: dotted; }
+      .legend-swatch.force { color: var(--foreground); border-top-width: 5px; }
 
       .side {
         display: flex;
@@ -170,7 +172,8 @@
         margin-bottom: 0;
       }
 
-      .parameter-row label {
+      .parameter-row label,
+      .parameter-row .row-label {
         display: block;
         font-size: 0.88rem;
         margin-bottom: 4px;
@@ -180,8 +183,21 @@
         width: 100%;
       }
 
-      .parameter-row input:disabled {
+      .parameter-row input:disabled,
+      .parameter-row button:disabled {
         opacity: 0.45;
+        cursor: not-allowed;
+      }
+
+      .shape-buttons {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+      }
+
+      .shape-buttons button {
+        padding: 6px 8px;
+        font-size: 0.86rem;
       }
 
       .value-wrap {
@@ -292,6 +308,11 @@
     <main class="exercise-page">
       <p class="assumption" data-i18n="assumption"></p>
 
+      <!-- GAME MODE (experimental) — mount point; to remove the feature delete the
+           two GAME MODE blocks in this file, game.js, its test file, and the
+           lines marked "Game mode hook" in main.js -->
+      <div id="game_mode_mount"></div>
+
       <div class="layout">
         <section class="panel scene-panel">
           <canvas id="simulation_canvas" width="920" height="540"></canvas>
@@ -301,9 +322,11 @@
             <button id="zoom_fit_button" type="button">⌖</button>
           </div>
           <div class="legend">
-            <span class="legend-item"><span class="legend-swatch force"></span><span data-i18n="legend_force"></span></span>
+            <span class="legend-item"><span class="legend-swatch weight"></span><span data-i18n="legend_weight"></span></span>
+            <span class="legend-item"><span class="legend-swatch normal"></span><span data-i18n="legend_normal"></span></span>
             <span class="legend-item"><span class="legend-swatch velocity"></span><span data-i18n="legend_velocity"></span></span>
             <span class="legend-item"><span class="legend-swatch acceleration"></span><span data-i18n="legend_acceleration"></span></span>
+            <span class="legend-item"><span class="legend-swatch force"></span><span data-i18n="legend_force"></span></span>
           </div>
         </section>
 
@@ -335,44 +358,64 @@
         <h2 data-i18n="formulas_title"></h2>
         <div class="formula-grid">
           <div class="formula-card">
-            <span class="name" data-i18n="formula_theta"></span>
-            <div class="math">θ(t) = θ₀ + ω t <small>(α = 0)</small></div>
-            <div class="sub"><span id="sub_theta"></span> = <span class="result" id="res_theta"></span></div>
+            <span class="name" data-i18n="formula_weight"></span>
+            <div class="math">P = m g</div>
+            <div class="sub"><span id="sub_weight"></span> = <span class="result" id="res_weight"></span></div>
           </div>
           <div class="formula-card">
-            <span class="name" data-i18n="formula_omega"></span>
-            <div class="math">ω = v / R</div>
-            <div class="sub"><span id="sub_omega"></span> = <span class="result" id="res_omega"></span></div>
+            <span class="name" data-i18n="formula_speed"></span>
+            <div class="math">v = √(2 g (h − y))</div>
+            <div class="sub"><span id="sub_speed"></span> = <span class="result" id="res_speed"></span></div>
           </div>
           <div class="formula-card">
-            <span class="name" data-i18n="formula_period"></span>
-            <div class="math">T = 2π R / v = 2π/ω</div>
-            <div class="sub"><span id="sub_period"></span> = <span class="result" id="res_period"></span></div>
+            <span class="name" data-i18n="formula_a_theta"></span>
+            <div class="math">a_θ = −g sin(φ)</div>
+            <div class="sub"><span id="sub_a_theta"></span> = <span class="result" id="res_a_theta"></span></div>
           </div>
           <div class="formula-card">
-            <span class="name" data-i18n="formula_x"></span>
-            <div class="math">x = R cos(θ)</div>
-            <div class="sub"><span id="sub_x"></span> = <span class="result" id="res_x"></span></div>
+            <span class="name" data-i18n="formula_a_r"></span>
+            <div class="math">a_r = −v²/r</div>
+            <div class="sub"><span id="sub_a_r"></span> = <span class="result" id="res_a_r"></span></div>
           </div>
           <div class="formula-card">
-            <span class="name" data-i18n="formula_y"></span>
-            <div class="math">y = R sin(θ)</div>
-            <div class="sub"><span id="sub_y"></span> = <span class="result" id="res_y"></span></div>
+            <span class="name" data-i18n="formula_normal"></span>
+            <div class="math">N = m (v²/r + g cos(φ))</div>
+            <div class="sub"><span id="sub_normal"></span> = <span class="result" id="res_normal"></span></div>
           </div>
           <div class="formula-card">
-            <span class="name" data-i18n="formula_v"></span>
-            <div class="math">v = R ω</div>
-            <div class="sub"><span id="sub_v"></span> = <span class="result" id="res_v"></span></div>
+            <span class="name" data-i18n="formula_load"></span>
+            <div class="math">n = N / P</div>
+            <div class="sub"><span id="sub_load"></span> = <span class="result" id="res_load"></span></div>
           </div>
           <div class="formula-card">
-            <span class="name" data-i18n="formula_a"></span>
-            <div class="math">a_r = −R ω² = −v²/R</div>
-            <div class="sub"><span id="sub_a"></span> = <span class="result" id="res_a"></span></div>
+            <span class="name" data-i18n="formula_top_speed"></span>
+            <div class="math">v_s,min = √(g r_s)</div>
+            <div class="sub"><span id="sub_top_speed"></span> = <span class="result" id="res_top_speed"></span></div>
           </div>
           <div class="formula-card">
-            <span class="name" data-i18n="formula_force"></span>
-            <div class="math">ΣF = m v²/R</div>
-            <div class="sub"><span id="sub_force"></span> = <span class="result" id="res_force"></span></div>
+            <span class="name" data-i18n="formula_normal_top"></span>
+            <div class="math">N_s = m (2 g (h − H)/r_s − g)</div>
+            <div class="sub"><span id="sub_normal_top"></span> = <span class="result" id="res_normal_top"></span></div>
+          </div>
+          <div class="formula-card">
+            <span class="name" data-i18n="formula_h_min"></span>
+            <div class="math">h_min = max(y − r cos(φ)/2)</div>
+            <div class="sub"><span id="sub_h_min"></span> = <span class="result" id="res_h_min"></span></div>
+          </div>
+          <div class="formula-card">
+            <span class="name" data-i18n="formula_position"></span>
+            <div class="math">s̈ = a_θ = −g sin(φ)</div>
+            <div class="sub"><span id="sub_position"></span> = <span class="result" id="res_position"></span></div>
+          </div>
+          <div class="formula-card">
+            <span class="name" data-i18n="formula_flight_x"></span>
+            <div class="math">x(τ) = u₀ τ + x₀</div>
+            <div class="sub"><span id="sub_flight_x"></span> = <span class="result" id="res_flight_x"></span></div>
+          </div>
+          <div class="formula-card">
+            <span class="name" data-i18n="formula_flight_y"></span>
+            <div class="math">y(τ) = −g τ²/2 + v₀ τ + y₀</div>
+            <div class="sub"><span id="sub_flight_y"></span> = <span class="result" id="res_flight_y"></span></div>
           </div>
         </div>
       </section>
@@ -385,12 +428,16 @@
             <figcaption data-i18n="graph_positions"></figcaption>
           </figure>
           <figure>
-            <canvas id="graph_velocities" width="400" height="210"></canvas>
-            <figcaption data-i18n="graph_velocities"></figcaption>
+            <canvas id="graph_speed" width="400" height="210"></canvas>
+            <figcaption data-i18n="graph_speed"></figcaption>
           </figure>
           <figure>
             <canvas id="graph_accelerations" width="400" height="210"></canvas>
             <figcaption data-i18n="graph_accelerations"></figcaption>
+          </figure>
+          <figure>
+            <canvas id="graph_normal" width="400" height="210"></canvas>
+            <figcaption data-i18n="graph_normal"></figcaption>
           </figure>
         </div>
       </section>
@@ -402,5 +449,100 @@
     <script src="calcul.js"></script>
     <script src="main.js"></script>
 
+    <!-- GAME MODE (experimental) — styles + script; see removal note at the mount point -->
+    <style>
+      .game-mode .formula-panel,
+      .game-mode .graphs-panel,
+      .game-mode #timeline,
+      .game-mode #step_back_button,
+      .game-mode #step_forward_button {
+        display: none;
+      }
+
+      .mode-tabs {
+        display: flex;
+        gap: 6px;
+        margin: 0 0 14px;
+      }
+
+      .game-panel {
+        margin-top: 16px;
+      }
+
+      .game-panel .panel-head {
+        display: flex;
+        align-items: baseline;
+        gap: 14px;
+        flex-wrap: wrap;
+        margin-bottom: 12px;
+      }
+
+      .game-panel .panel-head h2 {
+        margin: 0;
+      }
+
+      .game-panel .panel-head button {
+        margin-left: auto;
+      }
+
+      .game-panel .game-hint {
+        color: var(--muted);
+        font-size: 0.85rem;
+        line-height: 1.45;
+      }
+
+      .game-value {
+        font-size: 1.35rem;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+        color: var(--accent);
+      }
+
+      .game-target-value {
+        font-size: 0.98rem;
+        font-weight: 600;
+        line-height: 1.4;
+      }
+
+      .game-sub {
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 0.8rem;
+      }
+
+      .game-sub:empty {
+        display: none;
+      }
+
+      .game-gauge {
+        position: relative;
+        height: 10px;
+        margin-top: 8px;
+        border-radius: 999px;
+        background: color-mix(in srgb, var(--muted) 18%, transparent);
+        overflow: hidden;
+      }
+
+      .game-gauge span {
+        position: absolute;
+        inset: 0 auto 0 0;
+        width: 0;
+        border-radius: 999px;
+        background: linear-gradient(90deg, #43a047, #fdd835 70%, #e53935);
+        transition: width 0.08s linear;
+      }
+
+      .scene-panel canvas.game-shake {
+        animation: game-shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+      }
+
+      @keyframes game-shake {
+        10%, 90% { transform: translate(-2px, 1px); }
+        20%, 80% { transform: translate(4px, -2px); }
+        30%, 50%, 70% { transform: translate(-7px, 3px); }
+        40%, 60% { transform: translate(7px, -3px); }
+      }
+    </style>
+    <script src="game.js"></script>
   </body>
 </html>

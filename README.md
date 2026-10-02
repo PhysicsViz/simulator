@@ -10,8 +10,23 @@ Interactive physics simulations for first-year civil-engineering students
 - [Pendulum](src/mechanics/pendulum/index.html) — nonlinear motion, energy,
   tension, time graphs, and an experimental challenge mode.
 - [Uniform circular motion](src/mechanics/uniform-circular-motion/index.html) —
-  angular velocity, period, centripetal acceleration, force, and a vertical
-  bucket challenge.
+  angular velocity, period, centripetal acceleration and force (no game mode
+  for now).
+- [Loop-the-loop](src/mechanics/loop-the-loop/index.html) — ball released from
+  rest at height h on a frictionless rail (60° arc ramp, run-in of length R),
+  through a circular loop of radius R or a clothoid loop of the same height
+  2R; the ball is not held and leaves the rail when N = 0, then falls freely
+  (MRUA) until it touches the rail again. Energy conservation, normal reaction
+  N = m (v²/r + g cos(φ)), minimum height (5R/2 for the circle, lower for the
+  clothoid, whose critical point lies just before the top), load factor, RK4
+  motion along the rail. Experimental "water bucket" game: the teacher swings a
+  bucket in a vertical circle (R = arm + rope, pivot at the shoulder) and, after
+  a back-and-forth wind-up, it passes the horizontal position with speed v₀;
+  T = m (v₀²/R + 3 g cos(θ)) must stay between 0 and T_max. Each challenge
+  draws the one free variable (v₀, R, or m — fill at least 90 % of the largest
+  mass the rope holds), a place (Europa, Moon, Mars, Venus, Earth) and the
+  other quantities; the last value used never wins the next challenge. Spilled water and a snapped bucket follow real
+  free-fall trajectories (with an unlucky bounce onto the head).
 
 Each simulation includes editable parameters, animated canvas rendering,
 free-body diagrams, formula panels, playback controls, and French/English UI.
@@ -65,6 +80,7 @@ src/
     projectile-motion/              # Tir parabolique
     pendulum/                        # Pendule
     uniform-circular-motion/         # MCU
+    loop-the-loop/                   # Looping
       index.html                     # simulation page
       calcul.js                      # physics calculations
       main.js                        # UI, rendering, and controls
@@ -72,7 +88,8 @@ src/
 test/mechanics/
   projectile-motion/
   pendulum/
-  uniform-circular-motion/           # main and game tests per simulation
+  uniform-circular-motion/
+  loop-the-loop/                     # main and game tests per simulation
 integration/
   exercise_suite.js                  # shared page checks for every device
   home.spec.js                       # root page

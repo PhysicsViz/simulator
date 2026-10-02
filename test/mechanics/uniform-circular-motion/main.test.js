@@ -1,8 +1,7 @@
 /*
  * main.test.js — Unit tests for the uniform circular motion physics (calcul.js):
  * angular velocity, period, position/velocity orthogonality, centripetal
- * acceleration and force, vertical-circle rope tension and the classic
- * minimum top speed.
+ * acceleration and force.
  */
 
 import { test } from "node:test";
@@ -21,8 +20,6 @@ const {
     centripetalAcceleration,
     centripetalForce,
     period,
-    ropeTension,
-    minTopSpeed,
 } = globalThis.circular_motion_calcul;
 
 const EPSILON = 1e-9;
@@ -68,18 +65,4 @@ test("acceleration points toward the center with magnitude v²/R", () => {
 
 test("centripetal force is m·v²/R", () => {
     assertClose(centripetalForce(2, 3, 1.5), 12, "m=2, v=3, R=1.5");
-});
-
-test("rope tension at top and bottom of the vertical circle", () => {
-    assertClose(ropeTension(1, 10, 2, 6, Math.PI / 2), 18 - 10, "top: m(v²/R − g)");
-    assertClose(ropeTension(1, 10, 2, 6, -Math.PI / 2), 18 + 10, "bottom: m(v²/R + g)");
-});
-
-test("minTopSpeed reproduces the classic bucket result", () => {
-    // Un seau d'eau décrit un cercle vertical de rayon 80 cm :
-    // v_min = sqrt(g·R) = sqrt(9,81 × 0,8) ≈ 2,80 m/s
-    assertClose(minTopSpeed(9.81, 0.8), Math.sqrt(9.81 * 0.8), "v_min = sqrt(g·R)");
-    assert.ok(Math.abs(minTopSpeed(9.81, 0.8) - 2.8014) < 1e-3, "≈ 2,80 m/s");
-    // and the water stays iff the tension at the top is non-negative
-    assertClose(ropeTension(1, 9.81, 0.8, minTopSpeed(9.81, 0.8), Math.PI / 2), 0, "T_top = 0 at v_min");
 });

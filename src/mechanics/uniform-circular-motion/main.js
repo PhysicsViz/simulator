@@ -100,16 +100,10 @@
         return matchMedia("(prefers-color-scheme: dark)").matches ? "#e8ecf3" : "#1c2026";
     }
 
-    /* fitView: frame the circle (and the game's ground/teacher extent, if any) */
+    /* fitView: frame the circle with room for the vectors */
     function fitView() {
         const radius = parameters.radius;
-        let bottom = -1.3 * radius;
-        /* Game mode hook — remove together with game.js */
-        const game_extent = typeof globalThis.circular_motion_game_view_extent === "function" ? globalThis.circular_motion_game_view_extent() : null;
-        if (game_extent !== null) {
-            bottom = Math.min(bottom, game_extent.bottom);
-        }
-        camera.fitTo({ left: -1.3 * radius, right: 1.3 * radius, bottom, top: 1.3 * radius });
+        camera.fitTo({ left: -1.3 * radius, right: 1.3 * radius, bottom: -1.3 * radius, top: 1.3 * radius });
     }
 
     /* drawScene: circle path, radius line, angle marker, object and its vectors */
@@ -203,17 +197,6 @@
 
         drawFreeBodyInset(ink, angle, force);
 
-        /* Game mode hook — remove together with game.js */
-        if (typeof globalThis.circular_motion_game_overlay === "function") {
-            globalThis.circular_motion_game_overlay(context, transform, {
-                time,
-                angle,
-                omega,
-                speed: parameters.speed,
-                radius,
-                mass: parameters.mass,
-            });
-        }
         return { angle, force, acceleration };
     }
 
@@ -359,9 +342,7 @@
         document.getElementById("time_display").textContent = `t = ${formatNumber(time)} s`;
         document.getElementById("timeline").value = time;
         updateFormulas(time, scene_values);
-        if (!document.body.classList.contains("game-mode")) {
-            drawGraphs(time);
-        }
+        drawGraphs(time);
     }
 
     /* animationFrame: advance simulation time while playing, then render */

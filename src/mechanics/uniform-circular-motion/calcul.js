@@ -1,14 +1,9 @@
 /*
- * calcul.js — Uniform circular motion (MCU) kinematics, plus the vertical-circle
- * rope tension used by the bucket game.
+ * calcul.js — Uniform circular motion (MCU) kinematics.
  * Model: point mass on a circle of radius R at constant speed v; the angle theta
- * is measured from the +x axis, counterclockwise, so the top of the circle is
- * theta = pi/2. Course formulary notation: omega = v/R, v = R·omega, a_r =
- * −R·omega² = −v²/R (purely radial, toward the center, alpha = 0), net force
- * F = m·v²/R. For a bucket on a rope in a VERTICAL circle at constant speed,
- * the rope tension is T = m·(v²/R − g·sin(theta)) — maximal at the bottom
- * (theta = −pi/2), minimal at the top, where the water stays in iff
- * v ≥ sqrt(g·R). All SI units, angles in radians.
+ * is measured from the +x axis, counterclockwise. Course formulary notation:
+ * omega = v/R, v = R·omega, a_r = −R·omega² = −v²/R (purely radial, toward the
+ * center, alpha = 0), net force F = m·v²/R. All SI units, angles in radians.
  * Classic script (works via file://); exposes globalThis.circular_motion_calcul.
  */
 (() => {
@@ -61,16 +56,6 @@
         return 2 * Math.PI * radius / speed;
     }
 
-    /* ropeTension: vertical circle at constant speed, T = m·(v²/R − g·sin(theta)) */
-    function ropeTension(mass, gravity, radius, speed, angle) {
-        return mass * (speed * speed / radius - gravity * Math.sin(angle));
-    }
-
-    /* minTopSpeed: water stays in the bucket at the top iff v ≥ sqrt(g·R) */
-    function minTopSpeed(gravity, radius) {
-        return Math.sqrt(gravity * radius);
-    }
-
     globalThis.circular_motion_calcul = {
         angularVelocity,
         angleAt,
@@ -83,7 +68,5 @@
         centripetalAcceleration,
         centripetalForce,
         period,
-        ropeTension,
-        minTopSpeed,
     };
 })();
