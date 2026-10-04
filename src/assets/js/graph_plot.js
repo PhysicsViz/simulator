@@ -13,7 +13,7 @@
     const MARGIN_BOTTOM = 26;
 
     /* drawTimeGraph: render series = [{label, color, points: [[t, value], ...]}]
-       options = { cursor_time, unit, x_label } — the x axis is time by default but
+       options = { cursor_time, unit, x_label, time_min, time_max } — the x axis is time by default but
        any abscissa works (e.g. a distance profile with x_label: "d (m)") */
     function drawTimeGraph(canvas, series, options = {}) {
         const context = canvas.getContext("2d");
@@ -24,18 +24,23 @@
             canvas.height = client_height;
         }
 
-        let time_max = 1e-9;
+        const time_min = Number.isFinite(options.time_min) ? options.time_min : 0;
+        let time_max = time_min + 1e-9;
+        for (const single_series of series) {
+            for (const [time] of single_series.points) time_max = Math.max(time_max, time);
+        }
+        if (Number.isFinite(options.time_max)) time_max = Math.max(time_min + 1e-9, options.time_max);
         let value_min = Infinity;
         let value_max = -Infinity;
         for (const single_series of series) {
             for (const [time, value] of single_series.points) {
-                time_max = Math.max(time_max, time);
+                if (time < time_min || time > time_max) continue;
                 value_min = Math.min(value_min, value);
                 value_max = Math.max(value_max, value);
             }
         }
-        value_min = Math.min(value_min, 0);
-        value_max = Math.max(value_max, 0);
+        value_min = Number.isFinite(value_min) ? Math.min(value_min, 0) : 0;
+        value_max = Number.isFinite(value_max) ? Math.max(value_max, 0) : 0;
         if (value_max - value_min < 1e-9) {
             value_min -= 1;
             value_max += 1;
@@ -46,7 +51,8 @@
 
         const plot_width = canvas.width - MARGIN_LEFT - MARGIN_RIGHT;
         const plot_height = canvas.height - MARGIN_TOP - MARGIN_BOTTOM;
-        const toX = (time) => MARGIN_LEFT + (time / time_max) * plot_width;
+        const time_span = time_max - time_min;
+        const toX = (time) => MARGIN_LEFT + ((time - time_min) / time_span) * plot_width;
         const toY = (value) => MARGIN_TOP + (1 - (value - value_min) / (value_max - value_min)) * plot_height;
 
         context.clearRect(0, 0, canvas.width, canvas.height);
@@ -67,14 +73,17 @@
         }
         context.stroke();
 
-        const time_step = globalThis.canvas_draw.niceStep(time_max, 6);
+        const time_step = globalThis.canvas_draw.niceStep(time_span, 6);
         context.beginPath();
         context.textAlign = "center";
         context.textBaseline = "top";
-        for (let k = 0; k * time_step <= time_max + 1e-9; k++) {
-            context.moveTo(toX(k * time_step), MARGIN_TOP);
-            context.lineTo(toX(k * time_step), canvas.height - MARGIN_BOTTOM);
-            context.fillText(formatTick(k * time_step), toX(k * time_step), canvas.height - MARGIN_BOTTOM + 5);
+        const first_tick = Math.ceil(time_min / time_step) * time_step;
+        for (let k = 0; k <= Math.ceil(time_span / time_step); k++) {
+            const time = first_tick + k * time_step;
+            if (time > time_max + 1e-9) break;
+            context.moveTo(toX(time), MARGIN_TOP);
+            context.lineTo(toX(time), canvas.height - MARGIN_BOTTOM);
+            context.fillText(formatTick(time), toX(time), canvas.height - MARGIN_BOTTOM + 5);
         }
         context.stroke();
 
@@ -94,6 +103,8 @@
         context.textAlign = "right";
         context.fillText(options.x_label || "t (s)", canvas.width - MARGIN_RIGHT, canvas.height - MARGIN_BOTTOM + 5);
 
+        context.save();
+        context.beginPath(); context.rect(MARGIN_LEFT, MARGIN_TOP, plot_width, plot_height); context.clip();
         for (const single_series of series) {
             context.strokeStyle = single_series.color;
             context.lineWidth = 1.8;
@@ -109,7 +120,7 @@
         }
 
         if (typeof options.cursor_time === "number") {
-            const cursor_x = toX(Math.min(options.cursor_time, time_max));
+            const cursor_x = toX(Math.max(time_min, Math.min(options.cursor_time, time_max)));
             context.strokeStyle = "rgba(120, 130, 145, 0.7)";
             context.lineWidth = 1;
             context.setLineDash([3, 3]);
@@ -128,6 +139,7 @@
                 }
             }
         }
+        context.restore();
 
         context.font = "bold 11px system-ui, sans-serif";
         context.textAlign = "right";
@@ -146,9 +158,13 @@
         if (points.length === 0) {
             return null;
         }
-        const last_time = points[points.length - 1][0];
-        const ratio = last_time > 0 ? Math.min(Math.max(time / last_time, 0), 1) : 0;
-        return points[Math.round(ratio * (points.length - 1))][1];
+        let low = 0, high = points.length - 1;
+        while (low < high) {
+            const mid = Math.floor((low + high) / 2);
+            if (points[mid][0] < time) low = mid + 1; else high = mid;
+        }
+        const nearest = low > 0 && Math.abs(points[low - 1][0] - time) <= Math.abs(points[low][0] - time) ? low - 1 : low;
+        return points[nearest][1];
     }
 
     /* formatTick: compact numeric label for graph ticks */

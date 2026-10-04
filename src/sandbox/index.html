@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sandbox — Physics Simulator</title>
+  <link rel="stylesheet" href="../../styles.css">
+  <link rel="stylesheet" href="sandbox.css">
+</head>
+<body>
+  <header class="app-bar">
+    <a class="brand" href="../../index.html">Physics Simulator</a>
+    <span class="crumb" data-i18n="title"></span><span class="spacer"></span>
+    <button id="language_toggle" type="button">EN</button>
+  </header>
+  <main class="sandbox">
+    <div class="intro"><h1 data-i18n="title"></h1><p data-i18n="intro"></p></div>
+    <div class="layout">
+      <section class="panel scene">
+        <div class="transport">
+          <button id="play" class="primary" type="button"></button>
+          <button id="step" type="button" data-i18n="step"></button>
+          <button id="reset" type="button" data-i18n="reset"></button>
+          <button id="set_start" type="button" data-i18n="setStart"></button>
+          <label><span data-i18n="speed"></span> <select id="speed"><option value="0.25">0.25×</option><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option></select></label>
+          <output id="time">0.00 s</output>
+        </div>
+        <div class="tools" role="group" aria-label="Objects">
+          <button id="add_body" type="button" data-i18n="addBody"></button>
+          <button id="add_anchor" type="button" data-i18n="addAnchor"></button>
+          <button id="add_pendulum" type="button" data-i18n="addPendulum"></button>
+          <button id="connect" type="button" data-i18n="connect" aria-pressed="false"></button>
+        </div>
+        <label class="connection-default"><span data-i18n="newConnection"></span>
+          <select id="connection_mode">
+            <option value="mutual" data-i18n="mutual"></option>
+            <option value="anchor-a" data-i18n="anchorFirst"></option>
+            <option value="anchor-b" data-i18n="anchorSecond"></option>
+          </select>
+        </label>
+        <div class="tools" role="group" aria-label="Camera">
+          <button id="zoom_in" type="button" data-i18n="zoomIn"></button>
+          <button id="zoom_out" type="button" data-i18n="zoomOut"></button>
+          <button id="fit_view" type="button" data-i18n="fitView"></button>
+        </div>
+        <canvas id="scene" tabindex="0" aria-label="Physics world"></canvas>
+        <div class="display-options">
+          <label><input id="trails" type="checkbox" checked> <span data-i18n="trails"></span></label>
+          <label><input id="vectors" type="checkbox" checked> <span data-i18n="vectors"></span></label>
+        </div>
+        <p class="hint" data-i18n="hint"></p>
+        <p id="message" class="hint" role="status"></p>
+      </section>
+      <aside class="panel">
+        <h2 data-i18n="world"></h2>
+        <label class="field"><span data-i18n="gravity"></span><input id="gravity" type="number" min="0" max="30" step="any" value="9.81" required></label>
+        <p class="hint" data-i18n="assumption"></p>
+        <h2 data-i18n="selected"></h2>
+        <p id="selection_name"></p>
+        <form id="properties"><div id="fields"></div><button id="apply" type="submit" class="primary add" data-i18n="apply"></button></form>
+        <div class="tools"><button id="remove" type="button" data-i18n="remove"></button><button id="detach" type="button" data-i18n="detach"></button></div>
+        <output id="readout"></output>
+        <h2 class="connections-heading" data-i18n="connections"></h2>
+        <p class="hint" data-i18n="connectionHint"></p>
+        <div id="connections"></div>
+      </aside>
+    </div>
+    <section class="panel experiments">
+      <h2 data-i18n="presets"></h2>
+      <p class="hint" data-i18n="presetHint"></p>
+      <form id="save_preset" class="tools">
+        <label><span data-i18n="presetName"></span> <input id="preset_name" type="text" maxlength="80" required></label>
+        <button type="submit" data-i18n="savePreset"></button>
+      </form>
+      <div class="tools">
+        <label><span data-i18n="savedPresets"></span> <select id="preset_list"></select></label>
+        <button id="load_preset" type="button" data-i18n="loadPreset"></button>
+        <button id="delete_preset" type="button" data-i18n="deletePreset"></button>
+      </div>
+      <p id="preset_status" class="hint" role="status"></p>
+    </section>
+    <section class="panel experiments">
+      <div class="section-heading"><h2 data-i18n="objects"></h2><button id="clear" type="button" data-i18n="clear"></button></div>
+      <p class="hint" data-i18n="objectHint"></p>
+      <div id="objects" class="tools"></div>
+    </section>
+    <section class="panel experiments">
+      <h2 data-i18n="graphs"></h2>
+      <p class="hint" data-i18n="graphHint"></p>
+      <label class="connection-default"><span data-i18n="graphWindow"></span>
+        <select id="graph_window"><option value="5">5 s</option><option value="10" selected>10 s</option><option value="20">20 s</option><option value="60">60 s</option></select>
+      </label>
+      <div id="object_graphs"></div>
+    </section>
+  </main>
+  <script src="../assets/js/canvas_draw.js"></script><script src="../assets/js/graph_plot.js"></script>
+  <script src="model.js"></script><script src="camera.js"></script><script src="presets.js"></script><script src="main.js"></script>
+</body>
+</html>

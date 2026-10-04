@@ -165,6 +165,15 @@
       </section>
 
       <section class="theme-section">
+        <h2 data-i18n="sandbox_title"></h2>
+        <a class="card" href="src/sandbox/">
+          <h3 data-i18n="sandbox_name"></h3>
+          <p data-i18n="sandbox_desc"></p>
+          <span class="open" data-i18n="sandbox_open"></span>
+        </a>
+      </section>
+
+      <section class="theme-section">
         <h2 data-i18n="theme_mechanics"></h2>
         <div class="card-grid">
           <a class="card" href="src/mechanics/projectile-motion/">
@@ -236,6 +245,10 @@
       /* Home page i18n: fill data-i18n elements, FR/EN toggle persisted in localStorage. */
       (() => {
           const strings = {
+              sandbox_title: { fr: "Exploration libre", en: "Free exploration" },
+              sandbox_name: { fr: "Bac à sable", en: "Physics sandbox" },
+              sandbox_desc: { fr: "Déplacez des billes, modifiez leurs propriétés et reliez-les par des tiges. Explorez la gravité, les collisions et les pendules dans un monde partagé.", en: "Move balls, edit their properties, and connect them with rods. Explore gravity, collisions, and pendulums in a shared world." },
+              sandbox_open: { fr: "Ouvrir le bac à sable →", en: "Open sandbox →" },
               course_badge: { fr: "Physique 1 — BAC1 ingénieur civil", en: "Physics 1 — 1st-year engineering" },
               hero_title: { fr: "Comprendre la physique en manipulant", en: "Understand physics by experimenting" },
               hero_text: {
