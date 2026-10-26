@@ -2,10 +2,10 @@
  * main.js — Loop-the-loop page logic: animated scene (ramp with its support,
  * rail with ties, circular or clothoid loop, dimension lines h and H, the h_min
  * level with its critical point, traveled trace, predicted free-fall flight
- * after take-off, osculating circle of radius r at the ball, P / N / v / a
- * vectors drawn per unit mass so that a = P/m + N/m closes graphically, and a
+ * after take-off, P / N / v / a vectors drawn per unit mass so that a = P/m + N/m closes graphically, and a
  * free-body inset with the resultant), shared pan/zoom camera, transport over
- * a precomputed RK4 trajectory, parameters (loop shape, release height h, loop
+ * a precomputed RK4 trajectory (rewound to t = 0 shortly after the end of the
+ * run), parameters (loop shape, release height h, loop
  * radius R, mass m, g), live formulas in the course notation (a_θ = −g sin(φ),
  * a_r = −v²/r, N = m (v²/r + g cos(φ)), energy, h_min, MRUA flight) and time
  * graphs of positions, speed, accelerations and normal force. Classic script
@@ -96,6 +96,7 @@
 
     const SPEED_OPTIONS = [0.5, 1, 2, 4];
     const TIME_STEP = 0.1;
+    const END_HOLD_MILLISECONDS = 800;
     const MAX_DURATION = 20;
     const SIMULATION_RATE = 240;
     const SUBSTEPS = 8;
@@ -123,6 +124,7 @@
     let is_playing = false;
     let playback_speed = 1;
     let last_frame_timestamp = null;
+    let rewind_timestamp = null;
     let track = null;
     let rail_points = [];
     let rail_parts = null;
@@ -480,42 +482,6 @@
         context.restore();
     }
 
-    /* drawCurvatureCircle: osculating circle of radius r at the ball, center on the normal */
-    function drawCurvatureCircle(transform, state) {
-        if (state.phase !== "rail" || state.kappa <= 1 / (8 * parameters.loop_radius)) {
-            return;
-        }
-        const radius = 1 / state.kappa;
-        const center_x = state.x - Math.sin(state.phi) * radius;
-        const center_y = state.y + Math.cos(state.phi) * radius;
-        const screen_center_x = transform.toScreenX(center_x);
-        const screen_center_y = transform.toScreenY(center_y);
-        const screen_ball_x = transform.toScreenX(state.x);
-        const screen_ball_y = transform.toScreenY(state.y);
-        const radius_pixels = radius * (transform.toScreenX(1) - transform.toScreenX(0));
-        context.save();
-        context.strokeStyle = isDark() ? "rgba(144, 202, 249, 0.45)" : "rgba(25, 118, 210, 0.35)";
-        context.fillStyle = context.strokeStyle;
-        context.lineWidth = 1.2;
-        context.setLineDash([3, 5]);
-        context.beginPath();
-        context.arc(screen_center_x, screen_center_y, radius_pixels, 0, 2 * Math.PI);
-        context.moveTo(screen_center_x, screen_center_y);
-        context.lineTo(screen_ball_x, screen_ball_y);
-        context.stroke();
-        context.setLineDash([]);
-        context.beginPath();
-        context.arc(screen_center_x, screen_center_y, 3, 0, 2 * Math.PI);
-        context.fill();
-        context.fillStyle = isDark() ? "#90caf9" : "#1565c0";
-        context.font = "italic bold 12px system-ui, sans-serif";
-        context.textAlign = "center";
-        context.textBaseline = "middle";
-        context.textAlign = screen_ball_x >= screen_center_x ? "right" : "left";
-        context.fillText(`r = ${formatNumber(radius)} m`, screen_center_x + (screen_ball_x >= screen_center_x ? -6 : 6), screen_center_y + 12);
-        context.restore();
-    }
-
     /* drawBall: shaded sphere */
     function drawBall(screen_x, screen_y, radius) {
         context.save();
@@ -556,7 +522,6 @@
         if (!hide_answer) {
             drawPredictedFlight(transform);
         }
-        drawCurvatureCircle(transform, state);
 
         const ball_x = transform.toScreenX(state.x);
         const ball_y = transform.toScreenY(state.y);
@@ -819,7 +784,8 @@
         }
     }
 
-    /* animationFrame: advance simulation time while playing, then render */
+    /* animationFrame: advance simulation time while playing (the end of the run is
+       held briefly, then rewound to t = 0), then render */
     function animationFrame(timestamp) {
         if (is_playing) {
             if (last_frame_timestamp !== null) {
@@ -828,9 +794,14 @@
                 if (simulation_time >= trajectory.duration) {
                     simulation_time = trajectory.duration;
                     setPlaying(false);
+                    rewind_timestamp = timestamp + END_HOLD_MILLISECONDS;
                 }
             }
             last_frame_timestamp = timestamp;
+        }
+        if (rewind_timestamp !== null && timestamp >= rewind_timestamp) {
+            rewind_timestamp = null;
+            simulation_time = 0;
         }
         render();
         requestAnimationFrame(animationFrame);
@@ -838,6 +809,7 @@
 
     /* setPlaying: toggle play state and keep the button label in sync */
     function setPlaying(playing) {
+        rewind_timestamp = null;
         is_playing = playing;
         last_frame_timestamp = null;
         document.getElementById("play_pause_button").textContent = playing
@@ -847,6 +819,7 @@
 
     /* stepTime: shift simulation time by a signed amount, clamped to the trajectory */
     function stepTime(delta_seconds) {
+        rewind_timestamp = null;
         simulation_time = Math.min(Math.max(simulation_time + delta_seconds, 0), trajectory.duration);
     }
 
@@ -998,6 +971,7 @@
         document.getElementById("step_back_button").addEventListener("click", () => stepTime(-TIME_STEP));
         document.getElementById("step_forward_button").addEventListener("click", () => stepTime(TIME_STEP));
         document.getElementById("timeline").addEventListener("input", (event) => {
+            rewind_timestamp = null;
             simulation_time = Number(event.target.value);
         });
         document.getElementById("language_toggle").addEventListener("click", () => {

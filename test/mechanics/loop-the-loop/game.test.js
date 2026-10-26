@@ -248,6 +248,9 @@ test("the unlucky bounce is a true parabola ending exactly on its target", () =>
     assertClose(x, -0.2, 1e-9, "target x");
     assertClose(y, 1.3, 1e-9, "target y");
     assert.ok(bounce.velocity_y - GRAVITY * bounce.flight_time < 0, "lands while falling");
+    const needed = Math.sqrt(2 * 1.31 * 1.6);
+    const hard = bounceToward(1.2, -0.3, -40, -0.2, 1.3, 1.31);
+    assertClose(hard.velocity_y, 1.35 * needed, 1e-9, "a violent impact still gives a capped, energy-losing bounce");
 });
 
 test("milestones are shared across game modes", () => {

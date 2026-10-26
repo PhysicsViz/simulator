@@ -295,12 +295,14 @@
         return { theta, omega: slope / forward_duration };
     }
 
-    /* bounceToward: unlucky bounce — vertical speed after impact at least
-       restitution × |vy| and enough to rise above the target, horizontal speed
-       chosen so that the descending parabola ends exactly on the target */
+    /* bounceToward: unlucky bounce — vertical speed after impact restitution × |vy|,
+       kept between 1.12 and 1.35 times the speed needed to rise to the target (a
+       bad, energy-losing bounce), horizontal speed chosen so that the descending
+       parabola ends exactly on the target */
     function bounceToward(contact_x, contact_y, impact_vy, target_x, target_y, gravity = GRAVITY, restitution = 0.55) {
         const rise = target_y - contact_y;
-        const vertical = Math.max(restitution * Math.abs(impact_vy), 1.12 * Math.sqrt(2 * gravity * Math.max(rise, 0)));
+        const needed = Math.sqrt(2 * gravity * Math.max(rise, 0));
+        const vertical = Math.min(Math.max(restitution * Math.abs(impact_vy), 1.12 * needed), 1.35 * needed);
         const flight_time = (vertical + Math.sqrt(vertical * vertical - 2 * gravity * rise)) / gravity;
         return { velocity_x: (target_x - contact_x) / flight_time, velocity_y: vertical, flight_time };
     }
@@ -398,6 +400,8 @@
         slow_sub: { fr: "v₀ = 0 : le seau retombe simplement", en: "v₀ = 0: the bucket just falls back" },
         rope_label: { fr: "T_max = {t} N", en: "T_max = {t} N" },
         fbd_title: { fr: "Bilan des forces", en: "Free-body diagram" },
+        fast_forward: { fr: "avance rapide ×{rate}", en: "fast forward ×{rate}" },
+        offscreen_label: { fr: "seau à {h} m", en: "bucket at {h} m" },
     };
 
     const CONFETTI_COLORS = ["#e53935", "#fdd835", "#43a047", "#1e88e5", "#8e24aa", "#fb8c00", "#00acc1"];
@@ -408,8 +412,7 @@
     const HOODIE_LINE = "#9c4c10";
     const SKIN_LINE = "#c99572";
     const SKIN = "#f1c7a3";
-    const HAIR = "#a8916f";
-    const HAIR_LIGHT = "#cbb592";
+    const HAIR = "#b3a58e";
     const JEANS = "#8a9bb3";
     const BUCKET_WIDTH = 0.26;
     const PLACE_STYLES = {
@@ -419,7 +422,8 @@
         venus: { icon: "🟡", ground: "214, 176, 90" },
         earth: { icon: "🌍", ground: "120, 130, 145" },
     };
-    const SLOW_MOTION = 0.7;
+    const OFFSCREEN_SECONDS = 0.8;
+    const OFFSCREEN_MINIMUM_RATE = 4;
     const WATER_EMISSION_SECONDS = 0.3;
     const FAIL_SEQUENCE_SECONDS = 3.2;
     const SUCCESS_SEQUENCE_SECONDS = 3.4;
@@ -451,6 +455,7 @@
     let flash = null;
     let clock = 0;
     let last_overlay_milliseconds = null;
+    let resetting = false;
 
     /* currentLanguage: follow the language set by main.js on the <html> element */
     function currentLanguage() {
@@ -557,7 +562,6 @@
         run = null;
         sequence = null;
         flyer = null;
-        water_drops = [];
         bucket_water = 1;
         bucket_on_rope = true;
         teacher_pose = "idle";
@@ -568,7 +572,25 @@
         if (teacher_wetness > 0) {
             drying = DRYING_SECONDS;
         }
+        resetting = true;
         document.getElementById("reset_button").click();
+        resetting = false;
+    }
+
+    /* abortSequence: the user resets (or changes a parameter) during the success or
+       failure animation — skip it; a success already counted moves on */
+    function abortSequence() {
+        const finished = sequence.kind;
+        sequence = null;
+        banner = null;
+        flash = null;
+        rockets = [];
+        particles = particles.filter((particle) => particle.kind === "droplet");
+        if (finished === "success") {
+            newChallenge();
+        } else {
+            resetRun();
+        }
     }
 
     /* newChallenge: fresh feasible challenge, inputs imposed, view refitted */
@@ -909,12 +931,32 @@
         context.restore();
     }
 
+    /* drawTowel: towel held over the head and rubbed side to side; drawn before the
+       hair, so it passes behind it and only its ends show */
+    function drawTowel(context, transform, hand) {
+        const pixels_per_meter = transform.toScreenX(1) - transform.toScreenX(0);
+        const towel_x = transform.toScreenX(hand.x);
+        const towel_y = transform.toScreenY(hand.y);
+        const towel_width = 0.5 * pixels_per_meter;
+        context.save();
+        context.fillStyle = "#e3f2fd";
+        context.strokeStyle = "#90caf9";
+        context.lineWidth = 1.5;
+        context.beginPath();
+        context.roundRect(towel_x - towel_width / 2, towel_y - 0.03 * pixels_per_meter, towel_width, 0.2 * pixels_per_meter, 4);
+        context.fill();
+        context.stroke();
+        context.fillStyle = "#64b5f6";
+        context.fillRect(towel_x - towel_width / 2, towel_y + 0.1 * pixels_per_meter, towel_width, 0.025 * pixels_per_meter);
+        context.restore();
+    }
+
     /* freeArmPoints: elbow and hand of the left arm (watch side, screen right) */
     function freeArmPoints(geometry) {
         const shoulder = geometry.left_shoulder;
         const head = geometry.head;
         if (teacher_pose === "scared") {
-            return { elbow: { x: shoulder.x + 0.2, y: shoulder.y + 0.05 }, hand: { x: head.x + 0.06, y: head.y + 0.13 } };
+            return { elbow: { x: shoulder.x + 0.17, y: shoulder.y + 0.2 }, hand: { x: head.x + 0.16, y: head.y + 0.08 } };
         }
         if (teacher_pose === "cheer") {
             return { elbow: { x: shoulder.x + 0.12, y: shoulder.y + 0.28 }, hand: { x: shoulder.x + 0.04, y: shoulder.y + 0.56 + 0.04 * Math.sin(clock * 14) } };
@@ -928,118 +970,131 @@
         return { elbow: { x: shoulder.x + 0.05, y: shoulder.y - 0.28 }, hand: { x: shoulder.x - 0.02, y: shoulder.y - 0.55 } };
     }
 
-    /* drawHair: ∩-shaped hair with nearly straight sides, ending a little above the
-       shoulders, covered in small curls, with a sparse fringe of thin locks over a
-       visible forehead — the back mass (behind the face and the hoodie) or the
-       front; wet hair loses its curls and hangs dead straight, darker and longer */
+    /* drawHair: dry, a rounded curly mop of overlapping filled balls — modest on
+       top, bushy at the sides over the ears down to the nape; wet, the mop fades
+       into hair plastered on the skull: a smooth glossy cap, a fringe stuck to the
+       forehead and pointed clumps hanging over the ears, with drops beading and
+       falling from the tips. The two looks cross-fade with the wetness, so getting
+       soaked and drying off are progressive. behind = the part drawn behind the
+       face and the hoodie */
     function drawHair(context, transform, geometry, behind) {
         const pixels_per_meter = transform.toScreenX(1) - transform.toScreenX(0);
         const center_x = transform.toScreenX(geometry.head.x);
         const center_y = transform.toScreenY(geometry.head.y);
         const radius = geometry.head_radius * pixels_per_meter;
-        const wet = teacher_wetness;
-        const curliness = Math.max(1 - 1.6 * wet, 0);
-        const base = wet > 0.5 ? "#7d6a50" : HAIR;
-        const light = wet > 0.5 ? "#9c8767" : HAIR_LIGHT;
-        const length = 1.35 + 0.25 * wet;
+        const wet_share = Math.min(teacher_wetness * 1.4, 1);
+        const dry_share = 1 - wet_share;
+        const shade = "#9a8c76";
+        const wet_base = "#6b5f4c";
+        const wet_dark = "#564c3c";
         const toScreen = ([x, y]) => [center_x + x * radius, center_y + y * radius];
-        const tracePoints = (points) => {
+        const ball = (x, y, size, color) => {
+            const [screen_x, screen_y] = toScreen([x, y]);
+            context.fillStyle = color;
+            context.beginPath();
+            context.arc(screen_x, screen_y, size * radius, 0, 2 * Math.PI);
+            context.fill();
+        };
+        const shape = (points, color) => {
+            context.fillStyle = color;
             context.beginPath();
             points.map(toScreen).forEach(([x, y], index) => (index === 0 ? context.moveTo(x, y) : context.lineTo(x, y)));
-        };
-        const edge = (sign, inset, flare) => {
-            const points = [];
-            for (let k = 0; k <= 20; k++) {
-                const t = k / 20;
-                points.push([sign * (inset + flare * (1 - wet) * t * t), -0.3 + (length + 0.3) * t]);
-            }
-            return points;
-        };
-        const dome = (half_width, height) => {
-            const points = [];
-            for (let k = 0; k <= 24; k++) {
-                const angle = Math.PI + Math.PI * k / 24;
-                points.push([half_width * Math.cos(angle), -0.3 + height * Math.sin(angle)]);
-            }
-            return points;
-        };
-        const curls = (points, size) => {
-            if (curliness <= 0) {
-                return;
-            }
-            context.strokeStyle = light;
-            context.lineWidth = Math.max(size * radius * 0.28, 1);
-            points.forEach(([x, y], index) => {
-                const [screen_x, screen_y] = toScreen([x, y]);
-                const turn = index * 2.4;
-                const curl_radius = size * radius * curliness * (0.8 + 0.3 * Math.abs(Math.sin(index * 1.7)));
-                context.beginPath();
-                for (let k = 0; k <= 10; k++) {
-                    const angle = turn + k * 0.55;
-                    const spiral = curl_radius * (0.35 + 0.65 * k / 10);
-                    const point_x = screen_x + spiral * Math.cos(angle);
-                    const point_y = screen_y + spiral * Math.sin(angle);
-                    if (k === 0) {
-                        context.moveTo(point_x, point_y);
-                    } else {
-                        context.lineTo(point_x, point_y);
-                    }
-                }
-                context.stroke();
-            });
-        };
-        context.save();
-        context.lineCap = "round";
-        context.fillStyle = base;
-        if (behind) {
-            const bottom = [];
-            for (let k = 0; k <= 10; k++) {
-                bottom.push([1.32 - 2.64 * k / 10, length + 0.07 * curliness * Math.sin(k * 2.2)]);
-            }
-            tracePoints([...edge(-1, 1.2, 0.12).reverse(), ...dome(1.2, 0.95), ...edge(1, 1.2, 0.12), ...bottom]);
             context.closePath();
             context.fill();
+        };
+        const ring = (radius_x, radius_y, center_offset, count, size_top, size_side, color) => {
+            for (let k = 0; k <= count; k++) {
+                const angle = Math.PI * (0.92 + 1.16 * k / count);
+                const side_weight = Math.abs(Math.cos(angle));
+                ball(radius_x * Math.cos(angle), center_offset + radius_y * Math.sin(angle), size_top + (size_side - size_top) * side_weight, color);
+            }
+        };
+        const clump_tips = [[-1.05, 0.95], [-0.82, 1.1], [0.82, 1.1], [1.05, 0.95], [-0.98, 0.45], [0.98, 0.45]];
+        context.save();
+        if (behind) {
+            if (dry_share > 0) {
+                context.globalAlpha = dry_share;
+                ring(1.05, 0.88, -0.15, 12, 0.3, 0.42, shade);
+                for (const sign of [-1, 1]) {
+                    ball(sign * 1.12, 0.35, 0.36, shade);
+                    ball(sign * 0.95, 0.68, 0.32, shade);
+                }
+                ball(0, 0.55, 0.7, shade);
+                ring(0.98, 0.82, -0.18, 12, 0.26, 0.36, HAIR);
+                for (const sign of [-1, 1]) {
+                    ball(sign * 1.06, 0.3, 0.31, HAIR);
+                    ball(sign * 0.9, 0.6, 0.27, HAIR);
+                }
+            }
+            if (wet_share > 0) {
+                context.globalAlpha = wet_share;
+                const outline = [];
+                for (let k = 0; k <= 16; k++) {
+                    const angle = Math.PI + Math.PI * k / 16;
+                    outline.push([1.02 * Math.cos(angle), -0.2 + 0.95 * Math.sin(angle)]);
+                }
+                shape([
+                    ...outline,
+                    [1.08, 0.2], [1.05, 0.95], [0.95, 0.6], [0.82, 1.1], [0.7, 0.7], [0, 0.75],
+                    [-0.7, 0.7], [-0.82, 1.1], [-0.95, 0.6], [-1.05, 0.95], [-1.08, 0.2],
+                ], wet_dark);
+            }
             context.restore();
             return;
         }
-        tracePoints([...dome(1.16, 0.92), [0.95, -0.62], [0.5, -0.78], [0, -0.82], [-0.5, -0.78], [-0.95, -0.62]]);
-        context.closePath();
-        context.fill();
-        for (const sign of [-1, 1]) {
-            tracePoints([...edge(sign, 1.16, 0.14), ...edge(sign, 0.88, 0.06).reverse()]);
-            context.closePath();
+        if (dry_share > 0) {
+            context.globalAlpha = dry_share;
+            context.fillStyle = HAIR;
+            context.beginPath();
+            context.ellipse(center_x, center_y - 0.66 * radius, 0.95 * radius, 0.42 * radius, 0, Math.PI, 2 * Math.PI);
             context.fill();
-        }
-        context.strokeStyle = base;
-        context.lineWidth = Math.max(radius * 0.09, 1.2);
-        for (const [start_x, end_x, end_y] of [[-0.55, -0.62, -0.35], [-0.15, -0.05, -0.42], [0.3, 0.42, -0.38]]) {
-            tracePoints([[start_x, -0.8], [(start_x + end_x) / 2 + 0.06 * curliness, -0.6], [end_x, end_y + 0.15 * wet]]);
-            context.stroke();
-        }
-        const crown = [];
-        for (let k = 0; k <= 8; k++) {
-            const angle = Math.PI * (1.08 + 0.105 * k);
-            crown.push([0.98 * Math.cos(angle), -0.3 + 0.82 * Math.sin(angle)]);
-        }
-        curls(crown, 0.12);
-        const sides = [];
-        for (const sign of [-1, 1]) {
-            for (let k = 0; k < 5; k++) {
-                const t = (k + 0.5) / 5;
-                sides.push([sign * (1.02 + 0.06 * t * t), -0.2 + (length + 0.2) * t]);
-                sides.push([sign * (1.17 + 0.1 * t * t), -0.1 + (length + 0.1) * t]);
+            for (let k = 0; k <= 6; k++) {
+                const x = -0.78 + 0.26 * k;
+                ball(x, -0.74 + 0.04 * Math.abs(x), 0.17, HAIR);
             }
-        }
-        curls(sides, 0.1);
-        if (curliness <= 0) {
-            context.strokeStyle = light;
-            context.lineWidth = Math.max(radius * 0.05, 1);
             for (const sign of [-1, 1]) {
-                for (const inset of [0.96, 1.06]) {
-                    tracePoints(edge(sign, inset, 0.04).slice(1, 20));
-                    context.stroke();
-                }
+                ball(sign * 0.98, -0.42, 0.25, HAIR);
+                ball(sign * 1.04, 0.0, 0.26, HAIR);
+                ball(sign * 1.0, 0.36, 0.22, HAIR);
             }
+        }
+        if (wet_share > 0) {
+            context.globalAlpha = wet_share;
+            const cap = [];
+            for (let k = 0; k <= 16; k++) {
+                const angle = Math.PI + Math.PI * k / 16;
+                cap.push([0.98 * Math.cos(angle), -0.3 + 0.82 * Math.sin(angle)]);
+            }
+            shape([...cap, [0.9, -0.4], [0.7, -0.62], [0.55, -0.42], [0.35, -0.66], [0.15, -0.46], [-0.08, -0.68], [-0.3, -0.48], [-0.5, -0.66], [-0.7, -0.44], [-0.9, -0.42]], wet_base);
+            for (const sign of [-1, 1]) {
+                shape([[sign * 0.86, -0.5], [sign * 1.06, -0.3], [sign * 1.0, 0.45], [sign * 0.9, 0.1], [sign * 0.84, 0.3]], wet_base);
+            }
+            context.strokeStyle = "rgba(255, 255, 255, 0.45)";
+            context.lineCap = "round";
+            context.lineWidth = Math.max(radius * 0.07, 1);
+            for (const [start, control, end] of [[[-0.55, -0.98], [-0.2, -1.12], [0.2, -1.05]], [[0.45, -0.98], [0.7, -0.85], [0.82, -0.6]]]) {
+                const [start_x, start_y] = toScreen(start);
+                const [control_x, control_y] = toScreen(control);
+                const [end_x, end_y] = toScreen(end);
+                context.beginPath();
+                context.moveTo(start_x, start_y);
+                context.quadraticCurveTo(control_x, control_y, end_x, end_y);
+                context.stroke();
+            }
+            context.fillStyle = "rgba(66, 165, 245, 0.9)";
+            clump_tips.forEach(([x, y], index) => {
+                const phase = (clock * 0.9 + index * 0.31) % 1;
+                const swell = Math.min(phase / 0.6, 1);
+                const fall = Math.max(phase - 0.6, 0) / 0.4;
+                const [tip_x, tip_y] = toScreen([x, y]);
+                const drop_y = tip_y + fall * fall * 2.2 * radius;
+                const size = (0.05 + 0.05 * swell) * radius;
+                context.beginPath();
+                context.moveTo(tip_x, drop_y - size * 1.8);
+                context.quadraticCurveTo(tip_x + size * 1.2, drop_y, tip_x, drop_y + size);
+                context.quadraticCurveTo(tip_x - size * 1.2, drop_y, tip_x, drop_y - size * 1.8);
+                context.fill();
+            });
         }
         context.restore();
     }
@@ -1142,6 +1197,10 @@
             context.restore();
         }
 
+        const free_arm = freeArmPoints(geometry);
+        if (drying > 0) {
+            drawTowel(context, transform, free_arm.hand);
+        }
         drawHair(context, transform, geometry, true);
 
         context.save();
@@ -1186,41 +1245,10 @@
         context.stroke();
         context.restore();
 
-        const free_arm = freeArmPoints(geometry);
         drawSleevedArm(context, transform, geometry.left_shoulder, free_arm.elbow, free_arm.hand, true);
-        if (drying > 0) {
-            context.save();
-            const towel_x = toX(free_arm.hand.x);
-            const towel_y = toY(free_arm.hand.y);
-            const towel_width = 0.32 * pixels_per_meter;
-            context.fillStyle = "#e3f2fd";
-            context.strokeStyle = "#90caf9";
-            context.lineWidth = 1.5;
-            context.beginPath();
-            context.roundRect(towel_x - towel_width / 2, towel_y - 0.03 * pixels_per_meter, towel_width, 0.2 * pixels_per_meter, 4);
-            context.fill();
-            context.stroke();
-            context.fillStyle = "#64b5f6";
-            context.fillRect(towel_x - towel_width / 2, towel_y + 0.1 * pixels_per_meter, towel_width, 0.025 * pixels_per_meter);
-            context.restore();
-        }
-
         drawFace(context, transform, geometry);
         drawHair(context, transform, geometry, false);
 
-        if (teacher_wetness > 0.3) {
-            context.save();
-            context.fillStyle = "rgba(66, 165, 245, 0.85)";
-            for (let i = 0; i < 5; i++) {
-                const phase = (clock * 1.4 + i * 0.23) % 1;
-                const drip_x = toX(geometry.head.x + (i - 2) * 0.06);
-                const drip_y = toY(geometry.head.y - 0.12) + phase * 0.6 * pixels_per_meter;
-                context.beginPath();
-                context.ellipse(drip_x, drip_y, 0.012 * pixels_per_meter + 1, 0.02 * pixels_per_meter + 1.5, 0, 0, 2 * Math.PI);
-                context.fill();
-            }
-            context.restore();
-        }
     }
 
     /* drawBucket: bucket centred at (x, y) screen, opening along (sin r, −cos r) */
@@ -1526,10 +1554,10 @@
         }
     }
 
-    /* updateWater: exact free fall of every drop (slow motion), splashing on the
+    /* updateWater: exact free fall of every drop (real time), splashing on the
        teacher (wets them) or on the ground */
     function updateWater(context, transform, delta_seconds, geometry) {
-        const step = delta_seconds * SLOW_MOTION;
+        const step = delta_seconds;
         const surviving = [];
         for (const drop of water_drops) {
             drop.x += drop.velocity_x * step;
@@ -1540,13 +1568,15 @@
             const part = drop.velocity_y < 0 ? hitsTeacher(geometry, drop.x, drop.y) : null;
             if (part !== null) {
                 spawnSplash(screen_x, screen_y, part === "head" ? 4 : 2, 0.7);
-                teacher_wetness = Math.min(teacher_wetness + (part === "head" ? 0.05 : 0.03), 1);
+                if (drying <= 0) {
+                    teacher_wetness = Math.min(teacher_wetness + (part === "head" ? 0.05 : 0.03), 1);
+                }
                 continue;
             }
             if (drop.y <= geometry.ground_y) {
                 spawnSplash(screen_x, transform.toScreenY(geometry.ground_y), 2);
                 if (Math.abs(drop.x - geometry.body_x) < 0.4) {
-                    teacher_wetness = Math.min(teacher_wetness + 0.01, 1);
+                    teacher_wetness = drying > 0 ? teacher_wetness : Math.min(teacher_wetness + 0.01, 1);
                 }
                 continue;
             }
@@ -1565,10 +1595,21 @@
         water_drops = surviving;
     }
 
+    /* offscreenRate: fast-forward rate while the bucket is out of frame — at least
+       ×4, and enough for the whole flight phase to last about 0.8 s */
+    function offscreenRate(duration) {
+        return Math.max(OFFSCREEN_MINIMUM_RATE, duration / OFFSCREEN_SECONDS);
+    }
+
     /* launchFlyer: the bucket leaves the snapped rope along its tangent, spinning at
        the swing's own angular velocity (it kept facing the shoulder) */
     function launchFlyer(state, rotation) {
+        const drop = state.y - (params().radius - SHOULDER_HEIGHT) - BUCKET_WIDTH * 0.45;
+        const fall_time = (state.velocity_y + Math.sqrt(state.velocity_y ** 2 + 2 * challenge.gravity * Math.max(drop, 0))) / challenge.gravity;
         flyer = {
+            duration: fall_time,
+            rate: 1,
+            offscreen: false,
             phase: "flight",
             x: state.x,
             y: state.y,
@@ -1586,7 +1627,13 @@
         if (flyer === null) {
             return;
         }
-        const step = delta_seconds * SLOW_MOTION;
+        const margin = bucket_width;
+        const screen_now_x = transform.toScreenX(flyer.x);
+        const screen_now_y = transform.toScreenY(flyer.y);
+        flyer.offscreen = flyer.phase !== "hat" && (screen_now_x < -margin || screen_now_x > context.canvas.width + margin
+            || screen_now_y < -margin || screen_now_y > context.canvas.height + margin);
+        flyer.rate = flyer.offscreen ? offscreenRate(flyer.duration) : 1;
+        const step = delta_seconds * flyer.rate;
         const half_height = BUCKET_WIDTH * 0.45;
         if (flyer.phase === "flight" || flyer.phase === "bounce") {
             flyer.x += flyer.velocity_x * step;
@@ -1609,6 +1656,7 @@
             flyer.spin = (Math.PI + 2 * Math.PI * turns - flyer.rotation) / bounce.flight_time;
             flyer.phase = "bounce";
             flyer.remaining = bounce.flight_time;
+            flyer.duration = bounce.flight_time;
             spawnSplash(transform.toScreenX(flyer.x), transform.toScreenY(geometry.ground_y), 25);
             shakeCanvas();
         } else if (flyer.phase === "bounce") {
@@ -1909,6 +1957,90 @@
         context.restore();
     }
 
+    /* drawFastForward: fast-forward look while the bucket is out of frame — a grey
+       veil with a rolling tape-tracking band, an arrow on the frame edge pointing at
+       the bucket with its height, and a badge with a spinning stopwatch and the
+       real playback factor */
+    function drawFastForward(context, transform, geometry) {
+        const width = context.canvas.width;
+        const height = context.canvas.height;
+        context.save();
+        context.fillStyle = "rgba(40, 50, 62, 0.12)";
+        context.fillRect(0, 0, width, height);
+        const band_y = (clock * 260) % (height + 60) - 30;
+        context.fillStyle = "rgba(255, 255, 255, 0.16)";
+        context.fillRect(0, band_y, width, 22);
+        context.strokeStyle = "rgba(255, 255, 255, 0.35)";
+        context.lineWidth = 1;
+        for (let k = 0; k < 4; k++) {
+            const y = band_y + 3 + k * 5;
+            const offset = 30 * Math.sin(clock * 40 + k * 1.7);
+            context.beginPath();
+            context.moveTo(offset, y);
+            context.lineTo(width + offset, y);
+            context.stroke();
+        }
+
+        const bucket_x = transform.toScreenX(flyer.x);
+        const bucket_y = transform.toScreenY(flyer.y);
+        const edge_margin = 34;
+        const arrow_x = Math.min(Math.max(bucket_x, edge_margin), width - edge_margin);
+        const arrow_y = Math.min(Math.max(bucket_y, edge_margin), height - edge_margin);
+        const angle = Math.atan2(bucket_y - arrow_y, bucket_x - arrow_x);
+        context.translate(arrow_x, arrow_y);
+        context.fillStyle = "#1976d2";
+        context.strokeStyle = "#ffffff";
+        context.lineWidth = 2;
+        context.save();
+        context.rotate(angle);
+        context.beginPath();
+        context.moveTo(16, 0);
+        context.lineTo(-10, -11);
+        context.lineTo(-5, 0);
+        context.lineTo(-10, 11);
+        context.closePath();
+        context.fill();
+        context.stroke();
+        context.restore();
+        const label = text("offscreen_label", { h: formatValue(flyer.y - geometry.ground_y, 1) });
+        context.font = "bold 12px system-ui, sans-serif";
+        context.textAlign = arrow_x > width / 2 ? "right" : "left";
+        context.textBaseline = arrow_y > height / 2 ? "bottom" : "top";
+        context.lineWidth = 3;
+        context.strokeText(label, arrow_x > width / 2 ? -14 : 14, arrow_y > height / 2 ? -14 : 14);
+        context.fillText(label, arrow_x > width / 2 ? -14 : 14, arrow_y > height / 2 ? -14 : 14);
+        context.setTransform(1, 0, 0, 1, 0, 0);
+
+        const badge = text("fast_forward", { rate: formatValue(flyer.rate, 1) });
+        context.font = "bold 14px system-ui, sans-serif";
+        const badge_width = context.measureText(badge).width + 34;
+        const badge_x = width - 18 - badge_width;
+        const badge_y = height - 40;
+        context.fillStyle = "rgba(25, 118, 210, 0.92)";
+        context.beginPath();
+        context.roundRect(badge_x, badge_y, badge_width, 28, 14);
+        context.fill();
+        const watch_x = badge_x + 16;
+        const watch_y = badge_y + 14;
+        context.strokeStyle = "#ffffff";
+        context.lineWidth = 1.6;
+        context.beginPath();
+        context.arc(watch_x, watch_y, 8, 0, 2 * Math.PI);
+        context.moveTo(watch_x, watch_y - 8);
+        context.lineTo(watch_x, watch_y - 11);
+        context.stroke();
+        const hand_angle = clock * flyer.rate * 2;
+        context.beginPath();
+        context.moveTo(watch_x, watch_y);
+        context.lineTo(watch_x + 6 * Math.sin(hand_angle), watch_y - 6 * Math.cos(hand_angle));
+        context.stroke();
+        context.fillStyle = "#ffffff";
+        context.textAlign = "left";
+        context.textBaseline = "middle";
+        context.fillText(badge, badge_x + 28, badge_y + 15);
+        context.restore();
+    }
+
     /* drawSparkles: twinkling stars around the dry bucket after a success */
     function drawSparkles(context, screen_x, screen_y) {
         context.save();
@@ -1944,7 +2076,7 @@
     }
 
     /* resolveRun: the event has been reached — celebrate, or freeze the clock and let
-       the failure play out with the game's own (slow-motion) clock */
+       the failure play out with the game's own (real-time) clock */
     function resolveRun(context, state, playing, bucket_rotation) {
         run.resolved = true;
         run.after = 0;
@@ -2019,7 +2151,7 @@
         let angles;
         let driven = false;
         if (run !== null && run.resolved) {
-            run.after += delta_seconds * SLOW_MOTION;
+            run.after += delta_seconds;
             const keeps_swinging = run.outcome === "success" || run.outcome === "water_fell" || run.outcome === "underfilled";
             angles = swingAt(swing_data, keeps_swinging ? run.swing_time + run.after : run.swing_time);
         } else if (payload.time < windup_duration) {
@@ -2060,7 +2192,7 @@
             resolveRun(context, event_state, playing, rotation);
         }
         if (run !== null && run.resolved && run.outcome === "water_fell" && bucket_water > 0) {
-            const share = Math.min(delta_seconds * SLOW_MOTION / WATER_EMISSION_SECONDS, bucket_water);
+            const share = Math.min(delta_seconds / WATER_EMISSION_SECONDS, bucket_water);
             emitWater(state, Math.ceil(share * 90));
             bucket_water = Math.max(bucket_water - share, 0);
         }
@@ -2076,10 +2208,13 @@
         updateParticles(context, delta_seconds);
         drawFlash(context, delta_seconds);
         drawBanner(context, delta_seconds);
+        if (flyer !== null && flyer.offscreen) {
+            drawFastForward(context, transform, geometry);
+        }
 
         if (sequence !== null) {
             sequence.remaining -= delta_seconds;
-            const effects_done = water_drops.length === 0 && (flyer === null || flyer.phase === "hat");
+            const effects_done = flyer === null || flyer.phase === "hat";
             if (sequence.remaining <= 0 && effects_done) {
                 const finished = sequence.kind;
                 sequence = null;
@@ -2098,13 +2233,28 @@
         attributeFilter: ["lang"],
     });
 
-    /* in game mode, any parameter change resets the run to t = 0 */
+    /* in game mode, any parameter change resets the run to t = 0 (and cuts short a
+       running animation) */
     document.getElementById("parameter_rows").addEventListener("input", () => {
-        if (game_active && sequence === null) {
-            run = null;
-            bucket_water = 1;
-            teacher_pose = "idle";
-            document.getElementById("reset_button").click();
+        if (!game_active || resetting) {
+            return;
+        }
+        if (sequence !== null) {
+            abortSequence();
+            return;
+        }
+        run = null;
+        bucket_water = 1;
+        teacher_pose = "idle";
+        resetting = true;
+        document.getElementById("reset_button").click();
+        resetting = false;
+    });
+
+    /* the reset button also works during an animation */
+    document.getElementById("reset_button").addEventListener("click", () => {
+        if (game_active && !resetting && sequence !== null) {
+            abortSequence();
         }
     });
 
