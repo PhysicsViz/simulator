@@ -1,0 +1,29 @@
+# compiler.ps1 — Compile memoire.tex into memoire.pdf with MiKTeX or TeX Live,
+# without latexmk (so no Perl is needed): pdflatex, biber, then pdflatex twice
+# for the table of contents and cross-references. Run from any folder:
+#   powershell -ExecutionPolicy Bypass -File memoire\rapport\compiler.ps1
+# Stops at the first failing step and points at the log.
+
+$ErrorActionPreference = "Stop"
+Set-Location -Path $PSScriptRoot
+
+foreach ($tool in @("pdflatex", "biber")) {
+    if (-not (Get-Command $tool -ErrorAction SilentlyContinue)) {
+        Write-Error "$tool introuvable : installez MiKTeX (winget install MiKTeX.MiKTeX) puis rouvrez le terminal."
+    }
+}
+
+$steps = @(
+    @("pdflatex", "-interaction=nonstopmode", "-halt-on-error", "memoire.tex"),
+    @("biber", "memoire"),
+    @("pdflatex", "-interaction=nonstopmode", "-halt-on-error", "memoire.tex"),
+    @("pdflatex", "-interaction=nonstopmode", "-halt-on-error", "memoire.tex")
+)
+foreach ($step in $steps) {
+    Write-Host "> $($step -join ' ')"
+    & $step[0] $step[1..($step.Length - 1)] | Out-Null
+    if ($LASTEXITCODE -ne 0) {
+        Write-Error "Échec de '$($step[0])' : voir memoire.log (ou memoire.blg pour biber)."
+    }
+}
+Write-Host "OK : $PSScriptRoot\memoire.pdf"

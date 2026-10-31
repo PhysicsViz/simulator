@@ -1,0 +1,28 @@
+\babel@toc {french}{}\relax 
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {1.1}{\ignorespaces Page d'accueil du site : un exercice par carte, regroupés par thème.}}{2}{figure.caption.6}%
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {2.1}{\ignorespaces Réaction normale réduite \(N/(m g) = 2 (h - y)/R + \cos (\theta )\) le long du looping, avec \(y = R (1 - \cos (\theta ))\). Pour \(h = 5R/2\), \(N\) s'annule exactement au sommet ; pour \(h = 2R\), elle devient négative : le wagon quitte le rail. Données générées par le code de l'application (\texttt {outils/donnees.mjs}).}}{5}{figure.caption.7}%
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {7.1}{\ignorespaces Démarche de développement : les étapes de relecture et d'ajout de fonctionnalités se répètent jusqu'à ce que l'exercice soit complet, puis les tests sont écrits.}}{13}{figure.caption.14}%
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {8.1}{\ignorespaces Exercice du looping avec wagon sur un écran de \(1440 \times 900\) pixels : scène avec vecteurs \(P\), \(N\), \(v\), \(a\), diagramme des forces, énergies et état dans l'espace libre du canevas ; transport, paramètres et graphe à droite ; douze formules substituées en bas.}}{18}{figure.caption.26}%
+\contentsline {figure}{\numberline {8.2}{\ignorespaces Cas du décollage (\(R < h < 5R/2\)) et adaptation à un écran étroit.}}{19}{figure.caption.27}%
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {9.1}{\ignorespaces Modèle discret : pivot fixe, barre (masse effective \(m_b/3\)), dix maillons de corde unilatéraux, seau rigide articulé à son anse. À droite, le repère du seau : axe \(\vec {e}\) de l'anse vers le fond, normale \(\vec {n}\), bord à \(u_{\text {bord}} = \SI {6}{cm}\) et fond à \(u_{\text {fond}} = \SI {26}{cm}\) de l'anse ; les dix gouttes reposent sur le fond.}}{21}{figure.caption.30}%
+\contentsline {figure}{\numberline {9.2}{\ignorespaces Captures du jeu (Lune, \(L = \SI {0,89}{m}\), \(m = \SI {4,7}{kg}\), \(T_{\max } = \SI {78}{N}\)). Les quatre premières vignettes : \(v_0 = \SI {4,18}{m/s}\), réussi. Les deux dernières : \(v_0 = \SI {3,04}{m/s} = 0{,}85\,\sqrt {5 g R}\), raté. La main (beige) tient l'anse pendant l'élan ; poids \(P\) en rouge, tension \(T\) en violet après le lâcher.}}{24}{figure.caption.31}%
+\contentsline {figure}{\numberline {9.3}{\ignorespaces Vérifications numériques, calculées avec le code de l'application.}}{25}{figure.caption.32}%
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {C.1}{\ignorespaces Mode jeu du looping sur un écran de \(1440 \times 900\) pixels : scène fixe, réglage de la seule grandeur libre et données du défi à droite, panneau des statistiques et hypothèses en bas.}}{37}{figure.caption.34}%

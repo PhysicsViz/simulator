@@ -4,7 +4,7 @@
  * describeExercisePage() with the few page-specific facts (which parameter to
  * change, which formula must react); the suite then checks loading over
  * file://, responsive layout, canvas sizing and rendering, parameter/formula
- * synchronization, transport, camera, language toggle, touch-target sizes and
+ * synchronization, transport, camera (skipped for fixed-view pages), language toggle, touch-target sizes and
  * the optional game mode.
  */
 import { test, expect } from "@playwright/test";
@@ -181,6 +181,7 @@ export function describeExercisePage({ page_path, parameter_key, parameter_value
         });
 
         test("camera buttons redraw the scene", async ({ page, hasTouch }) => {
+            test.skip(await page.locator("#zoom_in_button").count() === 0, "exercise with a fixed view");
             await page.locator("#simulation_canvas").scrollIntoViewIfNeeded();
             const before = await canvasSignature(page, "#simulation_canvas");
             await press(page.locator("#zoom_in_button"), hasTouch);

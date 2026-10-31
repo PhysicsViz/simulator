@@ -1,0 +1,36 @@
+% 05-methodes-numeriques.tex — État de l'art 4/5 : méthodes numériques pour
+% la simulation physique interactive (≈ 4 pages).
+
+\chapter{Méthodes numériques pour la simulation interactive}
+\label{chap:methodes}
+
+\section{Intégrer les équations du mouvement}
+
+\begin{arediger}{1,5 page}
+Euler explicite, Euler semi-implicite, Verlet \parencite{verlet1967},
+Runge--Kutta d'ordre~4 \parencite{butcher2016} ; précision, stabilité,
+conservation de l'énergie \parencite{hairer2006}. Justifier RK4 pour le
+mouvement le long du rail (une seule équation \(\ddot{s} = -g \sin(\varphi)\))
+et les formes exactes partout où elles existent (parabole, énergie).
+\end{arediger}
+
+\section{Dynamique basée sur les positions}
+
+\begin{arediger}{1,5 page}
+Principe de la dynamique basée sur les positions \parencite{muller2007pbd,
+bender2014survey}, sa version étendue XPBD \parencite{macklin2016xpbd} et
+l'approche à petits pas \parencite{macklin2019smallsteps} ; précurseur dans le
+jeu vidéo \parencite{jakobsen2001}. Cordes, cheveux et tiges : projection
+\enquote{follow-the-leader} \parencite{muller2012ftl} et solveur direct pour
+chaînes \parencite{deul2018direct}. Le chapitre~\ref{chap:jeu} applique ces
+méthodes.
+\end{arediger}
+
+\section{Fluides particulaires}
+
+\begin{arediger}{1 page}
+SPH \parencite{monaghan1992sph} et fluides basés sur les positions
+\parencite{macklin2013pbf}. Pourquoi nous nous limitons à dix particules sans
+pression ni viscosité : on veut voir \emph{quand} l'eau sort du seau, pas
+comment elle s'écoule.
+\end{arediger}

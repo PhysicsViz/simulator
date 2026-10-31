@@ -1,0 +1,356 @@
+% 09-jeu-seau.tex — Réalisation 3/4 : le jeu du seau d'eau (≈ 5 pages, rédigé).
+% Implémentation : src/mechanics/loop-wagon/game.js. Les chiffres cités sont
+% mesurés sur ce code (outils/donnees.mjs, tests unitaires game.test.js).
+
+\chapter{Le jeu du seau d'eau : une corde qui plie et de l'eau en particules}
+\label{chap:jeu}
+
+\section{Principe du jeu et lien avec le looping}
+
+Le mode jeu de l'exercice du looping remplace le wagon par une expérience que
+tout le monde a vue, ou faite : faire tourner un seau d'eau à bout de bras sans
+se mouiller. Une barre légère tourne librement autour d'un pivot fixe ; une corde
+souple est attachée à son extrémité et porte un seau ouvert contenant dix gouttes
+d'eau. Au départ, tout pend au repos ; une main balance le seau, puis le lance
+(section~\ref{sec:jeu-main}) de sorte qu'il passe au point bas avec la vitesse
+\(v_0\). Le défi est réussi si le seau fait deux tours sans
+perdre une seule goutte et sans casser la corde ; sinon il est raté. Chaque défi
+impose le lieu (Lune, Mars, Vénus, Terre, donc \(g\)) et toutes les grandeurs
+sauf une, que l'étudiant règle : la vitesse \(v_0\), la longueur de corde \(L\)
+ou la masse \(m\) du seau rempli.
+
+Tant que la corde est tendue, barre, corde et seau restent alignés et forment
+un pendule de rayon \(R = L_b + L + d\), où \(L_b = \SI{0,50}{m}\) est la longueur
+de la barre et \(d = \SI{0,19}{m}\) la distance de l'anse au centre de masse du
+seau. La conservation de l'énergie donne \(v^2 = v_0^2 - 2 g R (1 - \cos(\theta))\),
+\(\theta\) étant l'angle depuis le point bas, et la deuxième loi de Newton selon
+la direction radiale donne la tension
+\begin{equation}
+  T = m \left(\frac{v^2}{R} + g \cos(\theta)\right)
+    = m \left(\frac{v_0^2}{R} + g \, (3 \cos(\theta) - 2)\right).
+  \label{eq:jeu-tension}
+\end{equation}
+C'est exactement la réaction normale du wagon, \(N = m (v^2/r + g \cos(\varphi))\),
+avec \(v_0^2 = 2 g h\) (tableau~\ref{tab:jeu-analogie}). Pourquoi l'eau reste-t-elle
+dans le seau ? Seuls le poids \(\vect{P}\) et la tension \(\vect{T}\) agissent sur
+le seau, donc \(\vect{a} = \vect{g} + \vect{T}/m\). Une goutte libre a pour
+accélération \(\vect{g}\) ; relativement au seau, elle accélère donc de
+\(-\vect{T}/m\), c'est-à-dire vers le fond du seau tant que \(T > 0\). L'eau
+reste dans le seau si et seulement si la corde reste tendue, et la condition la
+plus sévère est au sommet : \(T_s = m (v_0^2/R - 5 g) \geq 0\), soit
+\(v_0^2 \geq 5 g R\). La corde résiste si la tension maximale, au point bas, ne
+dépasse pas la tension de rupture : \(m (v_0^2/R + g) \leq T_{\max}\).
+
+\begin{table}[ht]
+  \centering\small
+  \begin{tabular}{@{}lll@{}}
+    \toprule
+    & Wagon sur le looping & Seau au bout de la corde \\
+    \midrule
+    Force de contact & réaction normale \(N\) & tension \(T\) \\
+    Énergie disponible & \(v_{\text{bas}}^2 = 2 g h\) & \(v_0^2\) \\
+    Contact perdu si & \(N < 0\) : décollage du rail & \(T = 0\) : corde molle, l'eau tombe \\
+    Condition au sommet & \(h \geq 5R/2\) & \(v_0^2 \geq 5 g R\) \\
+    Limite supplémentaire & --- & \(m (v_0^2/R + g) \leq T_{\max}\) \\
+    \bottomrule
+  \end{tabular}
+  \caption{Le jeu reprend la physique de l'exercice : la condition de réussite est
+    la relation du cours, pas un réglage à l'aveugle.}
+  \label{tab:jeu-analogie}
+\end{table}
+
+\paragraph{Pourquoi une barre libre et non un moteur ?} Une barre entraînée à
+vitesse angulaire \(\omega\) constante donne un comportement chaotique. Dans le
+référentiel tournant, le seau pendu à une corde de longueur \(\ell\) fixée à la
+distance \(a\) du pivot est un pendule centrifuge (\(\Omega = \omega \sqrt{a/\ell}\))
+forcé une fois par tour par la pesanteur ; l'amplitude forcée, environ
+\(g / (\omega^2 |a - \ell|)\), est de l'ordre de \SI{1}{rad} près du seuil. Une barre
+légère sur un pivot sans frottement ne transmet au contraire aucun couple : la
+corde tendue s'aligne sur elle et la relation~\eqref{eq:jeu-tension} vaut.
+
+\section{Un modèle discret : une chaîne de points}
+
+Le système est représenté par une chaîne de treize points matériels
+(figure~\ref{fig:jeu-schema}). Le pivot \(P_0\) est fixe. L'extrémité de la barre
+\(P_1\) porte la masse effective \(m_b/3\), qui reproduit le moment d'inertie
+\(I = m_b L_b^2/3\) d'une barre homogène de masse \(m_b = \SI{0,3}{kg}\) ; on y applique
+le poids \(m_b g/2\), pour que le couple du poids, \(m_b g \, (L_b/2) \sin(\alpha)\), soit
+exact. La corde
+est découpée en dix maillons de longueur \(\ell = L/10\) séparés par les nœuds
+\(P_2\) à \(P_{11}\), chacun de masse \(\mu \ell\) avec une masse linéique
+\(\mu = \SI{0,15}{kg/m}\) ; \(P_{11}\) est l'anse du seau et \(P_{12}\) son centre
+de masse, de masse \(m\). Deux liaisons sont rigides dans les deux sens : la barre
+\(|P_1 - P_0| = L_b\) et le seau \(|P_{12} - P_{11}| = d\), qui fait du seau un
+solide articulé à son anse. Les dix maillons de corde sont \emph{unilatéraux} :
+\(|P_{i+1} - P_i| \leq \ell\). Un maillon peut raccourcir, jamais s'allonger, et
+aucun angle n'est imposé entre deux maillons. C'est ce qui rend la corde
+pliable : tendue, elle est droite ; détendue, elle se courbe et ne pousse pas le
+seau.
+
+\begin{figure}[ht]
+  \centering
+  \begin{tikzpicture}[x=1cm, y=1cm, >={Stealth[length=2mm]},
+      noeud/.style={circle, fill=corde, inner sep=1.3pt},
+      etiquette/.style={font=\scriptsize, align=center}]
+    \fill[metal!60] (-0.25,-0.35) -- (0.25,-0.35) -- (0,0) -- cycle;
+    \draw[line width=3pt, metal] (0,0) -- (2.2,0);
+    \fill[black] (0,0) circle (3pt);
+    \node[etiquette, above] at (0,0.1) {\(P_0\)\\pivot fixe};
+    \node[etiquette, below] at (1.1,-0.15) {barre rigide \(L_b\)};
+    \foreach \k in {0,...,10} {
+      \coordinate (c\k) at ({2.2 + 0.5*\k}, {-0.55*sin(18*\k)});
+    }
+    \draw[corde, line width=1.4pt] (c0) \foreach \k in {1,...,10} { -- (c\k) };
+    \foreach \k in {1,...,9} { \node[noeud] at (c\k) {}; }
+    \fill[metal] (c0) circle (2.4pt);
+    \node[etiquette, above] at (c0) {\(P_1\)\\\(m_b/3\)};
+    \node[etiquette, below] at (c5) {\(P_2 \ldots P_{10}\) : nœuds de corde \(\mu \ell\)\\maillons \(|P_{i+1} - P_i| \leq \ell\)};
+    \draw[metal, line width=1.2pt, fill=metal!15] (7.6,-0.65) -- (8.85,-0.58) -- (8.85,0.58) -- (7.6,0.65) -- cycle;
+    \draw[thin] (7.6,0.65) .. controls (7.0,0.45) and (7.0,-0.45) .. (7.6,-0.65);
+    \foreach \x/\y in {8.68/-0.42, 8.68/-0.14, 8.68/0.14, 8.68/0.42, 8.44/-0.28, 8.44/0, 8.44/0.28, 8.2/-0.14, 8.2/0.14, 7.96/0} {
+      \fill[eau] (\x,\y) circle (0.12);
+    }
+    \fill[black] (7.2,0) circle (2pt);
+    \node[etiquette, above left] at (7.2,0.05) {\(P_{11}\)\\anse};
+    \fill[poids] (8.4,0) circle (2pt);
+    \node[etiquette, right] at (8.95,0.25) {\(P_{12}\) : centre\\de masse, \(m\)};
+    \draw[->, accent, thick] (7.2,0) -- (7.2,-1.1) node[below, etiquette] {\(\vect{n}\)};
+    \draw[->, accent, thick] (8.4,-0.95) -- (9.3,-0.95) node[right, etiquette] {\(\vect{e}\)};
+    \draw[|-|, thin] (7.2,1.0) -- node[above, etiquette] {\(u_{\text{bord}}\)} (7.6,1.0);
+    \draw[|-|, thin] (7.2,1.45) -- node[above, etiquette] {\(u_{\text{fond}} = \SI{26}{cm}\)} (8.85,1.45);
+  \end{tikzpicture}
+  \caption{Modèle discret : pivot fixe, barre (masse effective \(m_b/3\)), dix
+    maillons de corde unilatéraux, seau rigide articulé à son anse. À droite, le
+    repère du seau : axe \(\vect{e}\) de l'anse vers le fond, normale \(\vect{n}\),
+    bord à \(u_{\text{bord}} = \SI{6}{cm}\) et fond à \(u_{\text{fond}} = \SI{26}{cm}\)
+    de l'anse ; les dix gouttes reposent sur le fond.}
+  \label{fig:jeu-schema}
+\end{figure}
+
+\section{L'élan : une main qui porte le seau}
+\label{sec:jeu-main}
+
+Un élan réaliste ne peut pas commencer par une corde tendue et un seau déjà
+lancé : la corde ne doit jamais être figée. Au départ, tout pend au repos ; une
+main tient l'anse \(P_{11}\) et la déplace sur un cercle de rayon
+\((L_b + L)(1 - s)\), avec un mou \(s = \SI{3}{\percent}\) : la corde, un peu détendue,
+se courbe et entraîne la barre libre (figure~\ref{fig:jeu-captures}). La main fait
+d'abord un petit va-et-vient (\(+\ang{12}\) puis \(-\ang{45}\), à peu près au rythme
+propre du pendule, \(\tau = \sqrt{R/g}\)), puis un lancer par en dessous jusqu'à
+l'angle \(\theta_r\) où elle lâche le seau : \(+\ang{90}\) en général, \(+\ang{150}\) pour
+les lancers rapides (\(v_0^2 \geq 6 g R\)), dont le trajet plus long adoucit les
+accélérations. Pour que l'eau ne déborde pas pendant ce transport, la main incline
+le seau selon la pesanteur apparente \(\vect{g} - \vect{a}\) de l'anse, comme on
+porte un seau plein.
+
+Le lancer suit un polynôme de degré~6 en temps. Il part du repos sans
+accélération et arrive en \(\theta_r\) avec la vitesse
+\(v_r = \sqrt{v_0^2 - 2 g R (1 - \cos(\theta_r))}\), de sorte que le seau passe
+ensuite au point bas à \(v_0\) par conservation de l'énergie, ainsi qu'avec
+l'accélération et la dérivée de l'accélération du mouvement libre en ce point.
+\(\vect{g} - \vect{a}\) y est donc radial : le seau est aligné sur la corde et la
+passation se fait sans à-coup ; le mou n'est plus que de \SI{0,2}{\percent}. La
+dérivée troisième compte : l'inclinaison du seau suit \(\vect{a}\), donc sa vitesse
+de rotation suit la dérivée de \(\vect{a}\), et un saut de celle-ci au lâcher
+changerait d'environ \SI{0,7}{m/s} la vitesse du centre du seau. Comme le seau
+tourne avec son axe, son centre ne va pas exactement à \(\omega r\) : la vitesse
+angulaire finale de la main est corrigée par quelques itérations sur la vitesse
+du centre, calculée à partir de la seule trajectoire de la main. Au lâcher, le
+centre part ainsi à \SI{0,2}{\percent} près de \(v_r\). Pendant l'élan, la corde ne porte que la barre
+et la rupture n'est testée qu'après le lâcher. Deux pistes plus
+\enquote{automatiques} ont été écartées : une barre menée selon un horaire fixé
+(la vitesse au lâcher varie de façon chaotique avec la vitesse de la main) et
+une main qui pilote la barre par rétroaction sur l'énergie du seau (à-coups de
+tension, corde qui fouette).
+
+\section{Dynamique basée sur les positions}
+
+Modéliser une corde inextensible par des ressorts très raides imposerait un pas
+de temps minuscule. La dynamique basée sur les positions \parencite{muller2007pbd}
+contourne le problème : on prédit d'abord le mouvement sans liaisons, puis on
+\emph{projette} les positions prédites sur les liaisons, et l'on déduit enfin les
+vitesses des déplacements (algorithme~\ref{alg:jeu-pas}). Sa forme étendue XPBD
+\parencite{macklin2016xpbd} associe à chaque liaison un multiplicateur de Lagrange
+\(\lambda\), dont on tire directement la force : la tension d'un maillon vaut
+\(T = -\lambda/\Delta t^2\), et l'on retient celle du maillon le plus chargé (côté barre
+pour une corde lourde). Nous utilisons l'approche à petits pas
+\parencite{macklin2019smallsteps} : \num{2400} sous-pas par seconde après le lâcher
+(\num{1200} pendant l'élan, où la corde est molle) et une seule projection par
+sous-pas, plus précis que quelques gros pas itérés.
+
+\begin{algorithm}[ht]
+  \caption{Un sous-pas de la simulation du seau (\(\Delta t = 1/2400\) s).}
+  \label{alg:jeu-pas}
+  \begin{algorithmic}[1]
+    \For{chaque point libre \(i\) (nœuds, seau, gouttes)}
+      \State \(\vect{x}^{\,\text{préc}}_i \gets \vect{x}_i\) ;\quad
+             \(\vect{v}_i \gets \vect{v}_i + \vect{g} \, \Delta t\) ;\quad
+             \(\vect{x}_i \gets \vect{x}_i + \vect{v}_i \, \Delta t\)
+    \EndFor
+    \State projeter toutes les liaisons de la chaîne en une fois (section~\ref{sec:jeu-direct}) ; \(T \gets -\lambda_{\text{corde}}/\Delta t^2\)
+    \State ramener chaque goutte dans le seau, séparer les gouttes (section~\ref{sec:jeu-eau})
+    \For{chaque point libre \(i\)}
+      \State \(\vect{v}_i \gets (\vect{x}_i - \vect{x}^{\,\text{préc}}_i)/\Delta t\)
+    \EndFor
+    \State filtrer \(T\) sur \SI{20}{ms} ; corde cassée si \(T > T_{\max}\) ; goutte perdue si elle franchit le bord
+  \end{algorithmic}
+\end{algorithm}
+
+\section{Faire tenir une corde pliable : la résolution directe}
+\label{sec:jeu-direct}
+
+La méthode habituelle projette les liaisons une par une (Gauss--Seidel). Elle
+échoue ici à cause du rapport des masses : un nœud de corde pèse quelques
+grammes, le seau jusqu'à plusieurs kilogrammes. Chaque projection déplace
+presque uniquement le nœud léger, et la traction du seau ne remonte la chaîne
+que d'un maillon par itération. Avec une seule passe par sous-pas, une corde de
+\SI{30}{cm} portant un seau de \SI{5}{kg} s'allonge de plus de \SI{80}{cm}
+(figure~\ref{fig:jeu-verification}a), ce qui fausse complètement la tension.
+
+Nous résolvons donc toutes les liaisons simultanément. Linéarisées, les \(n\)
+liaisons \(C_i = |\vect{x}_{i+1} - \vect{x}_i| - \ell_i\) donnent un système
+\(A \, \Delta\boldsymbol{\lambda} = -\boldsymbol{C}\). Comme chaque point n'est
+partagé que par deux liaisons voisines, la matrice est tridiagonale :
+\begin{equation}
+  A_{i,i} = w_i + w_{i+1}, \qquad
+  A_{i,i+1} = A_{i+1,i} = -w_{i+1} \, (\vect{n}_i \cdot \vect{n}_{i+1}),
+\end{equation}
+où \(w_i = 1/m_i\) est l'inverse de la masse (nul pour le pivot) et \(\vect{n}_i\)
+le vecteur unitaire du maillon \(i\). L'algorithme de Thomas
+\parencite{press2007} la résout en \(O(n)\) opérations, puis chaque point est
+corrigé : \(\vect{x}_i \mathrel{-}= w_i \vect{n}_i \Delta\lambda_i\) et
+\(\vect{x}_{i+1} \mathrel{+}= w_{i+1} \vect{n}_i \Delta\lambda_i\). Cette idée de
+solveur direct pour les chaînes est celle de \textcite{deul2018direct}. Deux
+linéarisations par sous-pas suffisent : l'allongement résiduel reste inférieur à
+\SI{e-5}{mm}.
+
+Reste le caractère unilatéral. Une corde ne peut que tirer : pour chaque maillon,
+\(C_i \leq 0\), \(\lambda_i \leq 0\) et \(\lambda_i C_i = 0\) (soit il est tendu, soit
+il ne transmet rien). C'est un problème de complémentarité linéaire, résolu par
+une méthode d'ensemble actif \parencite{nocedal2006} : tous les maillons partent
+actifs ; on libère celui qui pousserait le plus (\(\Delta\lambda_i > 0\)) ; on reprend
+un maillon inactif que la correction allongerait ; on recommence jusqu'à ce que
+plus rien ne change. Un dernier piège est apparu en mettant au point le code :
+avec une corde trop légère, les ondes transversales \(c = \sqrt{T/\mu}\) parcourent
+un maillon plus vite qu'un sous-pas, et la corde vibre de façon parasite. La
+masse linéique réaliste de \SI{0,15}{kg/m} règle le problème.
+
+\section{L'eau : dix particules}
+\label{sec:jeu-eau}
+
+Chaque goutte est un disque de rayon \(r = \SI{2,2}{cm}\) soumis à son seul poids.
+À chaque sous-pas, on calcule le repère du seau à partir de l'anse \(P_{11}\) et du
+centre de masse \(P_{12}\) : axe \(\vect{e}\) et normale \(\vect{n}\)
+(figure~\ref{fig:jeu-schema}). Les coordonnées locales d'une goutte sont
+\(u = (\vect{x} - \vect{x}_{11}) \cdot \vect{e}\) et
+\(w = (\vect{x} - \vect{x}_{11}) \cdot \vect{n}\). La goutte est ramenée dans le seau
+par projection : \(u \leq u_{\text{fond}} - r\) pour le fond et
+\(|w| \leq \SI{10}{cm} - r\) pour les parois. Deux gouttes ne peuvent pas se
+chevaucher (\(|\vect{x}_i - \vect{x}_j| \geq 2 r\), correction partagée par moitié),
+ce qui suffit pour qu'elles s'empilent au fond. Sans frottement, dix particules
+glisseraient bien plus qu'une eau réelle au moindre basculement : leur vitesse
+relative à la paroi est amortie (taux \SI{8}{s^{-1}}, une viscosité effective),
+ce qui ne change pas le critère \(T \geq 0\). Une goutte dont le centre franchit
+le plan du bord (\(u < u_{\text{bord}}\)) est perdue : elle continue sa chute libre
+jusqu'au sol. Le couplage est à sens unique : les gouttes ne poussent pas le seau,
+leur masse est comprise dans \(m\). Cette simplification assumée ne change pas la
+condition de réussite, puisque celle-ci ne dépend que de la tension.
+
+La figure~\ref{fig:jeu-captures} montre un élan complet puis un essai raté sur la
+Lune. Quand \(v_0\) est trop faible, la corde se détend avant le sommet ; seau et
+eau tombent ensemble, presque en chute libre, et l'eau n'est éjectée que lorsque
+la corde se retend brutalement. Ce scénario n'a pas été programmé : il découle des
+seules liaisons.
+
+\begin{figure}[ht]
+  \centering
+  \newcommand{\vignette}[2]{%
+    \begin{subfigure}[b]{0.325\linewidth}
+      \includegraphics[width=\linewidth]{figures/captures/#1}
+      \caption*{#2}
+    \end{subfigure}}
+  \vignette{jeu-elan-1.png}{élan : petit va-et-vient}\hfill
+  \vignette{jeu-elan-3.png}{fin du retour à \(-\ang{45}\)}\hfill
+  \vignette{jeu-elan-4.png}{lancer : la corde molle plie}\\[3pt]
+  \vignette{jeu-elan-6.png}{seau lâché, corde tendue}\hfill
+  \vignette{jeu-rate-2.png}{\(v_0\) trop faible : corde molle}\hfill
+  \vignette{jeu-rate-4.png}{l'eau est perdue}
+  \caption{Captures du jeu (Lune, \(L = \SI{0,89}{m}\), \(m = \SI{4,7}{kg}\),
+    \(T_{\max} = \SI{78}{N}\)). Les quatre premières vignettes : \(v_0 = \SI{4,18}{m/s}\),
+    réussi. Les deux dernières : \(v_0 = \SI{3,04}{m/s} = 0{,}85\,\sqrt{5 g R}\), raté.
+    La main (beige) tient l'anse pendant l'élan ; poids \(P\) en rouge, tension \(T\)
+    en violet après le lâcher.}
+  \label{fig:jeu-captures}
+\end{figure}
+
+\section{Validation et jouabilité}
+
+La simulation doit donner raison à la formule du cours, sinon le jeu
+contredirait l'exercice. Pour 24 configurations (4 lieux, \(L\) = 0,3 ; 0,7 ;
+\SI{1,2}{m}, \(m\) = 1 et \SI{5}{kg}), le seuil de réussite simulé, trouvé par
+dichotomie, vaut \(v_0^\star = k \sqrt{5 g R}\) avec \(k\) compris entre \num{0,962}
+et \num{1,002}, élan compris. Le seuil est un peu sous la valeur théorique parce que
+la barre et la corde, lancées avec le seau, apportent leur propre énergie
+cinétique, que la formule à corde sans masse ignore. Au point bas, la tension
+simulée dépasse \(m (v_0^2/R + g)\) d'environ \SI{5}{\percent}
+(figure~\ref{fig:jeu-verification}b) : c'est la charge de la corde elle-même,
+\(\mu L (\omega^2 r_{\text{milieu}} + g)\). La projection des positions dissipe en outre
+un peu d'énergie (environ \SI{5}{\percent} en deux tours), un effet du premier ordre
+en \(\Delta t\).
+
+\begin{figure}[ht]
+  \centering
+  \begin{subfigure}[b]{0.49\linewidth}
+    \begin{tikzpicture}
+      \begin{axis}[width=\linewidth, height=4.6cm, xlabel={\(t\) (s)}, ylabel={allongement (mm)},
+        xmin=0, xmax=0.8, grid=major, grid style={gray!20}, legend style={font=\scriptsize},
+        legend pos=north east, tick label style={font=\scriptsize}, label style={font=\small}]
+        \addplot[poids, thick] table[x=t, y=gauss_seidel, col sep=comma] {figures/donnees/allongement_corde.csv};
+        \addplot[accent, very thick] table[x=t, y=directe, col sep=comma] {figures/donnees/allongement_corde.csv};
+        \legend{{Gauss--Seidel (une passe)}, résolution directe}
+      \end{axis}
+    \end{tikzpicture}
+    \caption{Allongement total d'une corde de \SI{30}{cm} (seau de \SI{5}{kg}).}
+  \end{subfigure}\hfill
+  \begin{subfigure}[b]{0.49\linewidth}
+    \begin{tikzpicture}
+      \begin{axis}[width=\linewidth, height=4.6cm, xlabel={\(t\) (s)}, ylabel={\(T\) (N)},
+        xmin=0, grid=major, grid style={gray!20}, legend style={font=\scriptsize},
+        legend pos=north east, tick label style={font=\scriptsize}, label style={font=\small}]
+        \addplot[color=tension, thick] table[x=t, y=simulee, col sep=comma] {figures/donnees/tension_seau.csv};
+        \addplot[black, dashed] table[x=t, y=ideale, col sep=comma] {figures/donnees/tension_seau.csv};
+        \legend{simulée, \(m (v_0^2/R + g (3 \cos(\theta) - 2))\)}
+      \end{axis}
+    \end{tikzpicture}
+    \caption{Tension après le lâcher (Terre, \(L = \SI{0,8}{m}\), \(v_0 = 1{,}15 \sqrt{5 g R}\)).}
+  \end{subfigure}
+  \caption{Vérifications numériques, calculées avec le code de l'application.}
+  \label{fig:jeu-verification}
+\end{figure}
+
+Chaque défi doit être \emph{prouvablement} soluble. La génération est
+constructive : on tire le lieu, \(L\) et \(m\), puis une vitesse de référence
+\(v_0^2 = (5{,}8 \text{ à } 7{,}5) \, g R\), et l'on fixe
+\(T_{\max} = m (v_0^2/R + g) \times (1{,}25 \text{ à } 1{,}6)\). La fenêtre gagnante
+annoncée est la fenêtre idéale réduite de \SI{6}{\percent} de chaque côté sur \(v_0\) ;
+sa borne haute tient aussi compte de la charge propre de la corde. Elle est
+convertie si nécessaire en fenêtre sur \(L\) ou sur \(m\) (pour la masse, il faut
+remplir le seau à au moins \SI{90}{\percent} de la masse maximale). Le vérificateur
+\fichier{isChallengeFeasible} ne se contente pas d'une inégalité : il \emph{rejoue
+la simulation complète}, élan compris, en cinq points régulièrement répartis dans
+la fenêtre, et le défi n'est accepté que si les cinq essais réussissent. Un essai
+complet prend de 70 à \SI{150}{ms} sur Terre et la génération d'un défi environ
+\SI{0,25}{s}. Les tests unitaires (dont un tirage de Monte-Carlo de 500 défis)
+vérifient ces propriétés.
+
+\begin{pointcle}
+\textbf{Limites.} Le modèle est plan, sans frottement au pivot ni résistance de
+l'air, avec une petite dissipation numérique. La main est idéalisée : sa
+trajectoire est imposée et l'inclinaison du seau néglige l'accélération angulaire
+propre du seau, ce qui ne compte que pour des lancers bien plus violents que ceux
+des défis. L'eau n'a pas de pression, sa viscosité est une simple traînée, et
+elle ne réagit pas sur le seau. Un fluide
+plus réaliste (SPH ou fluides basés sur les positions,
+\cite{monaghan1992sph, macklin2013pbf}) est possible, mais il n'apporterait rien à
+la question posée à l'étudiant : à quelle vitesse l'eau sort-elle du seau ?
+\end{pointcle}

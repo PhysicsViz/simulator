@@ -1,0 +1,37 @@
+% 10-validation.tex — Réalisation 4/4 : validation technique et physique (≈ 3 pages).
+
+\chapter{Validation des simulations}
+\label{chap:validation}
+
+\section{Une chaîne de vérifications}
+
+\begin{arediger}{1 page}
+Synthèse des trois niveaux (détaillés dans la section~\ref{sec:tests}) :
+tests unitaires de la physique contre des valeurs calculées à la main
+(134 tests au moment de la rédaction, dont 53 pour le looping avec wagon et
+son jeu) ; tests d'intégration Playwright sur neuf profils d'appareils
+(tableau~\ref{tab:appareils}) ; vérification physique par un agent
+indépendant qui redérive les formules et compare numériquement. Tableau :
+niveau, outil, ce qui est vérifié, nombre de cas.
+\end{arediger}
+
+\section{Ce que la vérification indépendante a trouvé}
+
+\begin{arediger}{1,5 page}
+Exemple concret pour le jeu du seau : l'agent de vérification a confirmé la
+physique du wagon (erreurs \(< 10^{-14}\) sur les formes fermées, \(< 2 \cdot 10^{-6}\)
+sur les temps RK4) et relevé six écarts dans le jeu, corrigés ensuite : poids
+de la barre sous-estimé d'un tiers, tension lue au mauvais bout de la corde,
+dissipation numérique non signalée, durée trop courte pour de très petites
+hauteurs, libellés. Montrer que ce dispositif attrape des erreurs qu'une
+relecture humaine laisserait passer, et discuter ses limites.
+\end{arediger}
+
+\section{Performance et compatibilité}
+
+\begin{arediger}{½ page}
+Temps de calcul (trajectoire RK4 du wagon : quelques millisecondes ; essai du
+seau : \SI{16}{ms} ; génération d'un défi : \SI{60}{ms}), fonctionnement en
+\fichier{file://} sur Chromium, WebKit et Firefox, mise en page d'un seul écran
+à partir de \(1000 \times 760\) pixels.
+\end{arediger}

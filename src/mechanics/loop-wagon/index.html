@@ -1,0 +1,553 @@
+<!doctype html>
+<!--
+  index.html — Compact wagon loop-the-loop exercise page (classic circular loop).
+  One-screen layout on desktop: scene canvas (fixed view; force diagram, energy
+  bars, live readout and legend drawn in its free space) beside a side column
+  (transport, parameters, tabbed graph) filling the first view, header
+  included; the formula strip sits just below the fold.
+  Text filled by main.js (FR/EN). Classic (non-module) scripts so the page works
+  when opened via file://.
+-->
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Looping (wagon) — Physics Simulator</title>
+    <link rel="stylesheet" href="../../../styles.css">
+    <style>
+      /* Every size inside the page is in em of .exercise-page, whose font-size
+         never goes below 16px and grows on large screens. */
+      .exercise-page {
+        display: flex;
+        flex-direction: column;
+        gap: 0.65em;
+        padding: 0.5em 1em 1em;
+        font-size: 16px;
+      }
+
+      .assumption {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.76em;
+        line-height: 1.4;
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) max(18.5em, 230px);
+        gap: 0.65em;
+        align-items: stretch;
+      }
+
+      .panel {
+        padding: 0.6em 0.75em;
+        border-radius: 0.6em;
+      }
+
+      .panel h2 {
+        margin: 0 0 0.5em;
+        font-size: 0.72em;
+      }
+
+      .scene-panel {
+        display: flex;
+        flex-direction: column;
+        padding: 0.4em;
+      }
+
+      .scene-panel canvas {
+        display: block;
+        width: 100%;
+        flex: 1;
+        min-height: 0;
+        border-radius: 0.4em;
+      }
+
+      .side {
+        display: flex;
+        flex-direction: column;
+        gap: 0.65em;
+        min-height: 0;
+      }
+
+      .exercise-page button,
+      .exercise-page input[type="number"] {
+        font-size: 1em;
+      }
+
+      .transport-head {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 0.5em;
+      }
+
+      #time_display {
+        margin: 0;
+        font-size: 1.15em;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+      }
+
+      #speed_buttons {
+        display: flex;
+        gap: 0.2em;
+      }
+
+      #speed_buttons button {
+        padding: 0.15em 0.45em;
+        font-size: 0.75em;
+      }
+
+      #timeline {
+        width: 100%;
+        margin: 0.3em 0 0.4em;
+      }
+
+      .transport-buttons {
+        display: flex;
+        gap: 0.3em;
+      }
+
+      .transport-buttons button {
+        padding: 0.35em 0.55em;
+        font-size: 0.85em;
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+      }
+
+      #play_pause_button {
+        flex: 1;
+      }
+
+      .parameter-row {
+        margin-bottom: 0.4em;
+      }
+
+      .parameter-row:last-child {
+        margin-bottom: 0;
+      }
+
+      .parameter-row .row-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.4em;
+      }
+
+      .parameter-row label {
+        font-size: 0.8em;
+      }
+
+      .parameter-row input[type="range"] {
+        width: 100%;
+        margin: 0.15em 0 0;
+      }
+
+      .value-wrap {
+        display: flex;
+        align-items: center;
+        gap: 0.25em;
+      }
+
+      .value-wrap input[type="number"] {
+        width: 5.6em;
+        padding: 0.15em 0.4em;
+        font-size: 0.85em;
+      }
+
+      .value-wrap .unit {
+        width: 2.6em;
+        color: var(--muted);
+        font-size: 0.78em;
+      }
+
+      .graphs-panel {
+        flex: 1;
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        grid-template-rows: auto minmax(0, 1fr);
+        column-gap: 0.6em;
+        row-gap: 0.4em;
+        min-height: 14em;
+      }
+
+      .graphs-panel h2 {
+        align-self: center;
+        margin: 0;
+      }
+
+      .graph-tabs {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.25em;
+      }
+
+      .graph-tabs button {
+        padding: 0.15em 0.25em;
+        font-size: 0.78em;
+      }
+
+      #graph_canvas {
+        grid-column: 1 / -1;
+        display: block;
+        width: 100%;
+        height: 100%;
+        min-height: 8em;
+        border: 1px solid var(--border);
+        border-radius: 0.4em;
+        background: var(--background);
+      }
+
+      .formula-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(12.25em, 1fr));
+        gap: 0.4em;
+      }
+
+      .formula-card {
+        padding: 0.3em 0.5em;
+        border: 1px solid var(--border);
+        border-radius: 0.4em;
+        background: var(--background);
+      }
+
+      .formula-card .name {
+        display: block;
+        color: var(--muted);
+        font-size: 0.64em;
+        font-weight: 600;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .formula-card .math {
+        font-family: "Cambria Math", Cambria, Georgia, serif;
+        font-size: 0.92em;
+      }
+
+      .formula-card .sub {
+        font-size: 0.76em;
+        color: var(--muted);
+        font-variant-numeric: tabular-nums;
+        overflow-wrap: anywhere;
+        height: 2.5em;
+        line-height: 1.25;
+        overflow: hidden;
+      }
+
+      .formula-card .result {
+        font-weight: 700;
+        color: var(--accent);
+        white-space: nowrap;
+      }
+
+      .formula-page {
+        padding-top: 0;
+      }
+
+      /* One-screen mode (tablets, laptops, desktops): the first view is exactly
+         the viewport, header included; the scene and the graph take the room
+         left, and the formulas start just below the fold. */
+      @media (min-width: 700px) and (min-height: 540px) {
+        .first-view {
+          display: flex;
+          flex-direction: column;
+          height: 100vh;
+          height: 100dvh;
+        }
+
+        .exercise-page {
+          font-size: clamp(16px, min(1.6vh, 1.12vw), 21px);
+        }
+
+        .first-view .exercise-page {
+          flex: 1;
+          min-height: 0;
+        }
+
+        .layout {
+          flex: 1;
+          min-height: 0;
+          grid-template-rows: minmax(0, 1fr);
+        }
+
+        .scene-panel,
+        .graphs-panel {
+          min-height: 0;
+        }
+
+        .scene-panel canvas {
+          height: 0;
+          min-height: 0;
+        }
+
+        #graph_canvas {
+          min-height: 0;
+        }
+
+        .graphs-panel {
+          flex: 1 1 0;
+          min-height: 9em;
+        }
+
+        .side .control-panel {
+          flex: 0 1 auto;
+          min-height: 0;
+          overflow-y: auto;
+        }
+      }
+
+      /* Phones in portrait: one column, scene first and sized to the screen. */
+      @media (max-width: 699px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+
+        .scene-panel canvas {
+          flex: none;
+          height: min(calc(52vw + 230px), calc(100svh - 110px));
+        }
+
+        .assumption {
+          order: 5;
+        }
+      }
+
+      /* Short landscape screens (phones turned sideways): scene as tall as the screen. */
+      @media (min-width: 700px) and (max-height: 539px) {
+        .scene-panel {
+          align-self: start;
+        }
+
+        .scene-panel canvas {
+          flex: none;
+          height: calc(100svh - 24px);
+        }
+      }
+
+      @media (pointer: coarse) {
+        .exercise-page button,
+        .exercise-page input[type="number"] {
+          min-height: 32px;
+          min-width: 32px;
+        }
+
+        .exercise-page input[type="range"] {
+          min-height: 28px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="first-view">
+    <header class="app-bar">
+      <a class="brand" href="../../../index.html">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M3 20 Q 12 -6 21 20" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+          <circle cx="16.7" cy="12.5" r="2.4" fill="currentColor"/>
+        </svg>
+        Physics Simulator
+      </a>
+      <span class="crumb" data-i18n="page_title"></span>
+      <span class="spacer"></span>
+      <button id="language_toggle" type="button">EN</button>
+    </header>
+
+    <main class="exercise-page">
+      <p class="assumption" data-i18n="assumption"></p>
+
+      <!-- GAME MODE (experimental) — mount point; to remove the feature delete the
+           two GAME MODE blocks in this file, game.js, its test file, and the
+           lines marked "Game mode hook" in main.js -->
+      <div id="game_mode_mount"></div>
+
+      <div class="layout">
+        <section class="panel scene-panel">
+          <canvas id="simulation_canvas" width="920" height="520"></canvas>
+        </section>
+
+        <div class="side">
+          <section class="panel transport-panel">
+            <div class="transport-head">
+              <p id="time_display">t = 0,00 s</p>
+              <span id="speed_buttons"></span>
+            </div>
+            <input id="timeline" type="range" min="0" max="20" step="0.01" value="0">
+            <div class="transport-buttons">
+              <button id="reset_button" type="button" data-i18n="reset"></button>
+              <button id="step_back_button" type="button" data-i18n="step_back"></button>
+              <button id="play_pause_button" type="button" class="primary"></button>
+              <button id="step_forward_button" type="button" data-i18n="step_forward"></button>
+            </div>
+          </section>
+
+          <section class="panel control-panel">
+            <h2 data-i18n="controls_title"></h2>
+            <div id="parameter_rows"></div>
+          </section>
+
+          <section class="panel graphs-panel">
+            <h2 data-i18n="graphs_title"></h2>
+            <div class="graph-tabs" id="graph_tabs"></div>
+            <canvas id="graph_canvas" width="260" height="140"></canvas>
+          </section>
+        </div>
+      </div>
+    </main>
+    </div>
+
+    <div class="exercise-page formula-page">
+      <section class="panel formula-panel">
+        <div class="formula-grid">
+          <div class="formula-card">
+            <span class="name" data-i18n="formula_weight"></span>
+            <div class="math">P = m g</div>
+            <div class="sub"><span id="sub_weight"></span> = <span class="result" id="res_weight"></span></div>
+          </div>
+          <div class="formula-card">
+            <span class="name" data-i18n="formula_speed"></span>
+            <div class="math">v = √(2 g (h − y))</div>
+            <div class="sub"><span id="sub_speed"></span> = <span class="result" id="res_speed"></span></div>
+          </div>
+          <div class="formula-card">
+            <span class="name" data-i18n="formula_a_theta"></span>
+            <div class="math">a_θ = −g sin(φ)</div>
+            <div class="sub"><span id="sub_a_theta"></span> = <span class="result" id="res_a_theta"></span></div>
+          </div>
+          <div class="formula-card">
+            <span class="name" data-i18n="formula_a_r"></span>
+            <div class="math">a_r = −v²/r</div>
+            <div class="sub"><span id="sub_a_r"></span> = <span class="result" id="res_a_r"></span></div>
+          </div>
+          <div class="formula-card">
+            <span class="name" data-i18n="formula_normal"></span>
+            <div class="math">N = m (v²/r + g cos(φ))</div>
+            <div class="sub"><span id="sub_normal"></span> = <span class="result" id="res_normal"></span></div>
+          </div>
+          <div class="formula-card">
+            <span class="name" data-i18n="formula_load"></span>
+            <div class="math">n = N / P</div>
+            <div class="sub"><span id="sub_load"></span> = <span class="result" id="res_load"></span></div>
+          </div>
+          <div class="formula-card">
+            <span class="name" data-i18n="formula_top_speed"></span>
+            <div class="math">v_s = √(2 g (h − 2 R))</div>
+            <div class="sub"><span id="sub_top_speed"></span> = <span class="result" id="res_top_speed"></span></div>
+          </div>
+          <div class="formula-card">
+            <span class="name" data-i18n="formula_top_minimum"></span>
+            <div class="math">v_s,min = √(g R)</div>
+            <div class="sub"><span id="sub_top_minimum"></span> = <span class="result" id="res_top_minimum"></span></div>
+          </div>
+          <div class="formula-card">
+            <span class="name" data-i18n="formula_normal_top"></span>
+            <div class="math">N_s = m (2 g (h − 2 R)/R − g)</div>
+            <div class="sub"><span id="sub_normal_top"></span> = <span class="result" id="res_normal_top"></span></div>
+          </div>
+          <div class="formula-card">
+            <span class="name" data-i18n="formula_h_min"></span>
+            <div class="math">h_min = 5 R / 2</div>
+            <div class="sub"><span id="sub_h_min"></span> = <span class="result" id="res_h_min"></span></div>
+          </div>
+          <div class="formula-card">
+            <span class="name" data-i18n="formula_takeoff"></span>
+            <div class="math">cos(θ_d) = 2 (R − h) / (3 R)</div>
+            <div class="sub"><span id="sub_takeoff"></span> = <span class="result" id="res_takeoff"></span></div>
+          </div>
+          <div class="formula-card">
+            <span class="name" data-i18n="formula_flight"></span>
+            <div class="math">x = u₀ τ + x₀ ; y = −g τ²/2 + v₀ τ + y₀</div>
+            <div class="sub"><span id="sub_flight"></span> = <span class="result" id="res_flight"></span></div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <script src="../../assets/js/canvas_draw.js"></script>
+    <script src="../../assets/js/graph_plot.js"></script>
+    <script src="calcul.js"></script>
+    <script src="main.js"></script>
+
+    <!-- GAME MODE (experimental) — styles + script; see removal note at the mount point -->
+    <style>
+      .game-mode .formula-panel,
+      .game-mode .graphs-panel,
+      .game-mode #timeline,
+      .game-mode #step_back_button,
+      .game-mode #step_forward_button,
+      .game-mode .parameter-row:not(.game-row),
+      .parameter-row.game-row {
+        display: none;
+      }
+
+      .game-mode .parameter-row.game-row {
+        display: block;
+      }
+
+      .mode-tabs {
+        display: flex;
+        gap: 6px;
+      }
+
+      .mode-tabs button {
+        padding: 3px 12px;
+        font-size: 0.85em;
+      }
+
+      .game-data {
+        margin: 8px 0 0;
+        padding: 0;
+        list-style: none;
+        font-size: 0.8em;
+        line-height: 1.55;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .game-data .unknown {
+        color: var(--accent);
+        font-weight: 700;
+      }
+
+      .game-panel .panel-head {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 6px;
+      }
+
+      .game-panel .assumption {
+        margin: 0 0 6px;
+      }
+
+      .game-panel .panel-head h2 {
+        margin: 0;
+      }
+
+      .game-panel .panel-head button {
+        margin-left: auto;
+        padding: 3px 10px;
+        font-size: 0.82em;
+      }
+
+      .game-value {
+        font-size: 1.05em;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+        color: var(--accent);
+      }
+
+      .game-value.success {
+        color: #2e7d32;
+      }
+
+      .game-value.failure {
+        color: #d32f2f;
+      }
+    </style>
+    <script src="game.js"></script>
+  </body>
+</html>
