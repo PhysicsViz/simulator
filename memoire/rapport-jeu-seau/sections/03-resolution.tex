@@ -1,0 +1,45 @@
+% 03-resolution.tex — Résolution numérique (XPBD à petits pas, solveur direct).
+
+\section{Résolution numérique}
+
+Une corde inextensible modélisée par des ressorts très raides demanderait un
+pas de temps minuscule. La dynamique basée sur les positions
+\cite{muller2007pbd, bender2014survey} contourne ce problème : à chaque pas, on
+prédit les positions sans tenir compte des liaisons, puis on les
+\emph{projette} sur les liaisons, et l'on déduit enfin les vitesses des
+déplacements. Sa forme étendue XPBD \cite{macklin2016xpbd} associe à chaque
+liaison un multiplicateur de Lagrange \(\lambda_i\), d'où l'on tire la force :
+la tension d'un maillon vaut \(T_i = -\lambda_i / \Delta t^2\). Un pas
+\(\Delta t\) comporte quatre étapes :
+\begin{enumerate}
+  \item prédiction : \(\vect{x}^* = \vect{x} + \vect{v} \Delta t + \vect{g}_{\text{eff}} \Delta t^2\) pour chaque point libre (\(\vect{g}_{\text{eff}} = \vect{g}\), sauf \(3\vect{g}/2\) pour l'extrémité de la barre) ;
+  \item projection de toutes les liaisons de la chaîne en une fois (ci-dessous) ;
+  \item projection des gouttes sur les parois du seau et entre elles ;
+  \item vitesses : \(\vect{v} = (\vect{x}^* - \vect{x}) / \Delta t\), puis frottement aux articulations.
+\end{enumerate}
+
+\paragraph{Une résolution directe plutôt qu'itérative.} La méthode PBD
+classique projette les liaisons une par une (Gauss--Seidel). Pour un seau
+lourd au bout de nœuds de corde légers, une passe ne suffit pas : la corde
+s'allonge. Avec un seau de \SI{5}{kg} au bout d'une corde de \SI{30}{cm}, une
+passe de Gauss--Seidel laisse la corde s'allonger jusqu'à \SI{1,04}{m} en
+\SI{0,38}{s}, plus de trois fois sa longueur, alors que l'écart reste inférieur
+à \SI{e-5}{mm} avec la résolution directe (données de
+\texttt{outils/donnees.mjs}). La linéarisation des
+contraintes \(C_i = |\vect{x}_{i+1} - \vect{x}_i| - \ell_i\) donne le système
+\(J M^{-1} J^{\mathsf{T}} \Delta\vect{\lambda} = -\vect{C}\). Comme la liaison
+\(i\) ne touche que les points \(i\) et \(i+1\), cette matrice est
+tridiagonale : elle se résout en \(O(n)\) opérations par l'algorithme de Thomas
+\cite{press2007}, comme le font les solveurs directs de tiges
+\cite{deul2018direct}. Les maillons de corde sont unilatéraux : un maillon
+détendu (\(C_i < 0\)) ou qui devrait pousser est retiré du système (ensemble
+actif), et le système est résolu à nouveau.
+
+\paragraph{Petits pas et stabilité.} Plutôt que plusieurs itérations par pas,
+la simulation fait beaucoup de pas courts \cite{macklin2019smallsteps} : au
+moins \num{1200} par seconde pendant l'élan et \num{2400} pendant le lancer et
+les tours libres. Le pas doit aussi suivre les ondes transverses de la corde,
+de célérité \(c = \sqrt{T/\mu}\) : la fréquence des pas vaut au moins
+\(1{,}3\, c/\ell\), ce qui compte pour une corde courte sous un seau lourd. La
+tension affichée est celle du maillon le plus chargé, filtrée sur \SI{20}{ms}.
+La projection dissipe un peu d'énergie, de 2 à \SI{8}{\percent} en deux tours.

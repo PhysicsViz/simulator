@@ -1,0 +1,50 @@
+% 04-moteur.tex — Le moteur : élan, lancer, alignement, lâcher.
+
+\section{Le moteur : élan, lancer et lâcher}
+
+Le seau part du repos, pendu sous la barre. Le moteur ne pousse jamais le seau
+lui-même : il choisit l'angle d'avance \(\delta\) de la barre sur le seau, et
+c'est la corde, tirée par l'extrémité de la barre, qui accélère le seau. Avec
+\(r\) la distance pivot--seau, la corde fait alors l'angle \(\psi\) avec la
+direction radiale du seau, donné par le triangle pivot--extrémité--seau :
+\begin{equation}
+  L_b \sin(\delta + \psi) = r \sin(\psi), \qquad \text{donc} \qquad \sin(\psi) \leq \frac{L_b}{r}.
+\end{equation}
+C'est pourquoi la barre est longue devant la corde : comme un bras qui fait
+tourner une corde courte, elle peut incliner la traction.
+
+\paragraph{Énergie apportée.} Par unité de masse, la corde doit fournir la
+composante radiale \(r \dot\theta^2 + g \cos(\theta)\) qui maintient le seau
+sur son cercle ; inclinée de \(\psi\), elle fournit en plus la composante
+tangentielle \((r \dot\theta^2 + g \cos(\theta)) \tan(\psi)\). L'énergie
+par unité de masse \(E = v^2/2 + g R (1 - \cos(\theta))\) varie donc, en
+assimilant \(r\) à \(R\), selon
+\begin{equation}
+  \frac{\mathrm{d}E}{\mathrm{d}\theta} = \left(2E + g R \left(3 \cos(\theta) - 2\right)\right) \tan(\psi).
+  \label{eq-energie}
+\end{equation}
+Le moteur inverse cette relation : il choisit \(\tan(\psi)\), puis \(\delta\),
+pour que l'énergie suive une courbe voulue. La traction est limitée à
+\(\tan(\psi) \leq 0{,}35\) pour que le seau, articulé à l'anse, suive.
+
+\paragraph{Phases.} Le mouvement comporte quatre phases (\cref{fig-captures}).
+\begin{itemize}
+  \item \emph{Élan} : quelques allers-retours au rythme propre du pendule, en
+        tirant dans le sens du mouvement, jusqu'à une amplitude d'environ
+        \ang{70}.
+  \item \emph{Lancer} : à partir d'un recul, le moteur fait suivre à
+        l'énergie une courbe lisse qui atteint \(v_0^2/2\) à \ang{90}
+        (équation~\eqref{eq-energie} plus une correction proportionnelle à
+        l'écart).
+  \item \emph{Alignement} : dès que l'énergie, augmentée de ce que
+        l'alignement apportera encore, atteint \(v_0^2/2\), la barre revient
+        dans l'axe de la corde et accompagne le seau jusqu'à ce que la chaîne
+        ne plie plus (flexion inférieure à \ang{3}, au plus \SI{0,6}{s}).
+  \item \emph{Lâcher} : la barre tourne ensuite librement, et le seau passe au
+        point bas avec une vitesse proche de \(v_0\) (voir
+        \cref{sec-validation}).
+\end{itemize}
+Un lâcher avec une chaîne pliée fait fouetter la barre : la corde se retend
+brusquement et la tension filtrée atteint environ 2,3 fois sa valeur avant le
+lâcher (\SI{230}{N} contre \SI{100}{N} dans un essai sur Terre, \(L = \SI{0,4}{m}\),
+\(m = \SI{2}{kg}\)). C'est la raison de la phase d'alignement.

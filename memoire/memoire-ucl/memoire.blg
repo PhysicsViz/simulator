@@ -1,0 +1,9 @@
+[0] Config.pm:329> INFO - This is Biber 2.22
+[1] Config.pm:332> INFO - Logfile is 'memoire.blg'
+[247] biber-MSWIN64:342> INFO - === 
+[336] Biber.pm:421> INFO - Reading 'memoire.bcf'
+[626] Biber.pm:1002> INFO - Found 0 citekeys in bib section 0
+[656] bbl.pm:676> INFO - Writing 'memoire.bbl' with encoding 'UTF-8'
+[656] bbl.pm:779> INFO - Output to memoire.bbl
+[665] Biber.pm:132> WARN - The file 'memoire.bcf' does not contain any citations!
+[666] Biber.pm:134> INFO - WARNINGS: 1

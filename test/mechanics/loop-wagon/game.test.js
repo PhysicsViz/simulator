@@ -9,7 +9,7 @@
  * until the release, lead geometry, critically damped bar, joint friction, substep
  * rate), the cached pumping phase (cold = warm = from scratch, T_max below its
  * peak), drop_count (count, radius, water volume, containment, no back-action on
- * the bucket), evaluate / fillThreshold, the feasibility checker on fallback and
+ * the bucket), rope_links (chain size, clamping, masses, outcome, cache key), evaluate / fillThreshold, the feasibility checker on fallback and
  * impossible challenges, seeded Monte-Carlo solvability of randomChallenge,
  * anti-repeat, variable frequencies and milestones.
  */
@@ -62,6 +62,7 @@ const MONTE_CARLO_COUNT = 96;
 const MONTE_CARLO_WORKERS = 8;
 const REPLAYED_WORKERS = 4;
 const DRAW_COUNT = 5000;
+const REFERENCE_DROP_COUNT = 10;
 
 /* assertClose: numeric comparison within a tolerance */
 function assertClose(actual, expected, tolerance, message) {
@@ -540,7 +541,7 @@ test("no force on the bucket but the rope: with the rope cut, the bucket is in f
     assertClose(start_y - state.nodes[CENTER].y, EARTH * time * time / 2, 0.02 * EARTH * time * time / 2, "free fall distance g t²/2");
 });
 
-test("drops do not act back on the bucket: the chain and the tension are identical for 10 and 40 drops", () => {
+test("drops do not act back on the bucket: the chain and the tension are identical for the default 25 and for 40 drops", () => {
     const parameters = runParameters(EARTH, 0.4, 2, 1.08);
     const reference = simulateRun(parameters);
     const finer = simulateRun({ ...parameters, drop_count: 40 });
@@ -766,9 +767,9 @@ function scratchRun(parameters) {
     return attempt;
 }
 
-/* pumpKey: key of the pumping cache for recorded runs of default drop count */
+/* pumpKey: key of the pumping cache (default drop count and rope links unless given) */
 function pumpKey(parameters, record = true) {
-    return [parameters.gravity, parameters.rope_length, parameters.mass, DROP_COUNT, record].join("|");
+    return [parameters.gravity, parameters.rope_length, parameters.mass, parameters.drop_count ?? DROP_COUNT, Math.min(Math.max(Math.round(parameters.rope_links ?? ROPE_LINKS), 2), 40), record].join("|");
 }
 
 test("pumping cache: a cold run, a warm run and a run from scratch are identical", () => {
@@ -843,18 +844,20 @@ test("pumping cache: the pumping depends on g, L, m and the drop count, not on v
     internals.pumpedAttempt({ ...base, drop_count: 20 }, false);
     assert.equal(internals.PUMP_CACHE.size, 3);
     assert.ok(internals.PUMP_CACHE.has(pumpKey({ ...base, mass: 1.5 }, false)));
-    assert.ok(internals.PUMP_CACHE.has([base.gravity, base.rope_length, base.mass, 20, false].join("|")));
+    assert.ok(internals.PUMP_CACHE.has(pumpKey({ ...base, drop_count: 20 }, false)));
+    assert.equal(pumpKey({ ...base, drop_count: 20 }, false), [base.gravity, base.rope_length, base.mass, 20, ROPE_LINKS, false].join("|"));
 });
 
 test("initialState honours drop_count: count, radius DROP_RADIUS √(10/n), same water volume, drops settled inside the bucket without overlap", () => {
     assert.equal(initialState({ ...EARTH_CASE }).drops.length, DROP_COUNT, "default count");
-    assertClose(initialState({ ...EARTH_CASE }).drop_radius, DROP_RADIUS, 1e-15, "default radius");
+    assertClose(initialState({ ...EARTH_CASE }).drop_radius, DROP_RADIUS * Math.sqrt(REFERENCE_DROP_COUNT / DROP_COUNT), 1e-15, "default radius");
+    assertClose(initialState({ ...EARTH_CASE, drop_count: REFERENCE_DROP_COUNT }).drop_radius, DROP_RADIUS, 1e-15, "radius of the 10 reference drops");
     assert.equal(initialState({ ...EARTH_CASE, drop_count: undefined }).drops.length, DROP_COUNT);
     for (const count of [1, 4, 10, 25, 40, 100]) {
         const state = initialState({ ...EARTH_CASE, drop_count: count });
         assert.equal(state.drops.length, count, `count ${count}`);
-        assertClose(state.drop_radius, DROP_RADIUS * Math.sqrt(DROP_COUNT / count), 1e-15, `radius for ${count} drops`);
-        assertClose(count * state.drop_radius ** 2, DROP_COUNT * DROP_RADIUS ** 2, 1e-15, `water volume for ${count} drops`);
+        assertClose(state.drop_radius, DROP_RADIUS * Math.sqrt(REFERENCE_DROP_COUNT / count), 1e-15, `radius for ${count} drops`);
+        assertClose(count * state.drop_radius ** 2, REFERENCE_DROP_COUNT * DROP_RADIUS ** 2, 1e-15, `water volume for ${count} drops`);
         const handle = state.nodes[HANDLE];
         for (const drop of state.drops) {
             const along = handle.y - drop.y;
@@ -885,9 +888,81 @@ test("simulateRun with drop_count: frames carry the drop count and radius, and t
         assertClose(frame.drop_radius, DROP_RADIUS / 2, 1e-15, "radius of 40 drops");
     }
     const default_run = simulateRun(runParameters(EARTH, 0.4, 2, 1.08));
-    assertClose(default_run.frames[0].drop_radius, DROP_RADIUS, 1e-15, "default radius in the frames");
+    assertClose(default_run.frames[0].drop_radius, DROP_RADIUS * Math.sqrt(REFERENCE_DROP_COUNT / DROP_COUNT), 1e-15, "default radius in the frames");
 });
 
+
+test("rope_links: node count is rope_links + 3, handle on nodes.length − 2, bucket centre last, link lengths L/n", () => {
+    for (const links of [2, 3, 10, 25, 40]) {
+        const state = initialState({ ...EARTH_CASE, rope_links: links });
+        assert.equal(state.nodes.length, links + 3, `nodes for ${links} links`);
+        assert.equal(state.link_lengths.length, links + 2);
+        assert.equal(state.rope_flags.length, links + 2);
+        assert.deepEqual(state.rope_flags, [false, ...new Array(links).fill(true), false]);
+        assert.equal(state.link_lengths[0], BAR_LENGTH);
+        assert.equal(state.link_lengths[links + 1], BUCKET.center_of_mass);
+        for (let i = 1; i <= links; i++) {
+            assertClose(state.link_lengths[i], 0.4 / links, 1e-15, `link ${i} of ${links}`);
+        }
+        assertClose(state.nodes[state.nodes.length - 2].y, PIVOT_HEIGHT - BAR_LENGTH - 0.4, 1e-12, "handle at the end of the rope");
+        assertClose(state.nodes[state.nodes.length - 1].y, PIVOT_HEIGHT - bucketRadius(0.4), 1e-12, "bucket centre");
+        assert.equal(state.nodes[state.nodes.length - 1].inverse_mass, 1 / 2);
+    }
+    assert.equal(initialState({ ...EARTH_CASE }).nodes.length, HANDLE + 2, "default chain: HANDLE and CENTER are the default indices");
+    assert.equal(CENTER, HANDLE + 1);
+    assert.equal(initialState({ ...EARTH_CASE, rope_links: undefined }).nodes.length, ROPE_LINKS + 3);
+});
+
+test("rope_links is rounded and clamped to [2, 40]", () => {
+    const count = (rope_links) => initialState({ ...EARTH_CASE, rope_links }).nodes.length - 3;
+    assert.equal(count(1), 2);
+    assert.equal(count(0), 2);
+    assert.equal(count(-4), 2);
+    assert.equal(count(2), 2);
+    assert.equal(count(100), 40);
+    assert.equal(count(40), 40);
+    assert.equal(count(7.6), 8);
+    assert.equal(count(7.4), 7);
+});
+
+test("rope_links: the handle mass sits on the last rope node and the rope mass μ L does not depend on the link count", () => {
+    for (const links of [2, 5, 10, 40]) {
+        const state = initialState({ ...EARTH_CASE, rope_links: links });
+        const node_mass = ROPE_DENSITY * 0.4 / links;
+        const rope_nodes = state.nodes.slice(2, links + 2);
+        assert.equal(rope_nodes.length, links);
+        rope_nodes.slice(0, -1).forEach((node, i) => assertClose(1 / node.inverse_mass, node_mass, 1e-12, `node ${i} of ${links}`));
+        assertClose(1 / state.nodes[links + 1].inverse_mass, node_mass + 0.01, 1e-12, `handle node of ${links}`);
+        const rope_mass = rope_nodes.reduce((sum, node) => sum + 1 / node.inverse_mass, 0) - 0.01;
+        assertClose(rope_mass, ROPE_DENSITY * 0.4, 1e-12, `rope mass for ${links} links`);
+        assert.equal(state.nodes[0].inverse_mass, 0);
+        assert.equal(state.nodes[1].inverse_mass, 0);
+    }
+});
+
+test("rope_links: 3 and 25 segments give the same successful outcome as 10, with a bottom tension within 5 %", () => {
+    const parameters = runParameters(EARTH, 0.4, 2, 1.08);
+    const reference = simulateRun(parameters);
+    assert.equal(reference.outcome, "success");
+    for (const rope_links of [3, 25]) {
+        const run = simulateRun({ ...parameters, rope_links });
+        assert.equal(run.outcome, "success", `${rope_links} links`);
+        assert.equal(run.frames[0].nodes.length, rope_links + 3);
+        assert.ok(Math.abs(run.max_tension / reference.max_tension - 1) < 0.05, `${rope_links} links: peak tension ${run.max_tension} vs ${reference.max_tension}`);
+    }
+});
+
+test("rope_links: the pumping cache keys differ by the link count", () => {
+    internals.PUMP_CACHE.clear();
+    const base = runParameters(MOON, 0.3, 1, 1.08);
+    internals.pumpedAttempt(base, false);
+    internals.pumpedAttempt({ ...base, rope_links: 3 }, false);
+    internals.pumpedAttempt({ ...base, rope_links: ROPE_LINKS }, false);
+    assert.equal(internals.PUMP_CACHE.size, 2, "explicit default links share the default entry");
+    assert.ok(internals.PUMP_CACHE.has(pumpKey({ ...base, rope_links: 3 }, false)));
+    assert.ok(internals.PUMP_CACHE.has(pumpKey(base, false)));
+    assert.notEqual(pumpKey({ ...base, rope_links: 3 }, false), pumpKey(base, false));
+});
 
 test("solveTridiagonal: a straight chain between two fixed nodes gives no NaN (singular row decoupled)", () => {
     for (const rope_flag of [false, true]) {

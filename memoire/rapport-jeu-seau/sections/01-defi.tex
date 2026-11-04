@@ -1,0 +1,48 @@
+% 01-defi.tex — Le défi et son lien avec le looping.
+
+\section{Le défi et son lien avec le looping}
+
+Le mode jeu de l'exercice du looping remplace le wagon par une expérience
+familière : faire tourner un seau d'eau dans un plan vertical sans se mouiller.
+Une barre rigide de longueur \(L_b = \SI{0,90}{m}\) et de masse
+\(m_b = \SI{0,30}{kg}\) tourne autour d'un pivot placé à \SI{1,95}{m} du sol. Une
+corde souple de longueur \(L\) (de \num{0,15} à \SI{0,60}{m}, masse linéique
+\(\mu = \SI{0,15}{kg/m}\)) pend à son extrémité et porte un seau ouvert de masse
+\(m\), eau comprise, dont le centre de masse est à \(d = \SI{0,19}{m}\) sous
+l'anse. Un défi est réussi si le seau fait deux tours complets après le lâcher
+de la barre sans perdre une goutte ni casser la corde (\cref{fig-captures}).
+L'étudiant règle une seule grandeur, tirée au sort à chaque défi : la vitesse
+\(v_0\) du seau au point bas, la longueur \(L\) ou la masse \(m\).
+
+Une fois la barre lâchée et la chaîne alignée, et en négligeant la masse de la
+barre et de la corde devant celle du seau (\(m_b/3 = \SI{0,10}{kg}\) et
+\(\mu L \leq \SI{0,09}{kg}\), contre \(m \geq \SI{1}{kg}\)), barre, corde et seau
+forment un pendule simple de rayon \(R = L_b + L + d\). Repérons le seau par l'angle \(\theta\)
+depuis le point bas. La conservation de l'énergie donne
+\(v^2 = v_0^2 - 2 g R (1 - \cos(\theta))\), et la deuxième loi de Newton
+projetée sur la direction radiale donne la tension de la corde
+\cite{formulaire_epl1201} :
+\begin{equation}
+  T = m \left(\frac{v^2}{R} + g \cos(\theta)\right)
+    = m \left(\frac{v_0^2}{R} + g \left(3 \cos(\theta) - 2\right)\right).
+  \label{eq-tension}
+\end{equation}
+
+L'eau reste dans le seau tant que la corde tire. En effet, la corde et le poids
+sont les seules forces sur le seau ; dans le référentiel en translation avec
+son centre de masse, la pesanteur apparente vaut
+\(\vect{g} - \vect{a} = -\vect{T}/m\) (la taille du seau est négligée devant
+\(R\)). Elle pointe de l'anse vers
+le fond tant que \(T > 0\) et l'eau est alors plaquée au fond. La condition la
+plus difficile est au sommet (\(\theta = \pi\)) :
+\begin{equation}
+  T_s = m \left(\frac{v_0^2}{R} - 5 g\right) \geq 0
+  \quad \Longleftrightarrow \quad v_0^2 \geq 5 g R .
+  \label{eq-sommet}
+\end{equation}
+C'est la condition du wagon dans le looping, \(h \geq 5R/2\), écrite avec
+\(v_0^2 = 2 g h\). La corde casse si sa tension dépasse \(T_{\max}\), la
+tension la plus grande étant atteinte au point bas :
+\(m (v_0^2/R + g) \leq T_{\max}\). L'étudiant calcule ces deux bornes idéales
+avec les formules du cours ; le jeu garantit la réussite dans une fenêtre un peu
+plus étroite (\cref{sec-defis}).

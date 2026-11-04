@@ -1,0 +1,76 @@
+% memoire.tex — Squelette du mémoire (titres seulement) au format EPL :
+% couverture officielle (couverture/couverture.pdf, page 1 en tête, page 2 en
+% fin de document), pages liminaires, introduction, trois parties
+% (état de l'art, réalisation, résultats), conclusion, bibliographie, annexes.
+% Compilation : voir README.md (compiler.ps1 fait couverture puis corps).
+
+\documentclass[11pt, a4paper, openright, twoside]{report}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage[french]{babel}
+\usepackage{microtype}
+\usepackage[a4paper, margin=2.5cm, bindingoffset=0.5cm]{geometry}
+\usepackage{graphicx}
+\usepackage{pdfpages}
+\usepackage{amsmath, amssymb}
+\usepackage[locale=FR]{siunitx}
+\usepackage{booktabs}
+\usepackage{csquotes}
+\usepackage[backend=biber, style=ieee]{biblatex}
+\usepackage[hidelinks]{hyperref}
+\addbibresource{bibliographie.bib}
+\graphicspath{{figures/}}
+
+\begin{document}
+
+\pagestyle{empty}
+\includepdf[pages=1]{couverture/couverture.pdf}
+\cleardoublepage
+\pagestyle{plain}
+
+\pagenumbering{roman}
+\input{chapitres/00-remerciements}
+\input{chapitres/00-resume}
+\input{chapitres/00-declaration-ia}
+\tableofcontents
+\listoffigures
+\listoftables
+
+\cleardoublepage
+\pagenumbering{arabic}
+\input{chapitres/01-introduction}
+
+\part{État de l'art}
+\input{chapitres/02-apprentissage-mecanique}
+\input{chapitres/03-simulations}
+\input{chapitres/04-ludification}
+\input{chapitres/05-methodes-numeriques}
+\input{chapitres/06-ia-developpement}
+
+\part{Réalisation}
+\input{chapitres/07-cahier-des-charges}
+\input{chapitres/08-architecture}
+\input{chapitres/09-exercices}
+\input{chapitres/10-mode-jeu}
+\input{chapitres/11-methodologie-ia}
+\input{chapitres/12-validation}
+
+\part{Résultats}
+\input{chapitres/13-protocole}
+\input{chapitres/14-resultats-quantitatifs}
+\input{chapitres/15-resultats-qualitatifs}
+\input{chapitres/16-discussion}
+
+\input{chapitres/17-conclusion}
+
+\printbibliography[heading=bibintoc, title={Bibliographie}]
+
+\appendix
+\input{chapitres/18-annexes}
+
+\cleardoublepage
+\includepdf[pages=2]{couverture/couverture.pdf}
+
+\end{document}

@@ -1,0 +1,83 @@
+% 02-modele.tex — Modèle physique discret (chaîne, eau, articulations).
+
+\section{Modèle physique discret}
+
+Pour que la corde puisse plier et se détendre, elle n'est pas modélisée comme
+un segment rigide mais comme une chaîne de points matériels
+(\cref{fig-schema}). La chaîne relie dans l'ordre : le pivot fixe, l'extrémité
+de la barre, dix nœuds de corde dont le dernier est l'anse (alourdie de
+\SI{10}{g}), et le centre de masse du seau.
+
+\begin{figure}[ht]
+  \centering
+  \begin{tikzpicture}[scale=1.1, every node/.style={font=\footnotesize}]
+    \coordinate (pivot) at (0,0);
+    \coordinate (tip) at (2.4,-1.2);
+    \coordinate (anse) at (4.4,-2.5);
+    \draw[metal!40, line width=3pt] (-0.5,-3.3) -- (pivot) -- (0.5,-3.3);
+    \draw[metal, line width=2.6pt] (pivot) -- (tip);
+    \fill (pivot) circle (2.4pt);
+    \node[above left] at (pivot) {pivot};
+    \node[above, sloped, metal] at ($(pivot)!0.5!(tip)$) {barre \(L_b\)};
+    \foreach \k in {1,...,4} { \coordinate (r\k) at ($(tip)!\k/5!(anse)+(0,-0.07*\k+0.014*\k*\k)$); }
+    \draw[corde, line width=1.1pt] (tip) -- (r1) -- (r2) -- (r3) -- (r4) -- (anse);
+    \foreach \k in {1,...,4} { \fill[corde] (r\k) circle (1.4pt); }
+    \fill (tip) circle (1.8pt) node[below left=1pt] {\(m_b/3\)};
+    \node[corde, above right] at ($(r2)+(0.05,0.05)$) {corde : maillons \(\ell = L/10\), \(\mu \ell\)};
+    \begin{scope}[shift={(anse)}, rotate=-33]
+      \draw[metal, very thick, fill=metal!10] (-0.32,-0.12) -- (-0.26,-0.62) -- (0.26,-0.62) -- (0.32,-0.12);
+      \draw[black] (-0.32,-0.12) arc (180:0:0.32 and 0.12);
+      \foreach \x/\y in {-0.16/-0.54, 0/-0.54, 0.16/-0.54, -0.08/-0.43, 0.08/-0.43} { \fill[eau] (\x,\y) circle (2pt); }
+      \draw[dashed] (0,0) -- (0,-0.44) coordinate (cm);
+      \fill (cm) circle (1.8pt);
+      \node[right] at (0.02,-0.2) {\(d\)};
+    \end{scope}
+    \fill (anse) circle (1.8pt);
+    \node[above right] at (anse) {anse};
+    \draw[-{Stealth}, poids, thick] (cm) -- ++(0,-0.75) node[right] {\(\vect{P} = m \vect{g}\)};
+    \draw[-{Stealth}, tensionc, thick] (anse) -- ($(anse)!0.7cm!(r4)$) node[below left] {\(\vect{T}\)};
+    \draw[gray, dashed] (pivot) -- (0,-1.6);
+    \draw[-{Stealth}, gray] (0,-1.0) arc (-90:-26.6:1.0);
+    \node[gray] at (0.42,-1.15) {\(\alpha\)};
+    \node[eau, right] at ($(cm)+(0.35,-0.1)$) {gouttes};
+  \end{tikzpicture}
+  \caption{Modèle discret du jeu : barre (masse effective \(m_b/3\) à son
+    extrémité), dix maillons de corde qui peuvent raccourcir mais pas
+    s'allonger (quatre nœuds dessinés sur dix), seau rigide articulé à l'anse,
+    gouttes d'eau en bleu. Seuls le
+    poids \(\vect{P}\) et la tension \(\vect{T}\) de la corde agissent sur le seau.}
+  \label{fig-schema}
+\end{figure}
+
+\paragraph{Barre.} Le moteur fait tourner la barre, et la barre tire la corde :
+c'est la seule action motrice ; les autres actions extérieures sont la
+pesanteur et la réaction du pivot. Une
+barre homogène de moment d'inertie \(I = m_b L_b^2/3\) autour du pivot équivaut,
+pour la rotation, à un point de masse \(I/L_b^2 = m_b/3\) placé à son extrémité.
+Pour que le moment du poids \(m_b g (L_b/2) \sin(\alpha)\) soit correct, ce point
+subit une force \(m_b g/2\), c'est-à-dire une accélération \(3g/2\). Tant que le
+moteur entraîne la barre, la position de ce point est imposée (masse inverse
+nulle) ; quand il la lâche, le point retrouve la masse \(m_b/3\).
+
+\paragraph{Corde.} Chaque maillon de longueur \(\ell = L/10\) porte une masse
+\(\mu \ell\). Il impose \(|\vect{x}_{i+1} - \vect{x}_i| \leq \ell\) : la corde
+peut se courber et se détendre, mais pas s'allonger, et elle ne pousse jamais.
+La barre et le lien anse--centre de masse sont au contraire des liaisons
+bilatérales (distance fixe). Le seau est ainsi un corps rigide articulé à son
+anse, avec sa masse concentrée en son centre de masse.
+
+\paragraph{Eau.} L'eau est représentée par 25 disques de rayon
+\SI{1,4}{cm} (la même quantité d'eau que dix gouttes de \SI{2,2}{cm} : le
+produit \(n r^2\) est fixé). Chaque goutte tombe sous l'effet de la pesanteur ;
+elle est maintenue dans le seau par projection sur le fond et les parois,
+séparée des autres par des contraintes de non-recouvrement, et freinée par une
+traînée visqueuse de taux \SI{8}{s^{-1}} sur sa vitesse relative à la paroi. Une
+goutte dont le centre franchit le plan du bord est perdue. Les gouttes ne
+réagissent pas sur le seau : leur masse est comprise dans \(m\).
+
+\paragraph{Articulations.} Après le lâcher, la chaîne garde une petite flexion à
+l'extrémité de la barre et à l'anse. Un léger frottement y est modélisé par
+une paire de couples internes opposés, dimensionnée pour que la rotation
+relative décroisse au taux \SI{8}{s^{-1}}. Ce frottement conserve la quantité de
+mouvement et le moment cinétique, et ne fait que retirer de l'énergie : il
+amortit la flexion sans freiner la rotation d'ensemble.

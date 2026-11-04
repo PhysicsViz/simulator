@@ -37,13 +37,16 @@ Interactive physics simulations for first-year civil-engineering students
   h_min = 5R/2 for the circle, ≈ 2.32 R for the clothoid (max of
   y − r cos(φ)/2 over the loop). Fixed view (no zoom or pan, the rail scales with R); the
   free space of the canvas holds the free-body diagram, the energy bars
-  (E_c, E_p, E_m), a live readout and the legend. Energy, N = m (v²/r + g cos(φ)),
+  (E_c, E_p, E_m) and the legend; formulas and assumptions sit below the fold. Energy, N = m (v²/r + g cos(φ)),
   h_min = 5R/2, speed and reaction at the top, load factor, RK4 motion along
   the rail, one tabbed time graph. One-screen layout from 700 × 540 px
   (header, scene, parameters and graph fill the first view, text never below
   16 px; the formulas start just below the fold), normal scrolling on phones.
-  Experimental game: a bucket with water drops (10 by default, a temporary
-  input sets more for testing) on a flexible rope at the tip of a 0.9 m bar.
+  Arrows shown can be toggled (P, N, ΣF, v, a, and the components P_t / P_n
+  and a_θ / a_r) in the scene and the free-body diagram; the run can replay in
+  a loop. Experimental game (tab in the header): a bucket with 25 water drops,
+  shown also in a magnified view, (temporary inputs set the number of drops and
+  of rope segments for testing) on a flexible rope at the tip of a 0.9 m bar.
   Everything starts at rest; the only actuator is a motor at the pivot: it
   swings the bar at the pendulum's rhythm, then speeds it up so that the rope,
   pulled by the bar's tip, brings the bucket to the energy ½ v₀², lines the bar

@@ -7,11 +7,13 @@
  * (5R/2 or the clothoid's), angle θ and radius in the circle or the local
  * radius of curvature on the clothoid, traveled trace, predicted free flight after take-off, the wagon
  * with P / N / v / a drawn per unit mass so that a = P/m + N/m closes
- * graphically. The free space of the canvas holds the free-body diagram (P, N,
- * ΣF), the energy bars (E_c, E_p, E_m), a live readout (position on the rail, v,
- * N, n, verdict) and the legend: in a column right of the loop on wide
- * canvases, in a band above the rail on narrow ones. Transport over a
- * precomputed RK4 trajectory (rewound to t = 0 shortly after the end), compact
+ * graphically; every arrow can be shown or hidden (P, N, ΣF, v, a, and the
+ * components P_t / P_n of the weight and a_θ / a_r of the acceleration). The
+ * free space of the canvas holds the free-body diagram (the same choice of
+ * arrows, with their values) and the energy bars (E_c, E_p, E_m), in a column
+ * right of the loop on wide canvases, in a band above the rail on narrow ones,
+ * and the legend. Transport over a precomputed RK4 trajectory (rewound to t = 0
+ * shortly after the end, or replayed in a loop), compact
  * parameters (loop shape, h ≤ 3R follows R, R, m, g), live formulas in the course notation
  * and one tabbed time graph (positions, speed, accelerations, normal force).
  * Classic script (works via file://); reads the globals of calcul.js,
@@ -52,24 +54,21 @@
         legend_velocity: { fr: "Vitesse v", en: "Velocity v" },
         legend_acceleration: { fr: "Accélération a", en: "Acceleration a" },
         legend_force: { fr: "Résultante ΣF", en: "Net force ΣF" },
+        legend_parts: { fr: "Composantes", en: "Components" },
         fbd_title: { fr: "Bilan des forces", en: "Free-body diagram" },
+        vectors_title: { fr: "Flèches affichées", en: "Arrows shown" },
+        vector_weight: { fr: "P", en: "P" },
+        vector_normal: { fr: "N", en: "N" },
+        vector_net: { fr: "ΣF", en: "ΣF" },
+        vector_velocity: { fr: "v", en: "v" },
+        vector_acceleration: { fr: "a", en: "a" },
+        vector_weight_parts: { fr: "P_t, P_n", en: "P_t, P_n" },
+        vector_acceleration_parts: { fr: "a_θ, a_r", en: "a_θ, a_r" },
+        loop: { fr: "↻", en: "↻" },
+        loop_hint: { fr: "Rejouer en boucle", en: "Replay in a loop" },
         energy_title: { fr: "Énergie", en: "Energy" },
-        state_title: { fr: "État", en: "State" },
         label_takeoff: { fr: "décollage (N = 0)", en: "take-off (N = 0)" },
         label_impact: { fr: "impact", en: "impact" },
-        segment_incline: { fr: "rampe", en: "ramp" },
-        segment_fillet: { fr: "raccord (r = R)", en: "fillet (r = R)" },
-        segment_run_in: { fr: "piste", en: "run-in" },
-        segment_loop: { fr: "looping, θ = {theta}°", en: "loop, θ = {theta}°" },
-        segment_exit: { fr: "sortie", en: "exit" },
-        segment_flight: { fr: "en vol (N = 0)", en: "in flight (N = 0)" },
-        verdict_loops: { fr: "h ≥ 5R/2 : le wagon fait le tour", en: "h ≥ 5R/2: the wagon loops" },
-        verdict_takeoff: { fr: "R < h < 5R/2 : décollage à θ_d = {theta}°", en: "R < h < 5R/2: take-off at θ_d = {theta}°" },
-        verdict_back: { fr: "h ≤ R : demi-tour à θ = {theta}°", en: "h ≤ R: turns back at θ = {theta}°" },
-        verdict_rest: { fr: "h = 0 : le wagon reste au repos", en: "h = 0: the wagon stays at rest" },
-        verdict_loops_clothoid: { fr: "h ≥ h_min : le wagon fait le tour", en: "h ≥ h_min: the wagon loops" },
-        verdict_takeoff_clothoid: { fr: "h < h_min : décollage à θ_d = {theta}°", en: "h < h_min: take-off at θ_d = {theta}°" },
-        verdict_back_clothoid: { fr: "N > 0 : demi-tour à θ = {theta}°", en: "N > 0: turns back at θ = {theta}°" },
         label_radius: { fr: "r = {r} m", en: "r = {r} m" },
         formula_weight: { fr: "Poids", en: "Weight" },
         formula_speed: { fr: "Vitesse (énergie)", en: "Speed (energy)" },
@@ -129,6 +128,7 @@
     const SUBSTEPS = 8;
     const GRAPH_STRIDE = 4;
     const SHAPES = ["circle", "clothoid"];
+    const VECTORS = ["weight", "normal", "net", "velocity", "acceleration", "weight_parts", "acceleration_parts"];
     const SHAPE_FORMULAS = {
         top_minimum: { circle: "v_s,min = √(g R)", clothoid: "v_s,min = √(g r_s)" },
         normal_top: { circle: "N_s = m (2 g (h − 2 R)/R − g)", clothoid: "N_s = m (2 g (h − 2 R)/r_s − g)" },
@@ -147,7 +147,6 @@
     const UI_SCALE_MIN = 1;
     const UI_SCALE_MAX = 1.8;
     const NARROW_WIDTH = 640;
-    const STATE_BOX_HEIGHT = 74;
     const FORCE_LENGTH_RATIO = 0.9;
     const VELOCITY_LENGTH_RATIO = 0.8;
     const WAGON_LENGTH_RATIO = 0.42;
@@ -182,6 +181,8 @@
     let max_force_per_mass = 1;
     let max_speed = 1;
     let ui_scale = 1;
+    let is_looping = false;
+    const shown = { weight: true, normal: true, net: true, velocity: true, acceleration: false, weight_parts: false, acceleration_parts: false };
 
     /* formatNumber: locale-aware number with 2 decimals (comma in FR, dot in EN),
        true minus sign, no "−0,00" */
@@ -329,36 +330,28 @@
         };
 
         let boxes;
-        if (stacked && width < px(NARROW_WIDTH)) {
-            const half = (width - 3 * gap) / 2;
-            const top_height = band - 3 * gap - px(STATE_BOX_HEIGHT);
-            boxes = [
-                { x: gap, y: gap, width: half, height: top_height },
-                { x: 2 * gap + half, y: gap, width: half, height: top_height },
-                { x: gap, y: 2 * gap + top_height, width: width - 2 * gap, height: px(STATE_BOX_HEIGHT) },
-            ];
-        } else if (stacked) {
-            const box_width = (width - 4 * gap) / 3;
+        if (stacked) {
+            const box_width = Math.min((width - 3 * gap) / 2, px(340));
             const box_height = Math.min(band - 2 * gap, px(230));
-            boxes = [0, 1, 2].map((k) => ({ x: gap + k * (box_width + gap), y: gap, width: box_width, height: box_height }));
+            const start = (width - 2 * box_width - gap) / 2;
+            boxes = [0, 1].map((k) => ({ x: start + k * (box_width + gap), y: gap, width: box_width, height: box_height }));
         } else {
             const left = toScreenX(frame.column_start * radius);
             const column_width = width - left - gap;
             const column_height = toScreenY(0.55 * radius) - 2 * gap;
             if (column_width >= px(290)) {
-                const top_height = Math.min(0.62 * column_height, px(240));
+                const box_height = Math.min(column_height, px(250));
                 const half = (column_width - gap) / 2;
                 boxes = [
-                    { x: left, y: gap, width: half, height: top_height },
-                    { x: left + half + gap, y: gap, width: half, height: top_height },
-                    { x: left, y: 2 * gap + top_height, width: column_width, height: Math.min(column_height - top_height - gap, px(130)) },
+                    { x: left, y: gap, width: half, height: box_height },
+                    { x: left + half + gap, y: gap, width: half, height: box_height },
                 ];
             } else {
-                const box_height = (column_height - 2 * gap) / 3;
-                boxes = [0, 1, 2].map((k) => ({ x: left, y: gap + k * (box_height + gap), width: column_width, height: box_height }));
+                const box_height = Math.min((column_height - gap) / 2, px(230));
+                boxes = [0, 1].map((k) => ({ x: left, y: gap + k * (box_height + gap), width: column_width, height: box_height }));
             }
         }
-        return { transform, boxes: { free_body: boxes[0], energy: boxes[1], state: boxes[2] } };
+        return { transform, boxes: { free_body: boxes[0], energy: boxes[1] } };
     }
 
     /* accelerationVector: total acceleration a = a_θ t + (v²/r) n on the rail, (0, −g) in flight */
@@ -371,6 +364,56 @@
             x: state.a_theta * Math.cos(state.phi) - centripetal * Math.sin(state.phi),
             y: state.a_theta * Math.sin(state.phi) + centripetal * Math.cos(state.phi),
         };
+    }
+
+    /* componentVectors: per unit mass, the tangential and normal components of
+       the weight (P_t, P_n along t = (cos φ, sin φ) and the inner normal
+       n = (−sin φ, cos φ)) and of the acceleration (a_θ t, and the radial part
+       of magnitude v²/r toward the centre of curvature) */
+    function componentVectors(state) {
+        const tangent = { x: Math.cos(state.phi), y: Math.sin(state.phi) };
+        const inner = { x: -Math.sin(state.phi), y: Math.cos(state.phi) };
+        const weight_along = -parameters.gravity * Math.sin(state.phi);
+        const weight_across = -parameters.gravity * Math.cos(state.phi);
+        const centripetal = state.phase === "flight" ? -parameters.gravity * Math.cos(state.phi) : -state.a_r;
+        const tangential = state.phase === "flight" ? weight_along : state.a_theta;
+        return {
+            weight_tangent: { x: weight_along * tangent.x, y: weight_along * tangent.y },
+            weight_normal: { x: weight_across * inner.x, y: weight_across * inner.y },
+            acceleration_tangent: { x: tangential * tangent.x, y: tangential * tangent.y },
+            acceleration_normal: { x: centripetal * inner.x, y: centripetal * inner.y },
+        };
+    }
+
+    /* drawVectors: the arrows ticked in the panel, from one point; world vectors
+       per unit mass (y up) scaled to pixels, the velocity with its own scale */
+    function drawVectors(center_x, center_y, state, force_scale, velocity_scale, ink) {
+        const acceleration = accelerationVector(state);
+        const parts = componentVectors(state);
+        const arrow = (world, scale, options) => vector(center_x, center_y, world.x * scale, -world.y * scale, options);
+        if (shown.weight_parts) {
+            arrow(parts.weight_tangent, force_scale, { color: WEIGHT_COLOR, dash: [5, 4], line_width: 1.6, label: "P_t" });
+            arrow(parts.weight_normal, force_scale, { color: WEIGHT_COLOR, dash: [5, 4], line_width: 1.6, label: "P_n" });
+        }
+        if (shown.acceleration_parts) {
+            arrow(parts.acceleration_tangent, force_scale, { color: ink, dash: [2, 4], line_width: 1.4, label: "a_θ" });
+            arrow(parts.acceleration_normal, force_scale, { color: ink, dash: [2, 4], line_width: 1.4, label: "a_r" });
+        }
+        if (shown.weight) {
+            arrow({ x: 0, y: -parameters.gravity }, force_scale, { color: WEIGHT_COLOR, label: "P" });
+        }
+        if (shown.normal) {
+            arrow({ x: -Math.sin(state.phi) * state.normal_per_mass, y: Math.cos(state.phi) * state.normal_per_mass }, force_scale, { color: NORMAL_COLOR, label: "N" });
+        }
+        if (shown.net) {
+            arrow(acceleration, force_scale, { color: ink, line_width: 4, label: "ΣF" });
+        }
+        if (shown.acceleration) {
+            arrow(acceleration, force_scale, { color: ink, dash: [2, 4], line_width: 2, label: "a" });
+        }
+        if (shown.velocity) {
+            arrow({ x: state.velocity_x, y: state.velocity_y }, velocity_scale, { color: ink, dash: [7, 5], line_width: 2, label: "v" });
+        }
     }
 
     /* tracePath: polyline through world points */
@@ -716,21 +759,46 @@
         context.restore();
     }
 
-    /* drawFreeBodyBox: the wagon alone with P, N and the resultant ΣF = m a */
+    /* drawFreeBodyBox: the wagon alone with the arrows ticked in the panel and
+       their values (forces per unit mass × m; the velocity on its own scale) */
     function drawFreeBodyBox(box, ink, state) {
         panelBox(box, strings.fbd_title[current_language], ink);
-        const side_text = box.width > 1.5 * box.height;
-        const area_width = side_text ? box.width * 0.55 : box.width;
-        const area_height = box.height - px(24) - px(side_text ? 6 : 48);
-        const center_x = box.x + area_width / 2;
-        const center_y = box.y + px(24) + area_height / 2;
         const acceleration = accelerationVector(state);
         const net_per_mass = Math.hypot(acceleration.x, acceleration.y);
+        const parts = componentVectors(state);
+        const m = parameters.mass;
+        const lines = [];
+        if (shown.weight) {
+            lines.push({ content: `P = ${formatNumber(m * parameters.gravity)} N`, color: WEIGHT_COLOR });
+        }
+        if (shown.weight_parts) {
+            lines.push({ content: `P_t = ${formatNumber(m * Math.hypot(parts.weight_tangent.x, parts.weight_tangent.y))} N   P_n = ${formatNumber(m * Math.hypot(parts.weight_normal.x, parts.weight_normal.y))} N`, color: WEIGHT_COLOR });
+        }
+        if (shown.normal) {
+            lines.push({ content: `N = ${formatNumber(m * state.normal_per_mass)} N`, color: NORMAL_COLOR });
+        }
+        if (shown.net) {
+            lines.push({ content: `ΣF = ${formatNumber(m * net_per_mass)} N`, color: ink });
+        }
+        if (shown.acceleration) {
+            lines.push({ content: `a = ${formatNumber(net_per_mass)} m/s²`, color: ink });
+        }
+        if (shown.acceleration_parts) {
+            lines.push({ content: `a_θ = ${formatNumber(state.a_theta)}   a_r = ${formatNumber(state.a_r)} m/s²`, color: ink });
+        }
+        if (shown.velocity) {
+            lines.push({ content: `v = ${formatNumber(state.speed)} m/s`, color: ink });
+        }
+        const line_height = px(13);
+        const side_text = box.width > 1.5 * box.height;
+        const area_width = side_text ? box.width * 0.5 : box.width;
+        const area_height = box.height - px(24) - (side_text ? px(6) : lines.length * line_height + px(8));
+        const center_x = box.x + area_width / 2;
+        const center_y = box.y + px(24) + area_height / 2;
         const largest = Math.max(parameters.gravity, state.normal_per_mass, net_per_mass);
         const scale = 0.4 * Math.min(area_width, area_height) / largest;
-        vector(center_x, center_y, 0, parameters.gravity * scale, { color: WEIGHT_COLOR, label: "P" });
-        vector(center_x, center_y, -Math.sin(state.phi) * state.normal_per_mass * scale, -Math.cos(state.phi) * state.normal_per_mass * scale, { color: NORMAL_COLOR, label: "N" });
-        vector(center_x, center_y, acceleration.x * scale, -acceleration.y * scale, { color: ink, line_width: 4, label: "ΣF" });
+        const velocity_scale = 0.4 * Math.min(area_width, area_height) / max_speed;
+        drawVectors(center_x, center_y, state, scale, velocity_scale, ink);
         context.save();
         context.fillStyle = "#f9a825";
         context.strokeStyle = "#8d5b00";
@@ -742,15 +810,10 @@
         context.textAlign = side_text ? "left" : "center";
         context.textBaseline = "top";
         const text_x = side_text ? box.x + area_width : center_x;
-        const lines_y = side_text ? box.y + box.height / 2 - px(18) : box.y + box.height - px(46);
-        const lines = [
-            { content: `P = ${formatNumber(parameters.mass * parameters.gravity)} N`, color: WEIGHT_COLOR },
-            { content: `N = ${formatNumber(parameters.mass * state.normal_per_mass)} N`, color: NORMAL_COLOR },
-            { content: `ΣF = ${formatNumber(parameters.mass * net_per_mass)} N`, color: ink },
-        ];
+        const lines_y = side_text ? box.y + box.height / 2 - lines.length * line_height / 2 : box.y + box.height - lines.length * line_height - px(6);
         lines.forEach((line, k) => {
             context.fillStyle = line.color;
-            context.fillText(line.content, text_x, lines_y + px(13) * k, box.width - px(side_text ? 6 : 8) - (side_text ? area_width : 0));
+            context.fillText(line.content, text_x, lines_y + line_height * k, box.width - px(side_text ? 6 : 8) - (side_text ? area_width : 0));
         });
         context.restore();
     }
@@ -791,55 +854,6 @@
         context.restore();
     }
 
-    /* verdictText: what this release height leads to (closed-form angles on the
-       circle, the simulated take-off and the height reached on the clothoid) */
-    function verdictText() {
-        const radius = parameters.loop_radius;
-        const height = track.start_height;
-        if (height <= 0) {
-            return text("verdict_rest");
-        }
-        if (track.shape !== "circle") {
-            if (height >= track.minimum_height) {
-                return text("verdict_loops_clothoid");
-            }
-            if (trajectory.takeoff !== null) {
-                return text("verdict_takeoff_clothoid", { theta: formatNumber(trajectory.takeoff.loop_angle * 180 / Math.PI) });
-            }
-            return text("verdict_back_clothoid", { theta: formatNumber(calc.heightAngle(track, height) * 180 / Math.PI) });
-        }
-        if (height >= calc.minimumHeight(radius)) {
-            return text("verdict_loops");
-        }
-        if (height > radius) {
-            return text("verdict_takeoff", { theta: formatNumber(calc.takeoffAngle(height, radius) * 180 / Math.PI) });
-        }
-        return text("verdict_back", { theta: formatNumber(calc.stopAngle(height, radius) * 180 / Math.PI) });
-    }
-
-    /* drawStateBox: where the wagon is, its speed, N and load factor, and the verdict */
-    function drawStateBox(box, ink, state) {
-        panelBox(box, strings.state_title[current_language], ink);
-        const where = state.segment === "loop"
-            ? text("segment_loop", { theta: formatNumber(state.loop_angle * 180 / Math.PI) })
-            : text(`segment_${state.segment}`);
-        const lines = [
-            { content: where, color: ink },
-            { content: `v = ${formatNumber(state.speed)} m/s   N = ${formatNumber(parameters.mass * state.normal_per_mass)} N   n = ${formatNumber(state.normal_per_mass / parameters.gravity)}`, color: ink },
-            { content: verdictText(), color: track.start_height >= track.minimum_height ? NORMAL_COLOR : FLIGHT_COLOR },
-        ];
-        context.save();
-        context.textAlign = "left";
-        context.textBaseline = "top";
-        const line_height = Math.min(px(18), (box.height - px(28)) / lines.length);
-        lines.forEach((line, k) => {
-            context.font = k === 2 ? font(12, "bold") : font(12);
-            context.fillStyle = line.color;
-            context.fillText(line.content, box.x + px(9), box.y + px(26) + k * line_height, box.width - px(18));
-        });
-        context.restore();
-    }
-
     /* drawLegend: vector color convention in the floor band, bottom left */
     function drawLegend(ink) {
         const items = [
@@ -848,7 +862,10 @@
             { key: "legend_velocity", color: ink, dash: [6, 4], width: 2 },
             { key: "legend_acceleration", color: ink, dash: [2, 3], width: 2 },
             { key: "legend_force", color: ink, dash: [], width: 5 },
-        ];
+        ].filter((item) => item.key !== "legend_force" || shown.net);
+        if (shown.weight_parts || shown.acceleration_parts) {
+            items.push({ key: "legend_parts", color: shown.weight_parts ? WEIGHT_COLOR : ink, dash: [5, 4], width: 1.6 });
+        }
         context.save();
         context.font = font(11);
         context.textBaseline = "middle";
@@ -892,7 +909,6 @@
         drawPredictedFlight(transform);
         drawFreeBodyBox(boxes.free_body, ink, state);
         drawEnergyBox(boxes.energy, ink, state);
-        drawStateBox(boxes.state, ink, state);
         drawLegend(ink);
 
         const wagon_size = WAGON_LENGTH_RATIO * radius * transform.pixels_per_meter;
@@ -903,11 +919,7 @@
         const center_y = rail_y - Math.cos(state.phi) * wagon.offset;
         const force_scale = FORCE_LENGTH_RATIO * radius * transform.pixels_per_meter / max_force_per_mass;
         const velocity_scale = VELOCITY_LENGTH_RATIO * radius * transform.pixels_per_meter / max_speed;
-        const acceleration = accelerationVector(state);
-        vector(center_x, center_y, 0, parameters.gravity * force_scale, { color: WEIGHT_COLOR, label: "P" });
-        vector(center_x, center_y, -Math.sin(state.phi) * state.normal_per_mass * force_scale, -Math.cos(state.phi) * state.normal_per_mass * force_scale, { color: NORMAL_COLOR, label: "N" });
-        vector(center_x, center_y, acceleration.x * force_scale, -acceleration.y * force_scale, { color: ink, dash: [2, 4], line_width: 2, label: "a" });
-        vector(center_x, center_y, state.velocity_x * velocity_scale, -state.velocity_y * velocity_scale, { color: ink, dash: [7, 5], line_width: 2, label: "v" });
+        drawVectors(center_x, center_y, state, force_scale, velocity_scale, ink);
         return state;
     }
 
@@ -1086,6 +1098,9 @@
         if (rewind_timestamp !== null && timestamp >= rewind_timestamp) {
             rewind_timestamp = null;
             simulation_time = 0;
+            if (is_looping) {
+                setPlaying(true);
+            }
         }
         render();
         requestAnimationFrame(animationFrame);
@@ -1121,6 +1136,33 @@
             button.dataset.i18n = `shape_${shape}`;
             button.classList.toggle("active", shape === parameters.shape);
             button.addEventListener("click", () => applyShape(shape));
+            group.append(button);
+        }
+        row.append(label, group);
+        container.append(row);
+    }
+
+    /* buildVectorRow: one toggle button per arrow (scene and free-body diagram) */
+    function buildVectorRow(container) {
+        const row = document.createElement("div");
+        row.className = "parameter-row";
+        const label = document.createElement("span");
+        label.className = "row-label";
+        label.dataset.i18n = "vectors_title";
+        const group = document.createElement("div");
+        group.className = "vector-buttons";
+        for (const key of VECTORS) {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.id = `vector_${key}`;
+            button.dataset.i18n = `vector_${key}`;
+            button.classList.toggle("active", shown[key]);
+            button.setAttribute("aria-pressed", String(shown[key]));
+            button.addEventListener("click", () => {
+                shown[key] = !shown[key];
+                button.classList.toggle("active", shown[key]);
+                button.setAttribute("aria-pressed", String(shown[key]));
+            });
             group.append(button);
         }
         row.append(label, group);
@@ -1173,6 +1215,7 @@
             row.append(head, slider);
             container.append(row);
         }
+        buildVectorRow(container);
         syncHeightRange();
     }
 
@@ -1253,6 +1296,7 @@
             }
         }
         document.getElementById("reset_button").title = strings.reset_hint[language];
+        document.getElementById("loop_button").title = strings.loop_hint[language];
         for (const definition of GRAPHS) {
             document.getElementById(`graph_tab_${definition.key}`).title = strings[`graph_${definition.key}`][language];
         }
@@ -1270,6 +1314,11 @@
                 simulation_time = 0;
             }
             setPlaying(!is_playing);
+        });
+        document.getElementById("loop_button").addEventListener("click", (event) => {
+            is_looping = !is_looping;
+            event.currentTarget.classList.toggle("active", is_looping);
+            event.currentTarget.setAttribute("aria-pressed", String(is_looping));
         });
         document.getElementById("reset_button").addEventListener("click", () => {
             simulation_time = 0;

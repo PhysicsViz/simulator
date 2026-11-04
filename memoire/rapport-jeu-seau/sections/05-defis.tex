@@ -1,0 +1,33 @@
+% 05-defis.tex — Génération de défis toujours solubles.
+
+\section{Des défis toujours solubles}
+\label{sec-defis}
+
+Un défi impossible découragerait l'étudiant ; chaque défi tiré doit donc être
+soluble, et cela se vérifie par la simulation elle-même. La génération est
+constructive. Le programme tire le lieu (Lune, Mars, Vénus ou Terre, donc
+\(g\)), \(L \in [\num{0,20} ; \SI{0,55}{m}]\) et \(m \in [1 ; \SI{6}{kg}]\),
+puis une vitesse de référence telle que
+\(v_{\text{réf}}^2 \in [\num{5,8} ; \num{7,5}]\, g R\), et fixe
+\(T_{\max} = m (v_{\text{réf}}^2/R + g)\) multiplié par un facteur entre
+\num{1,25} et \num{1,60}.
+
+La fenêtre garantie, utilisée en interne et jamais affichée, est plus étroite que la fenêtre idéale
+\(\sqrt{5 g R} \leq v_0 \leq \sqrt{(T_{\max}/m - g) R}\). Sa borne basse est
+relevée de \SI{6}{\percent}, \(v_0 \geq 1{,}06 \sqrt{5 g R}\). Sa borne haute
+n'utilise que \SI{80}{\percent} de \(T_{\max}\) et tient compte de la charge
+propre de la corde, \(\mu L (\omega^2 r_{\text{milieu}} + g)\). Pour un défi sur
+\(L\) ou sur \(m\), la même fenêtre est convertie en bornes sur la grandeur
+libre ; pour la masse, il faut remplir le seau à au moins \SI{90}{\percent} de
+la masse maximale que la corde supporte.
+
+Le vérificateur \texttt{isChallengeFeasible} ne se contente pas de ces
+inégalités : il \emph{rejoue la simulation complète} en cinq points répartis
+régulièrement dans la fenêtre, et le défi n'est retenu que si les cinq essais
+réussissent. Sinon, un autre défi est tiré ; après un nombre limité d'échecs,
+un défi de secours vérifié est proposé. Pour que ce contrôle reste rapide, l'élan,
+qui ne dépend pas de \(v_0\), n'est simulé qu'une fois par configuration
+et recopié pour chaque essai. Un défi est ainsi produit en \SI{1,8}{s} en
+moyenne (Node.js, ordinateur portable). Des tests unitaires (environ 70 pour le
+jeu, dont un tirage de Monte-Carlo de 96 défis rejoués) vérifient ces
+propriétés.

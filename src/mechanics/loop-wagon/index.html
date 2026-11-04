@@ -1,11 +1,12 @@
 <!doctype html>
 <!--
-  index.html — Compact wagon loop-the-loop exercise page (classic circular loop).
-  Circular or clothoid loop (shape selector in the parameters).
-  One-screen layout on desktop: scene canvas (fixed view; force diagram, energy
-  bars, live readout and legend drawn in its free space) beside a side column
-  (transport, parameters, tabbed graph) filling the first view, header
-  included; the formula strip sits just below the fold.
+  index.html — Compact wagon loop-the-loop exercise page, circular or clothoid
+  loop (shape selector in the parameters). One-screen layout on desktop: the
+  header (with the simulation / game tabs), the scene canvas (fixed view;
+  force diagram and energy bars drawn in its free space, legend) beside a side
+  column (transport with loop replay, parameters and arrows shown, tabbed
+  graph) fill the first view; the formula strip and the assumptions sit just
+  below the fold.
   Text filled by main.js (FR/EN). Classic (non-module) scripts so the page works
   when opened via file://.
 -->
@@ -262,6 +263,32 @@
         padding-top: 0;
       }
 
+      .shape-buttons,
+      .vector-buttons {
+        margin-top: 0.25em;
+      }
+
+      .vector-buttons {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.3em;
+      }
+
+      .vector-buttons button {
+        padding: 0.2em 0.3em;
+        font-size: 0.8em;
+        white-space: nowrap;
+      }
+
+      #loop_button {
+        padding: 0.15em 0.45em;
+        font-size: 0.75em;
+      }
+
+      #time_display {
+        white-space: nowrap;
+      }
+
       /* One-screen mode (tablets, laptops, desktops): the first view is exactly
          the viewport, header included; the scene and the graph take the room
          left, and the formulas start just below the fold. */
@@ -325,9 +352,6 @@
           height: min(calc(52vw + 230px), calc(100svh - 110px));
         }
 
-        .assumption {
-          order: 5;
-        }
       }
 
       /* Short landscape screens (phones turned sideways): scene as tall as the screen. */
@@ -366,18 +390,15 @@
         Physics Simulator
       </a>
       <span class="crumb" data-i18n="page_title"></span>
+      <!-- GAME MODE (experimental) — mount point of the mode tabs; to remove the
+           feature delete the GAME MODE blocks in this file, game.js, its test
+           file, and the lines marked "Game mode hook" in main.js -->
+      <div id="game_mode_mount"></div>
       <span class="spacer"></span>
       <button id="language_toggle" type="button">EN</button>
     </header>
 
     <main class="exercise-page">
-      <p class="assumption" data-i18n="assumption"></p>
-
-      <!-- GAME MODE (experimental) — mount point; to remove the feature delete the
-           two GAME MODE blocks in this file, game.js, its test file, and the
-           lines marked "Game mode hook" in main.js -->
-      <div id="game_mode_mount"></div>
-
       <div class="layout">
         <section class="panel scene-panel">
           <canvas id="simulation_canvas" width="920" height="520"></canvas>
@@ -388,6 +409,7 @@
             <div class="transport-head">
               <p id="time_display">t = 0,00 s</p>
               <span id="speed_buttons"></span>
+              <button id="loop_button" type="button" aria-pressed="false" data-i18n="loop"></button>
             </div>
             <input id="timeline" type="range" min="0" max="20" step="0.01" value="0">
             <div class="transport-buttons">
@@ -478,6 +500,7 @@
           </div>
         </div>
       </section>
+      <p class="assumption" id="exercise_assumption" data-i18n="assumption"></p>
     </div>
 
     <script src="../../assets/js/canvas_draw.js"></script>
@@ -488,6 +511,7 @@
     <!-- GAME MODE (experimental) — styles + script; see removal note at the mount point -->
     <style>
       .game-mode .formula-panel,
+      .game-mode #exercise_assumption,
       .game-mode .graphs-panel,
       .game-mode #timeline,
       .game-mode #step_back_button,
@@ -533,7 +557,35 @@
       }
 
       .game-panel .assumption {
-        margin: 0 0 6px;
+        margin: 8px 0 0;
+      }
+
+      #game_mode_mount {
+        margin-left: 12px;
+      }
+
+      @media (max-width: 699px) {
+        .app-bar {
+          flex-wrap: wrap;
+        }
+
+        .app-bar .crumb {
+          flex: 1 1 0;
+          min-width: 0;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .app-bar .spacer {
+          display: none;
+        }
+
+        #game_mode_mount {
+          order: 10;
+          flex-basis: 100%;
+          margin: 4px 0 0;
+        }
       }
 
       .game-panel .panel-head h2 {

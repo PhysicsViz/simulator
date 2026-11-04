@@ -1,0 +1,34 @@
+mon commentaire 
+
+pas fan du titre 
+plus rapide sur l'explication de l'exercice
+plus ilustrer sur les methode num avec plus de graph et potentielement des bout de code (petit)
+doit etre accesible a des non physisient ( des info devrais pouvoir comprendre) claire preci directe
+j'aime bien les etape mais ce serais bien de savoir quelle calcule quand 
+
+partie defi tjrs soluble est pas tres utile
+regler le centre de masse vrais en fct goute???
+faire plus realiste?
+
+a retirer : Enfin,
+un départ plus brutal, qui montrerait davantage la corde molle et les éclaboussures, a été essayé : il fait tomber
+l’eau quel que soit v0, ce qui rendrait les défis insolubles. Il n’a donc pas été retenu.
+j'aime bien comparons theorique et ce que l'on a fait
+
+
+un autre :
+
+ca j'enleve:
+∗Rédigé avec l’aide d’une IA ; voir la page « Utilisation de l’intelligence artificielle dans le projet ».
+Arnaud Gheysens∗ mettre mon nom ? xd
+
+"dix maillons de corde qui
+peuvent raccourcir mais pas s’allonger (quatre nœuds dessinés sur dix)" je dessinerais les 10
+
+le point 5 jsp s'il est super utile?
+
+je pense que j'enleverais les trais de l'eau qui tombe (les garder en petites billes tout le temps)
+
+aussi ce serait pas mal d'etre plus proche des resultats théoriques.. mais j'aime bcp la comparaison et ca on devrait faire à chaque fois 
+
+aussi ca "La simulation doit donner raison aux formules du cours, sinon le jeu contredirait l’exercice. " je suis pas fan, le but c'est d'etre proche de la théorie, pas de fausser la physique pour rentrer dans les cadres

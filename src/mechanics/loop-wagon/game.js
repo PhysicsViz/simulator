@@ -3,7 +3,7 @@
  * exercise. A light rigid bar (L_b = 0.9 m, 0.3 kg) turns on a frictionless
  * pivot; a flexible rope of length L (0.15–0.6 m) hangs from its tip and carries
  * an open bucket (centre of mass d = 0.19 m below the handle, total mass m with
- * its water) holding water drops (10 by default). Every force on the bucket comes
+ * its water) holding water drops (25 by default). Every force on the bucket comes
  * through the bar and the rope: at t = 0 everything hangs at rest, then a motor
  * at the pivot drives the bar — a few back-and-forth swings at the pendulum's
  * own rhythm until the swing reaches about 70°, then, from a backswing, a throw
@@ -14,9 +14,9 @@
  * accompanies it until bar, rope and bucket are aligned (bend < 3°, at most
  * 0.6 s, so the release may come after the top), then lets go: from there the
  * bar turns freely. The bucket then passes the lowest point a little faster than
- * v₀ (+3 to +10 %: the alignment still adds energy and the bar and rope hand
- * theirs over), so the measured success threshold lies at 0.92–0.98 √(5 g R)
- * and the tension up to ≈ 25 % above m (v₀²/R + g). The motor never pushes the bucket itself: it sets the bar's lead
+ * v₀ (+3 to +7 %: the alignment still adds energy and the bar and rope hand
+ * theirs over), so the measured success threshold lies at 0.92–0.97 √(5 g R)
+ * and the peak tension 11 to 33 % above m (v₀²/R + g) (rope load included). The motor never pushes the bucket itself: it sets the bar's lead
  * δ over the bucket so that the rope, pulling from the bar's tip, makes the
  * angle ψ with the bucket's inward radial that gives the wanted tangential pull
  * (triangle pivot–tip–bucket: L_b sin(δ + ψ) = r sin(ψ), so sin(ψ) ≤ L_b/r: a
@@ -36,7 +36,7 @@
  * during the gentle swings and 2400 from the throw on, both fast enough for the
  * transverse waves of the rope, 1.3 √(T/μ)/ℓ; zero compliance). One chain of point masses: fixed pivot → bar tip (bilateral link,
  * effective mass m_bar/3 = I/L_b², weight m_bar g/2 so that the torque of the
- * weight is right) → 10 rope links (one-sided: a link may
+ * weight is right) → 10 rope links (a test setting changes it; one-sided: a link may
  * shorten, never stretch, so the rope bends and goes slack but never pushes) →
  * handle → bucket centre of mass (bilateral link: the bucket is a rigid body
  * hinged at its handle). All links are projected at once by a direct solve of
@@ -44,7 +44,8 @@
  * set for the one-sided links); the rope tension is T = −λ/Δt² of its most
  * loaded link (the bar end for a heavy rope), low-pass filtered over 20 ms;
  * the position projection damps the motion slightly (2 to 8 % of the energy
- * over two turns at 2400 Hz). Water = 10 disc particles under gravity,
+ * over two turns at 2400 Hz). Water = 25 disc particles under gravity (as
+ * much water as 10 drops of 2.2 cm: n r² fixed),
  * kept in the moving bucket by projection on its bottom and side walls and
  * separated from each other by non-overlap constraints, with a viscous drag
  * (rate 8 s⁻¹) of their velocity relative to the bucket wall; a drop whose centre
@@ -60,8 +61,8 @@
  * reference solution, then the pure checker isChallengeFeasible replays the full
  * simulation, wind-up included (the pumping does not depend on v₀: it is
  * simulated once per setup and cloned for every probe), at five evenly spaced points of the announced
- * winning window (the ideal window shrunk by 6 % on v₀ at each end, its upper
- * end also allowing for the rope's own load), rejection sampling with a
+ * winning window (v₀ at least 6 % above √(5 g R), and the bottom tension,
+ * rope load included, at most 0.8 T_max), rejection sampling with a
  * deterministic fallback, Monte-Carlo tests. Milestone tiers as elsewhere.
  * Self-contained: to remove, delete this file, its test file, the GAME MODE
  * blocks in index.html and the lines marked "Game mode hook" in main.js.
@@ -93,7 +94,8 @@
     const ROPE_LINEAR_DENSITY = 0.15;
     const HANDLE_MASS = 0.01;
     const BUCKET = { rim: 0.06, bottom: 0.26, center_of_mass: 0.19, half_width: 0.1 };
-    const DROP_COUNT = 10;
+    const DROP_COUNT = 25;
+    const REFERENCE_DROP_COUNT = 10;
     const DROP_RADIUS = 0.022;
     const WATER_DRAG_RATE = 8;
     const SUBSTEP_RATE = 2400;
@@ -115,8 +117,9 @@
     const TIP = 1;
     const HANDLE = ROPE_LINKS + 1;
     const CENTER = ROPE_LINKS + 2;
-    const LAST_ROPE_LINK = ROPE_LINKS;
     const FIRST_ROPE_LINK = 1;
+    const MIN_ROPE_LINKS = 2;
+    const MAX_ROPE_LINKS = 40;
     const SLACK_TOLERANCE = 1e-6;
     const SINGULAR_TOLERANCE = 1e-9;
     const PUMP_AMPLITUDE = 70 * Math.PI / 180;
@@ -239,12 +242,13 @@
     }
 
     /* initialState: everything at rest, hanging straight down, the bar held by the
-       motor (tip with zero inverse mass until it lets go); drops (10 by default,
+       motor (tip with zero inverse mass until it lets go); drops (25 by default,
        radius 2.2 cm × √(10/n) so that the water volume does not change) settled
        on the bucket bottom in hexagonal rows */
     function initialState(parameters) {
         const radius = bucketRadius(parameters.rope_length);
-        const link_length = parameters.rope_length / ROPE_LINKS;
+        const rope_links = ropeLinks(parameters);
+        const link_length = parameters.rope_length / rope_links;
         const node_mass = ROPE_LINEAR_DENSITY * link_length;
         const point = (distance, inverse_mass) => ({
             x: 0,
@@ -256,25 +260,25 @@
             inverse_mass,
         });
         const nodes = [point(0, 0), point(BAR_LENGTH, 0)];
-        for (let i = 1; i <= ROPE_LINKS; i++) {
-            nodes.push(point(BAR_LENGTH + i * link_length, 1 / (i === ROPE_LINKS ? node_mass + HANDLE_MASS : node_mass)));
+        for (let i = 1; i <= rope_links; i++) {
+            nodes.push(point(BAR_LENGTH + i * link_length, 1 / (i === rope_links ? node_mass + HANDLE_MASS : node_mass)));
         }
         nodes.push(point(radius, 1 / parameters.mass));
         const drop_count = Math.max(1, Math.round(parameters.drop_count ?? DROP_COUNT));
-        const drop_radius = DROP_RADIUS * Math.sqrt(DROP_COUNT / drop_count);
+        const drop_radius = DROP_RADIUS * Math.sqrt(REFERENCE_DROP_COUNT / drop_count);
         return {
             nodes,
             drops: settledDrops(BAR_LENGTH + parameters.rope_length, drop_count, drop_radius, point),
             drop_radius,
-            link_lengths: [BAR_LENGTH, ...new Array(ROPE_LINKS).fill(link_length), BUCKET.center_of_mass],
-            rope_flags: [false, ...new Array(ROPE_LINKS).fill(true), false],
+            link_lengths: [BAR_LENGTH, ...new Array(rope_links).fill(link_length), BUCKET.center_of_mass],
+            rope_flags: [false, ...new Array(rope_links).fill(true), false],
             snapped: false,
             mass: parameters.mass,
             tension: (parameters.mass + ROPE_LINEAR_DENSITY * parameters.rope_length) * parameters.gravity,
             released: false,
             turned: 0,
             previous_angle: 0,
-            work: createWorkspace(ROPE_LINKS + 2),
+            work: createWorkspace(rope_links + 2),
         };
     }
 
@@ -295,6 +299,13 @@
             }
         }
         return drops;
+    }
+
+    /* ropeLinks: number of rope links (10 by default; a test setting may change
+       it, clamped to 2–40) — the chain is pivot, tip, the rope nodes, then the
+       handle (last rope node, nodes.length − 2) and the bucket centre (last node) */
+    function ropeLinks(parameters) {
+        return Math.min(Math.max(Math.round(parameters.rope_links ?? ROPE_LINKS), MIN_ROPE_LINKS), MAX_ROPE_LINKS);
     }
 
     /* createWorkspace: preallocated arrays of the chain solver (no allocation per substep) */
@@ -438,8 +449,8 @@
 
     /* bucketFrame: handle point, unit axis e (handle → bottom) and its normal */
     function bucketFrame(nodes) {
-        const handle = nodes[HANDLE];
-        const center = nodes[CENTER];
+        const handle = nodes[nodes.length - 2];
+        const center = nodes[nodes.length - 1];
         const length = Math.sqrt((center.x - handle.x) ** 2 + (center.y - handle.y) ** 2);
         const axis_x = (center.x - handle.x) / length;
         const axis_y = (center.y - handle.y) / length;
@@ -595,12 +606,12 @@
         for (let i = TIP; i < nodes.length; i++) {
             updateVelocity(nodes[i], dt);
         }
-        dampJoint(nodes[HANDLE - 1], nodes[HANDLE], nodes[CENTER], HINGE_DAMPING_RATE, dt);
+        dampJoint(nodes[nodes.length - 3], nodes[nodes.length - 2], nodes[nodes.length - 1], HINGE_DAMPING_RATE, dt);
         if (state.released) {
             dampJoint(nodes[PIVOT], nodes[TIP], nodes[TIP + 1], HINGE_DAMPING_RATE, dt);
         }
-        const handle = nodes[HANDLE];
-        const center = nodes[CENTER];
+        const handle = nodes[nodes.length - 2];
+        const center = nodes[nodes.length - 1];
         const arm_x = center.x - handle.x;
         const arm_y = center.y - handle.y;
         const spin = (arm_x * (center.velocity_y - handle.velocity_y) - arm_y * (center.velocity_x - handle.velocity_x)) / (arm_x * arm_x + arm_y * arm_y);
@@ -618,7 +629,7 @@
             return 0;
         }
         let largest = 0;
-        for (let i = FIRST_ROPE_LINK; i <= LAST_ROPE_LINK; i++) {
+        for (let i = FIRST_ROPE_LINK; i <= nodes.length - 3; i++) {
             largest = Math.max(largest, -lambdas[i]);
         }
         return largest / (dt * dt);
@@ -640,7 +651,7 @@
 
     /* bucketAngle: angle of the bucket centre of mass around the pivot, from the lowest point */
     function bucketAngle(state) {
-        const center = state.nodes[CENTER];
+        const center = state.nodes[state.nodes.length - 1];
         return Math.atan2(center.x, PIVOT_HEIGHT - center.y);
     }
 
@@ -648,7 +659,7 @@
        speed (r × v)/r² and its energy per unit mass ½ v² + g (y − y_bas) from the
        lowest point of the circle of radius R */
     function bucketMotion(state, gravity, radius) {
-        const center = state.nodes[CENTER];
+        const center = state.nodes[state.nodes.length - 1];
         const relative_x = center.x;
         const relative_y = center.y - PIVOT_HEIGHT;
         const distance_squared = relative_x * relative_x + relative_y * relative_y;
@@ -748,8 +759,8 @@
         const bend = (first, second) => Math.abs(((second - first + 3 * Math.PI) % (2 * Math.PI)) - Math.PI);
         const nodes = state.nodes;
         const bar = direction({ x: 0, y: PIVOT_HEIGHT }, nodes[TIP]);
-        const rope = direction(nodes[TIP], nodes[HANDLE]);
-        const bucket = direction(nodes[HANDLE], nodes[CENTER]);
+        const rope = direction(nodes[TIP], nodes[nodes.length - 2]);
+        const bucket = direction(nodes[nodes.length - 2], nodes[nodes.length - 1]);
         return Math.max(bend(bar, rope), bend(rope, bucket));
     }
 
@@ -802,7 +813,7 @@
        transverse waves of the rope under the tension T, rate ≥ 1.3 c/ℓ with
        c = √(T/μ) (a short rope under a heavy bucket), rounded up to 120 Hz */
     function waveRate(parameters, tension, minimum) {
-        const wave = Math.sqrt(tension / ROPE_LINEAR_DENSITY) / (parameters.rope_length / ROPE_LINKS);
+        const wave = Math.sqrt(tension / ROPE_LINEAR_DENSITY) / (parameters.rope_length / ropeLinks(parameters));
         return Math.max(minimum, Math.ceil(1.3 * wave / 120) * 120);
     }
 
@@ -884,7 +895,7 @@
                     releaseBar(state);
                     motor.phase = "free";
                     attempt.release_time = time;
-                    attempt.launch_speed = Math.hypot(state.nodes[CENTER].velocity_x, state.nodes[CENTER].velocity_y);
+                    attempt.launch_speed = Math.hypot(state.nodes[state.nodes.length - 1].velocity_x, state.nodes[state.nodes.length - 1].velocity_y);
                 }
             }
             const change = state.released ? trackTurns(state) : 0;
@@ -935,7 +946,7 @@
        replay only the throw; null if the pumping ended the run or would snap this
        rope (the caller then runs the attempt from t = 0) */
     function pumpedAttempt(parameters, record) {
-        const key = [parameters.gravity, parameters.rope_length, parameters.mass, parameters.drop_count ?? DROP_COUNT, record].join("|");
+        const key = [parameters.gravity, parameters.rope_length, parameters.mass, parameters.drop_count ?? DROP_COUNT, ropeLinks(parameters), record].join("|");
         if (!PUMP_CACHE.has(key)) {
             const pumping = { ...parameters, launch_speed: 0, tension_max: Infinity };
             const attempt = newAttempt(pumping, record);
@@ -1174,6 +1185,8 @@
         phase_align: { fr: "la barre s'aligne sur la corde", en: "the bar lines up with the rope" },
         phase_free: { fr: "barre libre, seau à {v} m/s", en: "bar free, bucket at {v} m/s" },
         drop_count: { fr: "Gouttes (test)", en: "Drops (test)" },
+        rope_links: { fr: "Tronçons de corde (test)", en: "Rope segments (test)" },
+        magnifier: { fr: "Seau (loupe ×{zoom})", en: "Bucket (magnified ×{zoom})" },
     };
     const UNITS = { launch_speed: "m/s", rope_length: "m", mass: "kg" };
     const VIEW = { left: -2, right: 2, bottom: -0.2, top: 3.85 };
@@ -1188,6 +1201,7 @@
     let challenge = null;
     let value = VARIABLES.launch_speed.default_value;
     let drop_count = DROP_COUNT;
+    let rope_links = ROPE_LINKS;
     let run = null;
     let run_dirty = true;
     let recorded = false;
@@ -1223,7 +1237,7 @@
 
     /* currentParameters: full simulation parameters of the attempt */
     function currentParameters() {
-        return { gravity: challenge.gravity, tension_max: challenge.tension_max, drop_count, ...resolveParameters(challenge, value) };
+        return { gravity: challenge.gravity, tension_max: challenge.tension_max, drop_count, rope_links, ...resolveParameters(challenge, value) };
     }
 
     /* ensureRun: recompute the attempt once after any change (at most once per frame) */
@@ -1358,29 +1372,31 @@
         return content;
     }
 
-    /* buildDropRow: temporary test row — number of water drops (same water volume) */
-    function buildDropRow() {
+    /* buildTestRow: temporary test row — an integer setting of the simulation
+       (number of drops, same water volume; number of rope segments) */
+    function buildTestRow(key, minimum, maximum, current, apply) {
         const row = document.createElement("div");
         row.className = "parameter-row game-row";
         const head = document.createElement("div");
         head.className = "row-head";
         const label = document.createElement("label");
-        label.htmlFor = "number_game_drops";
-        label.dataset.gameI18n = "drop_count";
+        label.htmlFor = `number_game_${key}`;
+        label.dataset.gameI18n = key;
         const input = document.createElement("input");
         input.type = "number";
-        input.id = "number_game_drops";
-        input.min = 1;
-        input.max = 200;
+        input.id = `number_game_${key}`;
+        input.min = minimum;
+        input.max = maximum;
         input.step = 1;
-        input.value = drop_count;
+        input.value = current;
         input.addEventListener("change", () => {
             const next = Number(input.value);
-            if (!Number.isInteger(next) || next < 1 || next > 200) {
-                input.value = drop_count;
+            if (!Number.isInteger(next) || next < minimum || next > maximum) {
+                input.value = current;
                 return;
             }
-            drop_count = next;
+            current = next;
+            apply(next);
             run_dirty = true;
             resetClock();
         });
@@ -1414,7 +1430,15 @@
         elements.data = document.createElement("ul");
         elements.data.className = "game-data";
         row.append(head, elements.slider, elements.fill_rule, elements.data);
-        document.getElementById("parameter_rows").append(row, buildDropRow());
+        document.getElementById("parameter_rows").append(
+            row,
+            buildTestRow("drop_count", 1, 200, drop_count, (next) => {
+                drop_count = next;
+            }),
+            buildTestRow("rope_links", MIN_ROPE_LINKS, MAX_ROPE_LINKS, rope_links, (next) => {
+                rope_links = next;
+            }),
+        );
         for (const [input, mirror] of [[elements.slider, elements.number], [elements.number, elements.slider]]) {
             input.addEventListener("input", () => {
                 const spec = VARIABLES[challenge.variable];
@@ -1465,7 +1489,7 @@
         elements.grid.className = "formula-grid";
         elements.assumption = document.createElement("p");
         elements.assumption.className = "assumption";
-        elements.panel.append(panel_head, elements.assumption, elements.grid);
+        elements.panel.append(panel_head, elements.grid, elements.assumption);
         elements.objective = createCard("card_objective");
         elements.tier = createCard("card_tier");
         elements.totals = createCard("card_totals");
@@ -1580,28 +1604,95 @@
         context.restore();
     }
 
-    /* drawDrops: water drops as discs */
-    function drawDrops(context, transform, drops, radius) {
+    /* drawDrops: water as discs over a soft halo that merges them into a body of
+       water; drops already lost get a streak from where they were 50 ms before */
+    function drawDrops(context, transform, drops, radius, previous) {
+        const pixels = radius * transform.scale;
         context.save();
+        context.fillStyle = "rgba(66, 165, 245, 0.35)";
+        for (const [x, y, spilled] of drops) {
+            if (!spilled) {
+                context.beginPath();
+                context.arc(transform.toScreenX(x), transform.toScreenY(y), 1.7 * pixels, 0, 2 * Math.PI);
+                context.fill();
+            }
+        }
+        context.strokeStyle = "rgba(30, 136, 229, 0.55)";
+        context.lineCap = "round";
+        context.lineWidth = Math.max(1.5, 1.2 * pixels);
+        drops.forEach(([x, y, spilled], index) => {
+            if (spilled && previous[index] !== undefined) {
+                context.beginPath();
+                context.moveTo(transform.toScreenX(previous[index][0]), transform.toScreenY(previous[index][1]));
+                context.lineTo(transform.toScreenX(x), transform.toScreenY(y));
+                context.stroke();
+            }
+        });
         context.fillStyle = "#1e88e5";
         context.strokeStyle = "#0d47a1";
         context.lineWidth = 1;
         for (const [x, y] of drops) {
             context.beginPath();
-            context.arc(transform.toScreenX(x), transform.toScreenY(y), radius * transform.scale, 0, 2 * Math.PI);
+            context.arc(transform.toScreenX(x), transform.toScreenY(y), Math.max(pixels, 1.5), 0, 2 * Math.PI);
             context.fill();
             context.stroke();
         }
         context.restore();
     }
 
+    /* drawMagnifier: the bucket alone, magnified, in its own frame (handle up,
+       bottom down), with the water inside — the sloshing shows even when the
+       bucket is small on the scene */
+    function drawMagnifier(context, frame, ink) {
+        const handle = frame.nodes[frame.nodes.length - 2];
+        const center = frame.nodes[frame.nodes.length - 1];
+        const length = Math.hypot(center[0] - handle[0], center[1] - handle[1]);
+        const axis = [(center[0] - handle[0]) / length, (center[1] - handle[1]) / length];
+        const normal = [-axis[1], axis[0]];
+        const size = Math.min(context.canvas.width, context.canvas.height) * 0.3;
+        const box = { x: context.canvas.width - size - 10 * ui_scale, y: 10 * ui_scale, width: size, height: size };
+        const zoom = 0.62 * size / (BUCKET.bottom + 0.05);
+        const origin_x = box.x + box.width / 2;
+        const origin_y = box.y + 0.2 * box.height;
+        const local = ([x, y]) => {
+            const along = (x - handle[0]) * axis[0] + (y - handle[1]) * axis[1];
+            const across = (x - handle[0]) * normal[0] + (y - handle[1]) * normal[1];
+            return [origin_x + across * zoom, origin_y + along * zoom];
+        };
+        const inset = { scale: zoom, toScreenX: (x) => x, toScreenY: (y) => y };
+        context.save();
+        context.fillStyle = matchMedia("(prefers-color-scheme: dark)").matches ? "rgba(22, 27, 34, 0.9)" : "rgba(255, 255, 255, 0.92)";
+        context.strokeStyle = "rgba(120, 130, 145, 0.5)";
+        context.lineWidth = 1;
+        context.beginPath();
+        context.roundRect(box.x, box.y, box.width, box.height, 8 * ui_scale);
+        context.fill();
+        context.stroke();
+        context.beginPath();
+        context.roundRect(box.x, box.y, box.width, box.height, 8 * ui_scale);
+        context.clip();
+        drawBucket(context, { toScreenX: (x) => origin_x + x * zoom, toScreenY: (y) => origin_y - y * zoom }, [0, 0], [0, -length], ink);
+        drawDrops(context, inset, frame.drops.map((drop) => [...local(drop), drop[2]]), frame.drop_radius, []);
+        context.fillStyle = ink;
+        context.font = `bold ${Math.round(11 * ui_scale)}px system-ui, sans-serif`;
+        context.textAlign = "left";
+        context.textBaseline = "top";
+        context.fillText(text("magnifier", { zoom: formatValue(zoom / currentScale(context.canvas), 0) }).toUpperCase(), box.x + 8 * ui_scale, box.y + 6 * ui_scale);
+        context.restore();
+    }
+
+    /* currentScale: pixels per metre of the scene */
+    function currentScale(canvas) {
+        return viewTransform(canvas).scale;
+    }
+
     /* drawForces: the only forces on the bucket — its weight P and the rope
        tension T at the handle (same scale), the rope being pulled by the bar */
     function drawForces(context, transform, frame, parameters) {
         const draw = globalThis.canvas_draw;
-        const center = frame.nodes[CENTER];
-        const handle = frame.nodes[HANDLE];
-        const rope = frame.nodes[HANDLE - 1];
+        const center = frame.nodes[frame.nodes.length - 1];
+        const handle = frame.nodes[frame.nodes.length - 2];
+        const rope = frame.nodes[frame.nodes.length - 3];
         const scale = 0.7 * transform.scale / challenge.tension_max;
         const style = { font: `bold ${Math.round(13 * ui_scale)}px system-ui, sans-serif`, line_width: 2.5 * ui_scale };
         draw.drawVector(context, transform.toScreenX(center[0]), transform.toScreenY(center[1]), 0, parameters.mass * parameters.gravity * scale, { ...style, color: WEIGHT_COLOR, label: "P" });
@@ -1664,10 +1755,11 @@
         context.clearRect(0, 0, canvas.width, canvas.height);
         globalThis.canvas_draw.drawGrid(context, transform.toScreenX, transform.toScreenY, transform.bounds, { font: `${Math.round(11 * ui_scale)}px system-ui, sans-serif` });
         drawStand(context, transform);
-        drawRope(context, transform, frame.nodes.slice(frame.snapped ? 2 : 1, HANDLE + 1));
+        drawRope(context, transform, frame.nodes.slice(frame.snapped ? 2 : 1, frame.nodes.length - 1));
         drawBar(context, transform, frame.nodes[0], frame.nodes[1]);
-        drawDrops(context, transform, frame.drops, frame.drop_radius);
-        drawBucket(context, transform, frame.nodes[HANDLE], frame.nodes[CENTER], ink);
+        drawBucket(context, transform, frame.nodes[frame.nodes.length - 2], frame.nodes[frame.nodes.length - 1], ink);
+        drawDrops(context, transform, frame.drops, frame.drop_radius, frameAt(run, Math.max(time - 0.05, 0)).drops);
+        drawMagnifier(context, frame, ink);
         drawForces(context, transform, frame, currentParameters());
         drawStatus(context, frame, time, ink);
         return true;
