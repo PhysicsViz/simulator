@@ -1,16 +1,18 @@
 /*
  * main.js — Wagon loop-the-loop page logic: fixed scene (no zoom or pan; the
- * rail is proportional to R, so the view is a fixed frame in units of R and the
- * picture never moves), ramp with its support, rail with ties, circular loop,
- * dimension lines h and H = 2R, the h_min = 5R/2 level, angle θ and radius in
- * the loop, traveled trace, predicted free flight after take-off, the wagon
+ * rail is proportional to R, so the view is a fixed frame in units of R, from
+ * the ramp top to the end of the rail, and the picture never moves; it only
+ * rescales when the loop shape changes), ramp with its support, rail with ties,
+ * circular or clothoid loop, dimension lines h and H = 2R, the h_min level
+ * (5R/2 or the clothoid's), angle θ and radius in the circle or the local
+ * radius of curvature on the clothoid, traveled trace, predicted free flight after take-off, the wagon
  * with P / N / v / a drawn per unit mass so that a = P/m + N/m closes
  * graphically. The free space of the canvas holds the free-body diagram (P, N,
  * ΣF), the energy bars (E_c, E_p, E_m), a live readout (position on the rail, v,
  * N, n, verdict) and the legend: in a column right of the loop on wide
  * canvases, in a band above the rail on narrow ones. Transport over a
  * precomputed RK4 trajectory (rewound to t = 0 shortly after the end), compact
- * parameters (h ≤ 3R follows R, R, m, g), live formulas in the course notation
+ * parameters (loop shape, h ≤ 3R follows R, R, m, g), live formulas in the course notation
  * and one tabbed time graph (positions, speed, accelerations, normal force).
  * Classic script (works via file://); reads the globals of calcul.js,
  * canvas_draw.js and graph_plot.js.
@@ -23,8 +25,8 @@
     const strings = {
         page_title: { fr: "Looping (wagon)", en: "Loop-the-loop (wagon)" },
         assumption: {
-            fr: "Hypothèses : wagon = point matériel de masse m lâché sans vitesse à la hauteur h ; rail sans frottement, air négligé, g uniforme. Le wagon n'est pas retenu (pas de roues anti-décollage) : il quitte le rail dès que N = 0, puis suit une parabole (MRUA) jusqu'au rail, où la simulation s'arrête (choc non modélisé). Rampe à 60° partant de 3R, raccordée au sol par un arc de rayon R, piste de longueur R, looping circulaire de rayon R. φ : inclinaison du rail (en vol : direction de la vitesse), θ : angle depuis le bas du looping ; en vol, τ = t − t_d et u₀, v₀, x₀, y₀ sont les composantes de la vitesse et de la position au décollage. s(t) est intégré numériquement (RK4) ; v découle de la conservation de l'énergie.",
-            en: "Assumptions: wagon = point mass m released from rest at height h; frictionless rail, air neglected, uniform g. The wagon is not held (no upstop wheels): it leaves the rail as soon as N = 0, then follows a parabola (constant acceleration) back to the rail, where the simulation stops (impact not modelled). 60° ramp starting at 3R, joined to the floor by an arc of radius R, run-in of length R, circular loop of radius R. φ: rail inclination (in flight: direction of the velocity), θ: angle from the bottom of the loop; in flight, τ = t − t_d and u₀, v₀, x₀, y₀ are the velocity and position components at take-off. s(t) is integrated numerically (RK4); v follows from energy conservation.",
+            fr: "Hypothèses : wagon = point matériel de masse m lâché sans vitesse à la hauteur h ; rail sans frottement, air négligé, g uniforme. Le wagon n'est pas retenu (pas de roues anti-décollage) : il quitte le rail dès que N = 0, puis suit une parabole (MRUA) jusqu'au rail, où la simulation s'arrête (choc non modélisé). Rampe à 60° partant de 3R, raccordée au sol par un arc de rayon R, piste de longueur R, looping de hauteur H = 2R : cercle de rayon R, ou clothoïde (courbure proportionnelle à la longueur parcourue depuis l'entrée, κ = s/A², rayon infini à l'entrée et minimal au sommet, r_s = A/√(2π), avec A = 2R/Y₁ et Y₁ = ∫₀^√(2π) sin(u²/2) du ; positions intégrées numériquement ; h_min est cherché numériquement : N ≥ 0 en tout point de la boucle, le point critique est juste avant le sommet). φ : inclinaison du rail (en vol : direction de la vitesse), θ : angle parcouru depuis le bas du looping (égal à φ dans la boucle) ; en vol, τ = t − t_d et u₀, v₀, x₀, y₀ sont les composantes de la vitesse et de la position au décollage. s(t) est intégré numériquement (RK4) ; v découle de la conservation de l'énergie.",
+            en: "Assumptions: wagon = point mass m released from rest at height h; frictionless rail, air neglected, uniform g. The wagon is not held (no upstop wheels): it leaves the rail as soon as N = 0, then follows a parabola (constant acceleration) back to the rail, where the simulation stops (impact not modelled). 60° ramp starting at 3R, joined to the floor by an arc of radius R, run-in of length R, loop of height H = 2R: a circle of radius R, or a clothoid (curvature proportional to the length travelled from the entry, κ = s/A², infinite radius at the entry and smallest at the top, r_s = A/√(2π), with A = 2R/Y₁ and Y₁ = ∫₀^√(2π) sin(u²/2) du; positions integrated numerically; h_min is found numerically: N ≥ 0 at every point of the loop, the critical point lies just before the top). φ: rail inclination (in flight: direction of the velocity), θ: angle travelled from the bottom of the loop (equal to φ in the loop); in flight, τ = t − t_d and u₀, v₀, x₀, y₀ are the velocity and position components at take-off. s(t) is integrated numerically (RK4); v follows from energy conservation.",
         },
         controls_title: { fr: "Paramètres", en: "Parameters" },
         graphs_title: { fr: "Graphe", en: "Graph" },
@@ -40,6 +42,9 @@
         step_forward: { fr: "+0,1 s", en: "+0.1 s" },
         start_height: { fr: "Hauteur de départ h", en: "Release height h" },
         loop_radius: { fr: "Rayon du looping R", en: "Loop radius R" },
+        shape: { fr: "Forme du looping", en: "Loop shape" },
+        shape_circle: { fr: "Cercle", en: "Circle" },
+        shape_clothoid: { fr: "Clothoïde", en: "Clothoid" },
         mass: { fr: "Masse du wagon m", en: "Wagon mass m" },
         gravity: { fr: "Pesanteur g", en: "Gravity g" },
         legend_weight: { fr: "Poids P", en: "Weight P" },
@@ -62,6 +67,10 @@
         verdict_takeoff: { fr: "R < h < 5R/2 : décollage à θ_d = {theta}°", en: "R < h < 5R/2: take-off at θ_d = {theta}°" },
         verdict_back: { fr: "h ≤ R : demi-tour à θ = {theta}°", en: "h ≤ R: turns back at θ = {theta}°" },
         verdict_rest: { fr: "h = 0 : le wagon reste au repos", en: "h = 0: the wagon stays at rest" },
+        verdict_loops_clothoid: { fr: "h ≥ h_min : le wagon fait le tour", en: "h ≥ h_min: the wagon loops" },
+        verdict_takeoff_clothoid: { fr: "h < h_min : décollage à θ_d = {theta}°", en: "h < h_min: take-off at θ_d = {theta}°" },
+        verdict_back_clothoid: { fr: "N > 0 : demi-tour à θ = {theta}°", en: "N > 0: turns back at θ = {theta}°" },
+        label_radius: { fr: "r = {r} m", en: "r = {r} m" },
         formula_weight: { fr: "Poids", en: "Weight" },
         formula_speed: { fr: "Vitesse (énergie)", en: "Speed (energy)" },
         formula_a_theta: { fr: "Accélération tangentielle", en: "Tangential acceleration" },
@@ -72,14 +81,20 @@
         formula_top_minimum: { fr: "Vitesse minimale au sommet", en: "Minimum speed at the top" },
         formula_normal_top: { fr: "Réaction au sommet", en: "Reaction at the top" },
         formula_h_min: { fr: "Hauteur minimale (N_s ≥ 0)", en: "Minimum height (N_s ≥ 0)" },
+        formula_h_min_clothoid: { fr: "Hauteur minimale (N ≥ 0 partout)", en: "Minimum height (N ≥ 0 everywhere)" },
+        formula_top_minimum_clothoid: { fr: "Vitesse au sommet si N_s = 0", en: "Speed at the top for N_s = 0" },
         formula_takeoff: { fr: "Angle de décollage (N = 0)", en: "Take-off angle (N = 0)" },
         formula_flight: { fr: "Vol libre (MRU / MRUA)", en: "Free flight (uniform / uniformly accelerated)" },
         straight_line: { fr: "r = ∞ (droite) → 0", en: "r = ∞ (straight) → 0" },
         no_contact: { fr: "en vol : plus de contact", en: "in flight: no contact" },
         top_not_reached: { fr: "h < 2R : sommet non atteint", en: "h < 2R: top not reached" },
         leaves_before_top: { fr: "< 0 : décollage avant le sommet", en: "< 0: take-off before the top" },
+        takeoff_before_top: { fr: "(h < h_min : non atteint)", en: "(h < h_min: not reached)" },
         no_takeoff_loops: { fr: "h ≥ 5R/2 : pas de décollage", en: "h ≥ 5R/2: no take-off" },
         no_takeoff_low: { fr: "h ≤ R : N > 0, pas de décollage", en: "h ≤ R: N > 0, no take-off" },
+        no_takeoff_loops_clothoid: { fr: "h ≥ h_min : pas de décollage", en: "h ≥ h_min: no take-off" },
+        no_takeoff_low_clothoid: { fr: "N > 0 partout : pas de décollage", en: "N > 0 everywhere: no take-off" },
+        h_min_scan: { fr: "max en θ = {theta}° : {y} − {r} × cos({theta}°)/2", en: "max at θ = {theta}°: {y} − {r} × cos({theta}°)/2" },
         no_flight: { fr: "pas de vol pour ce h", en: "no flight for this h" },
         flight_later: { fr: "décollage à t = {t} s", en: "take-off at t = {t} s" },
         not_applicable: { fr: "—", en: "—" },
@@ -96,6 +111,7 @@
         loop_radius: 2,
         mass: 200,
         gravity: 9.81,
+        shape: "circle",
     };
     const GRAPHS = [
         { key: "positions", label: "x, y" },
@@ -112,8 +128,18 @@
     const SIMULATION_RATE = 240;
     const SUBSTEPS = 8;
     const GRAPH_STRIDE = 4;
-    const FRAME = { left: -3.9, right: 3.35, bottom: -0.42, top: 3.32 };
-    const COLUMN_START = 1.5;
+    const SHAPES = ["circle", "clothoid"];
+    const SHAPE_FORMULAS = {
+        top_minimum: { circle: "v_s,min = √(g R)", clothoid: "v_s,min = √(g r_s)" },
+        normal_top: { circle: "N_s = m (2 g (h − 2 R)/R − g)", clothoid: "N_s = m (2 g (h − 2 R)/r_s − g)" },
+        h_min: { circle: "h_min = 5 R / 2", clothoid: "h_min = max(y − r cos(φ)/2)" },
+        takeoff: { circle: "cos(θ_d) = 2 (R − h) / (3 R)", clothoid: "v_d²/r_d + g cos(φ_d) = 0" },
+    };
+    const FRAME_MARGIN_LEFT = 0.59;
+    const FRAME_MARGIN_RIGHT = 0.25;
+    const FRAME_BOTTOM = -0.42;
+    const FRAME_TOP = 3.32;
+    const COLUMN_GAP = 0.5;
     const BAND_MINIMUM = 190;
     const BOX_GAP = 8;
     const UI_REFERENCE_WIDTH = 1100;
@@ -223,10 +249,10 @@
 
     /* rebuild: rail, RK4 trajectory, vector scales and graph series for the current parameters */
     function rebuild() {
-        track = calc.buildTrack(parameters.loop_radius, parameters.start_height);
+        track = calc.buildTrack(parameters.loop_radius, parameters.start_height, parameters.shape);
         rail_points = [];
         for (const segment of track.segments) {
-            const count = segment.kappa === 0 ? 2 : Math.max(Math.ceil(segment.length * segment.kappa / 0.02), 8);
+            const count = segment.turn === 0 ? 2 : Math.max(Math.ceil(segment.turn / 0.02), 8);
             for (let i = rail_points.length === 0 ? 0 : 1; i <= count; i++) {
                 rail_points.push(calc.pointAt(track, segment.s_start + segment.length * i / count));
             }
@@ -257,6 +283,20 @@
         }
     }
 
+    /* sceneFrame: fixed frame in units of R, from just left of the ramp top to
+       just right of the rail end; the overlay column starts right of the loop */
+    function sceneFrame() {
+        const radius = parameters.loop_radius;
+        const rail_end = calc.pointAt(track, track.length).x;
+        return {
+            left: track.ramp_top_x / radius - FRAME_MARGIN_LEFT,
+            right: rail_end / radius + FRAME_MARGIN_RIGHT,
+            bottom: FRAME_BOTTOM,
+            top: FRAME_TOP,
+            column_start: track.loop_extent / radius + COLUMN_GAP,
+        };
+    }
+
     /* sceneLayout: fixed world→screen transform (frame in units of R, floor near the
        bottom) and the boxes of the overlays — a column right of the loop when the
        canvas is wide, a band above the scene when it is tall */
@@ -265,25 +305,26 @@
         const height = canvas.height;
         ui_scale = Math.min(Math.max(Math.min(width / UI_REFERENCE_WIDTH, height / UI_REFERENCE_HEIGHT), UI_SCALE_MIN), UI_SCALE_MAX);
         const gap = px(BOX_GAP);
-        const frame_width = FRAME.right - FRAME.left;
-        const frame_height = FRAME.top - FRAME.bottom;
+        const frame = sceneFrame();
+        const frame_width = frame.right - frame.left;
+        const frame_height = frame.top - frame.bottom;
         const scale = Math.min(width / frame_width, height / frame_height);
         const band = height - scale * frame_height;
         const stacked = band >= px(BAND_MINIMUM);
         const offset_x = stacked ? (width - scale * frame_width) / 2 : 0;
         const radius = parameters.loop_radius;
         const pixels_per_meter = scale / radius;
-        const toScreenX = (x) => offset_x + (x / radius - FRAME.left) * scale;
-        const toScreenY = (y) => height - (y / radius - FRAME.bottom) * scale;
+        const toScreenX = (x) => offset_x + (x / radius - frame.left) * scale;
+        const toScreenY = (y) => height - (y / radius - frame.bottom) * scale;
         const transform = {
             toScreenX,
             toScreenY,
             pixels_per_meter,
             bounds: {
-                left: (FRAME.left - offset_x / scale) * radius,
-                right: (FRAME.left + (width - offset_x) / scale) * radius,
-                bottom: FRAME.bottom * radius,
-                top: (FRAME.bottom + height / scale) * radius,
+                left: (frame.left - offset_x / scale) * radius,
+                right: (frame.left + (width - offset_x) / scale) * radius,
+                bottom: frame.bottom * radius,
+                top: (frame.bottom + height / scale) * radius,
             },
         };
 
@@ -301,7 +342,7 @@
             const box_height = Math.min(band - 2 * gap, px(230));
             boxes = [0, 1, 2].map((k) => ({ x: gap + k * (box_width + gap), y: gap, width: box_width, height: box_height }));
         } else {
-            const left = toScreenX(COLUMN_START * radius);
+            const left = toScreenX(frame.column_start * radius);
             const column_width = width - left - gap;
             const column_height = toScreenY(0.55 * radius) - 2 * gap;
             if (column_width >= px(290)) {
@@ -423,12 +464,12 @@
         context.restore();
     }
 
-    /* drawMinimumHeight: dashed h_min = 5R/2 level across the scene */
+    /* drawMinimumHeight: dashed h_min level (5R/2 or the clothoid's) across the scene */
     function drawMinimumHeight(transform) {
         const radius = parameters.loop_radius;
-        const level_y = transform.toScreenY(calc.minimumHeight(radius));
+        const level_y = transform.toScreenY(track.minimum_height);
         const left = transform.toScreenX(track.ramp_top_x + 0.35 * radius);
-        const right = transform.toScreenX(1.1 * radius);
+        const right = transform.toScreenX(track.loop_extent + 0.1 * radius);
         context.save();
         context.strokeStyle = CRITICAL_COLOR;
         context.fillStyle = CRITICAL_COLOR;
@@ -442,7 +483,8 @@
         context.font = font(12, "bold");
         context.textAlign = "left";
         context.textBaseline = "bottom";
-        context.fillText(`h_min = 5R/2 = ${formatNumber(calc.minimumHeight(radius))} m`, transform.toScreenX(-2.6 * radius), level_y - 4);
+        const label = track.shape === "circle" ? "h_min = 5R/2" : "h_min";
+        context.fillText(`${label} = ${formatNumber(track.minimum_height)} m`, transform.toScreenX(track.ramp_top_x + 0.71 * radius), level_y - 4);
         context.restore();
     }
 
@@ -479,9 +521,15 @@
         context.restore();
     }
 
-    /* drawLoopAngle: radius from the centre to the wagon and the angle θ from the bottom */
+    /* drawLoopAngle: in the circle, radius from the centre to the wagon and the
+       angle θ from the bottom; on the clothoid, the local radius of curvature
+       from the wagon to its centre of curvature */
     function drawLoopAngle(transform, state, ink) {
         if (state.loop_angle === null) {
+            return;
+        }
+        if (track.shape !== "circle") {
+            drawCurvatureRadius(transform, state, ink);
             return;
         }
         const radius = parameters.loop_radius;
@@ -513,6 +561,38 @@
         context.beginPath();
         context.arc(center_x, center_y, 2.5, 0, 2 * Math.PI);
         context.fill();
+        context.restore();
+    }
+
+    /* drawCurvatureRadius: dashed radius r = 1/κ toward the centre of curvature */
+    function drawCurvatureRadius(transform, state, ink) {
+        if (state.kappa <= 0) {
+            return;
+        }
+        const radius = 1 / state.kappa;
+        const start_x = transform.toScreenX(state.x);
+        const start_y = transform.toScreenY(state.y);
+        const center_x = transform.toScreenX(state.x - Math.sin(state.phi) * radius);
+        const center_y = transform.toScreenY(state.y + Math.cos(state.phi) * radius);
+        context.save();
+        context.strokeStyle = ink;
+        context.fillStyle = ink;
+        context.globalAlpha = 0.7;
+        context.lineWidth = 1.2;
+        context.setLineDash([4, 4]);
+        context.beginPath();
+        context.moveTo(start_x, start_y);
+        context.lineTo(center_x, center_y);
+        context.stroke();
+        context.setLineDash([]);
+        context.beginPath();
+        context.arc(center_x, center_y, 2.5, 0, 2 * Math.PI);
+        context.fill();
+        context.globalAlpha = 1;
+        context.font = font(12, "italic");
+        context.textAlign = "center";
+        context.textBaseline = "middle";
+        context.fillText(text("label_radius", { r: formatNumber(radius) }), (start_x + center_x) / 2 + px(14), (start_y + center_y) / 2);
         context.restore();
     }
 
@@ -711,12 +791,22 @@
         context.restore();
     }
 
-    /* verdictText: what this release height leads to (closed-form angles) */
+    /* verdictText: what this release height leads to (closed-form angles on the
+       circle, the simulated take-off and the height reached on the clothoid) */
     function verdictText() {
         const radius = parameters.loop_radius;
         const height = track.start_height;
         if (height <= 0) {
             return text("verdict_rest");
+        }
+        if (track.shape !== "circle") {
+            if (height >= track.minimum_height) {
+                return text("verdict_loops_clothoid");
+            }
+            if (trajectory.takeoff !== null) {
+                return text("verdict_takeoff_clothoid", { theta: formatNumber(trajectory.takeoff.loop_angle * 180 / Math.PI) });
+            }
+            return text("verdict_back_clothoid", { theta: formatNumber(calc.heightAngle(track, height) * 180 / Math.PI) });
         }
         if (height >= calc.minimumHeight(radius)) {
             return text("verdict_loops");
@@ -736,7 +826,7 @@
         const lines = [
             { content: where, color: ink },
             { content: `v = ${formatNumber(state.speed)} m/s   N = ${formatNumber(parameters.mass * state.normal_per_mass)} N   n = ${formatNumber(state.normal_per_mass / parameters.gravity)}`, color: ink },
-            { content: verdictText(), color: track.start_height >= calc.minimumHeight(parameters.loop_radius) ? NORMAL_COLOR : FLIGHT_COLOR },
+            { content: verdictText(), color: track.start_height >= track.minimum_height ? NORMAL_COLOR : FLIGHT_COLOR },
         ];
         context.save();
         context.textAlign = "left";
@@ -794,7 +884,7 @@
         drawGround(transform);
         drawRampSupport(transform);
         drawDimension(transform, track.ramp_top_x - 0.25 * radius, track.start_height, `h = ${formatNumber(track.start_height)} m`, ink, -1);
-        drawDimension(transform, 1.25 * radius, track.loop_height, `H = 2R = ${formatNumber(track.loop_height)} m`, ink, 1);
+        drawDimension(transform, track.loop_extent + 0.25 * radius, track.loop_height, `H = 2R = ${formatNumber(track.loop_height)} m`, ink, 1);
         drawMinimumHeight(transform);
         drawRail(transform);
         drawLoopAngle(transform, state, ink);
@@ -831,8 +921,10 @@
         const in_flight = state.phase === "flight";
         const weight = m * g;
         const normal = m * state.normal_per_mass;
+        const circle = track.shape === "circle";
+        const top_radius = track.top_radius;
         const top_speed = calc.topSpeed(g, h, radius);
-        const top_normal = m * calc.topNormalPerMass(g, h, radius);
+        const top_normal = m * calc.topNormalPerMass(g, h, radius, top_radius);
         const takeoff_angle = calc.takeoffAngle(h, radius);
         const curvature_radius = in_flight
             ? (Math.abs(Math.cos(state.phi)) > 1e-9 ? state.speed * state.speed / (g * Math.abs(Math.cos(state.phi))) : Infinity)
@@ -852,11 +944,31 @@
         }
 
         let takeoff = { substitution: `2 × (${formatNumber(radius)} − ${formatNumber(h)}) / (3 × ${formatNumber(radius)})`, result: "" };
-        if (takeoff_angle === null) {
+        if (!circle) {
+            const departure = trajectory.takeoff;
+            if (departure === null) {
+                takeoff = {
+                    substitution: not_applicable,
+                    result: h >= track.minimum_height ? strings.no_takeoff_loops_clothoid[current_language] : strings.no_takeoff_low_clothoid[current_language],
+                };
+            } else {
+                takeoff = {
+                    substitution: `${formatNumber(departure.speed)}² / ${formatNumber(1 / departure.kappa)} + ${formatNumber(g)} × cos(${formatNumber(departure.phi * 180 / Math.PI)}°)`,
+                    result: `${formatNumber(departure.normal_per_mass)} → θ_d = ${formatNumber(departure.loop_angle * 180 / Math.PI)}°`,
+                };
+            }
+        } else if (takeoff_angle === null) {
             takeoff.result = h >= calc.minimumHeight(radius) ? strings.no_takeoff_loops[current_language] : strings.no_takeoff_low[current_language];
         } else {
             takeoff.result = `${formatNumber(Math.cos(takeoff_angle))} → θ_d = ${formatNumber(takeoff_angle * 180 / Math.PI)}°`;
         }
+        const critical = track.critical;
+        const h_min = circle
+            ? { substitution: `5 × ${formatNumber(radius)} / 2`, result: `${formatNumber(track.minimum_height)} m` }
+            : {
+                substitution: text("h_min_scan", { theta: formatNumber(critical.phi * 180 / Math.PI), y: formatNumber(critical.y), r: formatNumber(critical.radius) }),
+                result: `${formatNumber(track.minimum_height)} m`,
+            };
 
         const cards = {
             weight: { substitution: `${formatNumber(m)} × ${formatNumber(g)}`, result: `${formatNumber(weight)} N` },
@@ -877,20 +989,29 @@
                 substitution: `√(2 × ${formatNumber(g)} × (${formatNumber(h)} − 2 × ${formatNumber(radius)}))`,
                 result: top_speed === null ? strings.top_not_reached[current_language] : `${formatNumber(top_speed)} m/s`,
             },
-            top_minimum: { substitution: `√(${formatNumber(g)} × ${formatNumber(radius)})`, result: `${formatNumber(Math.sqrt(g * radius))} m/s` },
+            top_minimum: { substitution: `√(${formatNumber(g)} × ${formatNumber(top_radius)})`, result: `${formatNumber(Math.sqrt(g * top_radius))} m/s` },
             normal_top: {
-                substitution: `${formatNumber(m)} × (2 × ${formatNumber(g)} × (${formatNumber(h)} − 2 × ${formatNumber(radius)}) / ${formatNumber(radius)} − ${formatNumber(g)})`,
+                substitution: `${formatNumber(m)} × (2 × ${formatNumber(g)} × (${formatNumber(h)} − 2 × ${formatNumber(radius)}) / ${formatNumber(top_radius)} − ${formatNumber(g)})`,
                 result: h < 2 * radius
                     ? strings.top_not_reached[current_language]
-                    : (top_normal < 0 ? `${formatNumber(top_normal)} N ${strings.leaves_before_top[current_language]}` : `${formatNumber(top_normal)} N`),
+                    : (top_normal < 0 ? `${formatNumber(top_normal)} N ${strings.leaves_before_top[current_language]}`
+                        : (h < track.minimum_height ? `${formatNumber(top_normal)} N ${strings.takeoff_before_top[current_language]}` : `${formatNumber(top_normal)} N`)),
             },
-            h_min: { substitution: `5 × ${formatNumber(radius)} / 2`, result: `${formatNumber(calc.minimumHeight(radius))} m` },
+            h_min,
             takeoff,
             flight,
         };
         for (const [key, content] of Object.entries(cards)) {
             document.getElementById(`sub_${key}`).textContent = content.substitution;
             document.getElementById(`res_${key}`).textContent = content.result;
+        }
+        for (const [key, forms] of Object.entries(SHAPE_FORMULAS)) {
+            document.getElementById(`math_${key}`).textContent = forms[circle ? "circle" : "clothoid"];
+        }
+        for (const key of ["formula_h_min", "formula_top_minimum"]) {
+            const title = document.getElementById(`title_${key}`);
+            title.dataset.i18n = circle ? key : `${key}_clothoid`;
+            title.textContent = strings[title.dataset.i18n][current_language];
         }
     }
 
@@ -984,9 +1105,42 @@
         simulation_time = Math.min(Math.max(simulation_time + delta_seconds, 0), runDuration());
     }
 
-    /* buildControls: one compact row (label, number, unit, slider) per parameter */
+    /* buildShapeRow: segmented circle / clothoid selector */
+    function buildShapeRow(container) {
+        const row = document.createElement("div");
+        row.className = "parameter-row";
+        const label = document.createElement("span");
+        label.className = "row-label";
+        label.dataset.i18n = "shape";
+        const group = document.createElement("div");
+        group.className = "shape-buttons";
+        for (const shape of SHAPES) {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.id = `shape_${shape}`;
+            button.dataset.i18n = `shape_${shape}`;
+            button.classList.toggle("active", shape === parameters.shape);
+            button.addEventListener("click", () => applyShape(shape));
+            group.append(button);
+        }
+        row.append(label, group);
+        container.append(row);
+    }
+
+    /* applyShape: switch the loop shape and rebuild */
+    function applyShape(shape) {
+        parameters.shape = shape;
+        for (const candidate of SHAPES) {
+            document.getElementById(`shape_${candidate}`).classList.toggle("active", candidate === shape);
+        }
+        rebuild();
+    }
+
+    /* buildControls: shape selector, then one compact row (label, number, unit,
+       slider) per numeric parameter */
     function buildControls() {
         const container = document.getElementById("parameter_rows");
+        buildShapeRow(container);
         for (const config of parameter_config) {
             const row = document.createElement("div");
             row.className = "parameter-row";

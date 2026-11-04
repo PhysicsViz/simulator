@@ -30,10 +30,12 @@ Interactive physics simulations for first-year civil-engineering students
 - [Loop-the-loop (wagon)](src/mechanics/loop-wagon/index.html) — compact,
   one-screen version of the classic circular loop: a roller-coaster wagon
   (point mass, default m = 200 kg) released from rest at height h ≤ 3R on a
-  frictionless rail (60° ramp from 3R, fillet of radius R, run-in R, circular
-  loop of radius R, default R = 2 m, h = 5,5 m); not held on the rail, it
-  leaves it when N = 0 (cos(θ_d) = 2 (R − h)/(3 R)) and falls freely (MRUA)
-  back onto the loop. Fixed view (no zoom or pan, the rail scales with R); the
+  frictionless rail (60° ramp from 3R, fillet of radius R, run-in R, loop of
+  height 2R: circle of radius R or clothoid with κ ∝ s, default R = 2 m,
+  h = 5,5 m); not held on the rail, it leaves it when N = 0 (circle:
+  cos(θ_d) = 2 (R − h)/(3 R)) and falls freely (MRUA) back onto the loop.
+  h_min = 5R/2 for the circle, ≈ 2.32 R for the clothoid (max of
+  y − r cos(φ)/2 over the loop). Fixed view (no zoom or pan, the rail scales with R); the
   free space of the canvas holds the free-body diagram, the energy bars
   (E_c, E_p, E_m), a live readout and the legend. Energy, N = m (v²/r + g cos(φ)),
   h_min = 5R/2, speed and reaction at the top, load factor, RK4 motion along

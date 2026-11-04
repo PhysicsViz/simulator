@@ -1,6 +1,7 @@
 <!doctype html>
 <!--
   index.html — Compact wagon loop-the-loop exercise page (classic circular loop).
+  Circular or clothoid loop (shape selector in the parameters).
   One-screen layout on desktop: scene canvas (fixed view; force diagram, energy
   bars, live readout and legend drawn in its free space) beside a side column
   (transport, parameters, tabbed graph) filling the first view, header
@@ -126,6 +127,18 @@
 
       .parameter-row:last-child {
         margin-bottom: 0;
+      }
+
+      .shape-buttons {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.4em;
+        margin-top: 0.25em;
+      }
+
+      .shape-buttons button {
+        padding: 0.3em 0.5em;
+        font-size: 0.85em;
       }
 
       .parameter-row .row-head {
@@ -439,23 +452,23 @@
             <div class="sub"><span id="sub_top_speed"></span> = <span class="result" id="res_top_speed"></span></div>
           </div>
           <div class="formula-card">
-            <span class="name" data-i18n="formula_top_minimum"></span>
-            <div class="math">v_s,min = √(g R)</div>
+            <span class="name" id="title_formula_top_minimum" data-i18n="formula_top_minimum"></span>
+            <div class="math" id="math_top_minimum">v_s,min = √(g R)</div>
             <div class="sub"><span id="sub_top_minimum"></span> = <span class="result" id="res_top_minimum"></span></div>
           </div>
           <div class="formula-card">
             <span class="name" data-i18n="formula_normal_top"></span>
-            <div class="math">N_s = m (2 g (h − 2 R)/R − g)</div>
+            <div class="math" id="math_normal_top">N_s = m (2 g (h − 2 R)/R − g)</div>
             <div class="sub"><span id="sub_normal_top"></span> = <span class="result" id="res_normal_top"></span></div>
           </div>
           <div class="formula-card">
-            <span class="name" data-i18n="formula_h_min"></span>
-            <div class="math">h_min = 5 R / 2</div>
+            <span class="name" id="title_formula_h_min" data-i18n="formula_h_min"></span>
+            <div class="math" id="math_h_min">h_min = 5 R / 2</div>
             <div class="sub"><span id="sub_h_min"></span> = <span class="result" id="res_h_min"></span></div>
           </div>
           <div class="formula-card">
             <span class="name" data-i18n="formula_takeoff"></span>
-            <div class="math">cos(θ_d) = 2 (R − h) / (3 R)</div>
+            <div class="math" id="math_takeoff">cos(θ_d) = 2 (R − h) / (3 R)</div>
             <div class="sub"><span id="sub_takeoff"></span> = <span class="result" id="res_takeoff"></span></div>
           </div>
           <div class="formula-card">

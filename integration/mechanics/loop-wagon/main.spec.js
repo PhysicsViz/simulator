@@ -51,6 +51,17 @@ test.describe(`${PAGE_PATH} — specific`, () => {
         await expect(page.locator("#res_h_min")).toHaveText("2,50 m");
     });
 
+    test("clothoid toggle: h_min and the shape formulas switch, back to the circle restores them", async ({ page, hasTouch }) => {
+        await press(page.locator("#shape_clothoid"), hasTouch);
+        await expect(page.locator("#shape_clothoid")).toHaveClass(/active/);
+        await expect(page.locator("#math_h_min")).toHaveText("h_min = max(y − r cos(φ)/2)");
+        await expect(page.locator("#res_h_min")).toHaveText("4,63 m");
+        await expect(page.locator("#math_top_minimum")).toHaveText("v_s,min = √(g r_s)");
+        await press(page.locator("#shape_circle"), hasTouch);
+        await expect(page.locator("#math_h_min")).toHaveText("h_min = 5 R / 2");
+        await expect(page.locator("#res_h_min")).toHaveText("5,00 m");
+    });
+
     test("one-screen mode: first view fills the viewport, formulas just below the fold, text not shrunk", async ({ page }) => {
         const viewport = page.viewportSize();
         test.skip(viewport.width < 700 || viewport.height < 540, "one-screen layout from 700 × 540");

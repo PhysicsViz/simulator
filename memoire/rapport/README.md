@@ -33,6 +33,12 @@ Déjà rédigé :
      (`winget install StrawberryPerl.StrawberryPerl`), sinon choisir la recette
      « pdflatex ➞ bibtex ➞ pdflatex × 2 » en remplaçant bibtex par biber.
 
+Le chapitre du jeu du seau existe aussi en **tiré à part** (`jeu-seau.tex`,
+≈ 8 pages) pour le lire et le retravailler seul :
+`powershell -ExecutionPolicy Bypass -File memoire\rapport\compiler.ps1 jeu-seau`
+→ `memoire\rapport\jeu-seau.pdf`. Il inclut le même fichier
+`chapitres/09-jeu-seau.tex` : toute modification vaut pour les deux PDF.
+
 Paquets utilisés : babel (french), siunitx, pgfplots, tikz, tcolorbox,
 algorithm / algpseudocode, biblatex (biber), cleveref, titlesec, fancyhdr.
 
