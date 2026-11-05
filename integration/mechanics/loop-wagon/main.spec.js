@@ -82,13 +82,16 @@ test.describe(`${PAGE_PATH} — specific`, () => {
     });
 
     test("game mode: one free input, loop parameters hidden, run length from the game", { tag: "@important" }, async ({ page, hasTouch }) => {
+        test.setTimeout(180_000);
         await press(page.locator(".mode-tabs button").nth(1), hasTouch);
         await expect(page.locator("body")).toHaveClass(/game-mode/);
         await expect(page.locator("#number_start_height")).toBeHidden();
         await expect(page.locator("#number_game_value")).toBeVisible();
         await expect(page.locator(".game-panel")).toBeVisible();
+        await expect(page.locator(".game-panel")).toHaveAttribute("data-state", "ready", { timeout: 90_000 });
         await page.locator("#number_game_value").fill(await page.locator("#number_game_value").getAttribute("min"));
         await expect(page.locator("#slider_game_value")).toHaveValue(await page.locator("#number_game_value").inputValue());
+        await expect(page.locator(".game-panel")).toHaveAttribute("data-state", "ready", { timeout: 60_000 });
         await press(page.locator("#play_pause_button"), hasTouch);
         await expect(page.locator("#time_display")).not.toHaveText("t = 0,00 s");
         await press(page.locator(".mode-tabs button").nth(0), hasTouch);

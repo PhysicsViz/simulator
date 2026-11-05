@@ -88,6 +88,47 @@
       \verb 10.1016/j.jvcir.2007.01.005
       \endverb
     \endentry
+    \entry{macklin2016xpbd}{inproceedings}{}{}
+      \name{author}{3}{}{%
+        {{hash=fb9fad16d2ae65ef730edb579c4636cf}{%
+           family={Macklin},
+           familyi={M\bibinitperiod},
+           given={Miles},
+           giveni={M\bibinitperiod}}}%
+        {{hash=81a3feeb579a36f8ed14c22d7264cf2c}{%
+           family={Müller},
+           familyi={M\bibinitperiod},
+           given={Matthias},
+           giveni={M\bibinitperiod}}}%
+        {{hash=d47ede25f528b578ea7d00270e9c2106}{%
+           family={Chentanez},
+           familyi={C\bibinitperiod},
+           given={Nuttapong},
+           giveni={N\bibinitperiod}}}%
+      }
+      \strng{namehash}{9275353df1f273183141d9f513188010}
+      \strng{fullhash}{2f3133607f038cabc90dec4adc200591}
+      \strng{fullhashraw}{2f3133607f038cabc90dec4adc200591}
+      \strng{bibnamehash}{2f3133607f038cabc90dec4adc200591}
+      \strng{authorbibnamehash}{2f3133607f038cabc90dec4adc200591}
+      \strng{authornamehash}{9275353df1f273183141d9f513188010}
+      \strng{authorfullhash}{2f3133607f038cabc90dec4adc200591}
+      \strng{authorfullhashraw}{2f3133607f038cabc90dec4adc200591}
+      \field{extraname}{1}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{booktitle}{Proceedings of the 9th International Conference on Motion in Games}
+      \field{langid}{english}
+      \field{title}{{XPBD}: Position-Based Simulation of Compliant Constrained Dynamics}
+      \field{year}{2016}
+      \field{pages}{49\bibrangedash 54}
+      \range{pages}{6}
+      \verb{doi}
+      \verb 10.1145/2994258.2994272
+      \endverb
+    \endentry
     \entry{bender2014survey}{article}{}{}
       \name{author}{5}{}{%
         {{hash=97874e24e149ca0ddbd194fb257ea4c5}{%
@@ -140,45 +181,65 @@
       \verb 10.1111/cgf.12346
       \endverb
     \endentry
-    \entry{macklin2016xpbd}{inproceedings}{}{}
-      \name{author}{3}{}{%
+    \entry{macklin2019smallsteps}{inproceedings}{}{}
+      \name{author}{7}{}{%
         {{hash=fb9fad16d2ae65ef730edb579c4636cf}{%
            family={Macklin},
            familyi={M\bibinitperiod},
            given={Miles},
            giveni={M\bibinitperiod}}}%
-        {{hash=81a3feeb579a36f8ed14c22d7264cf2c}{%
-           family={Müller},
-           familyi={M\bibinitperiod},
-           given={Matthias},
+        {{hash=b097d7c793249b8202873b12d4f1a21f}{%
+           family={Storey},
+           familyi={S\bibinitperiod},
+           given={Kier},
+           giveni={K\bibinitperiod}}}%
+        {{hash=c8e642dcd0c155ed924ff41ccffb368f}{%
+           family={Lu},
+           familyi={L\bibinitperiod},
+           given={Michelle},
            giveni={M\bibinitperiod}}}%
+        {{hash=83db29f234df00546b5fc5fd0bd86f21}{%
+           family={Terdiman},
+           familyi={T\bibinitperiod},
+           given={Pierre},
+           giveni={P\bibinitperiod}}}%
         {{hash=d47ede25f528b578ea7d00270e9c2106}{%
            family={Chentanez},
            familyi={C\bibinitperiod},
            given={Nuttapong},
            giveni={N\bibinitperiod}}}%
+        {{hash=e41724e40235b4a508a5ded8cae91403}{%
+           family={Jeschke},
+           familyi={J\bibinitperiod},
+           given={Stefan},
+           giveni={S\bibinitperiod}}}%
+        {{hash=81a3feeb579a36f8ed14c22d7264cf2c}{%
+           family={Müller},
+           familyi={M\bibinitperiod},
+           given={Matthias},
+           giveni={M\bibinitperiod}}}%
       }
       \strng{namehash}{9275353df1f273183141d9f513188010}
-      \strng{fullhash}{2f3133607f038cabc90dec4adc200591}
-      \strng{fullhashraw}{2f3133607f038cabc90dec4adc200591}
-      \strng{bibnamehash}{2f3133607f038cabc90dec4adc200591}
-      \strng{authorbibnamehash}{2f3133607f038cabc90dec4adc200591}
+      \strng{fullhash}{de1cd1e95badcc2069693ea89041fcf9}
+      \strng{fullhashraw}{de1cd1e95badcc2069693ea89041fcf9}
+      \strng{bibnamehash}{9275353df1f273183141d9f513188010}
+      \strng{authorbibnamehash}{9275353df1f273183141d9f513188010}
       \strng{authornamehash}{9275353df1f273183141d9f513188010}
-      \strng{authorfullhash}{2f3133607f038cabc90dec4adc200591}
-      \strng{authorfullhashraw}{2f3133607f038cabc90dec4adc200591}
-      \field{extraname}{1}
+      \strng{authorfullhash}{de1cd1e95badcc2069693ea89041fcf9}
+      \strng{authorfullhashraw}{de1cd1e95badcc2069693ea89041fcf9}
+      \field{extraname}{2}
       \field{sortinit}{3}
       \field{sortinithash}{ad6fe7482ffbd7b9f99c9e8b5dccd3d7}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
-      \field{booktitle}{Proceedings of the 9th International Conference on Motion in Games}
+      \field{booktitle}{Proceedings of the 18th Annual {ACM} {SIGGRAPH}/Eurographics Symposium on Computer Animation}
       \field{langid}{english}
-      \field{title}{{XPBD}: Position-Based Simulation of Compliant Constrained Dynamics}
-      \field{year}{2016}
-      \field{pages}{49\bibrangedash 54}
-      \range{pages}{6}
+      \field{title}{Small Steps in Physics Simulation}
+      \field{year}{2019}
+      \field{pages}{1\bibrangedash 7}
+      \range{pages}{7}
       \verb{doi}
-      \verb 10.1145/2994258.2994272
+      \verb 10.1145/3309486.3340247
       \endverb
     \endentry
     \entry{press2007}{book}{}{}
@@ -258,8 +319,8 @@
       \strng{authornamehash}{358ffb643df5f0271308702f51f5b2d4}
       \strng{authorfullhash}{1e5b8afbcb52e3df8914e4dc3df11889}
       \strng{authorfullhashraw}{1e5b8afbcb52e3df8914e4dc3df11889}
-      \field{sortinit}{5}
-      \field{sortinithash}{20e9b4b0b173788c5dace24730f47d8c}
+      \field{sortinit}{4}
+      \field{sortinithash}{9381316451d1b9788675a07e972a12a7}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{journaltitle}{Computer Graphics Forum}
@@ -274,133 +335,88 @@
       \verb 10.1111/cgf.13326
       \endverb
     \endentry
-    \entry{macklin2019smallsteps}{inproceedings}{}{}
-      \name{author}{7}{}{%
-        {{hash=fb9fad16d2ae65ef730edb579c4636cf}{%
-           family={Macklin},
-           familyi={M\bibinitperiod},
-           given={Miles},
-           giveni={M\bibinitperiod}}}%
-        {{hash=b097d7c793249b8202873b12d4f1a21f}{%
-           family={Storey},
-           familyi={S\bibinitperiod},
-           given={Kier},
-           giveni={K\bibinitperiod}}}%
-        {{hash=c8e642dcd0c155ed924ff41ccffb368f}{%
-           family={Lu},
-           familyi={L\bibinitperiod},
-           given={Michelle},
-           giveni={M\bibinitperiod}}}%
-        {{hash=83db29f234df00546b5fc5fd0bd86f21}{%
-           family={Terdiman},
-           familyi={T\bibinitperiod},
-           given={Pierre},
-           giveni={P\bibinitperiod}}}%
-        {{hash=d47ede25f528b578ea7d00270e9c2106}{%
-           family={Chentanez},
-           familyi={C\bibinitperiod},
-           given={Nuttapong},
-           giveni={N\bibinitperiod}}}%
-        {{hash=e41724e40235b4a508a5ded8cae91403}{%
-           family={Jeschke},
-           familyi={J\bibinitperiod},
-           given={Stefan},
-           giveni={S\bibinitperiod}}}%
-        {{hash=81a3feeb579a36f8ed14c22d7264cf2c}{%
-           family={Müller},
-           familyi={M\bibinitperiod},
-           given={Matthias},
-           giveni={M\bibinitperiod}}}%
+    \entry{guendelman2003stacking}{article}{}{}
+      \name{author}{3}{}{%
+        {{hash=a397bb01764b023bae079a538fa1940d}{%
+           family={Guendelman},
+           familyi={G\bibinitperiod},
+           given={Eran},
+           giveni={E\bibinitperiod}}}%
+        {{hash=65c851dceea4db6bd4213d41182ae6d3}{%
+           family={Bridson},
+           familyi={B\bibinitperiod},
+           given={Robert},
+           giveni={R\bibinitperiod}}}%
+        {{hash=73fcba443bcb76d103964120ede9df59}{%
+           family={Fedkiw},
+           familyi={F\bibinitperiod},
+           given={Ronald},
+           giveni={R\bibinitperiod}}}%
       }
-      \strng{namehash}{9275353df1f273183141d9f513188010}
-      \strng{fullhash}{de1cd1e95badcc2069693ea89041fcf9}
-      \strng{fullhashraw}{de1cd1e95badcc2069693ea89041fcf9}
-      \strng{bibnamehash}{9275353df1f273183141d9f513188010}
-      \strng{authorbibnamehash}{9275353df1f273183141d9f513188010}
-      \strng{authornamehash}{9275353df1f273183141d9f513188010}
-      \strng{authorfullhash}{de1cd1e95badcc2069693ea89041fcf9}
-      \strng{authorfullhashraw}{de1cd1e95badcc2069693ea89041fcf9}
-      \field{extraname}{2}
-      \field{sortinit}{6}
-      \field{sortinithash}{b33bc299efb3c36abec520a4c896a66d}
-      \field{labelnamesource}{author}
-      \field{labeltitlesource}{title}
-      \field{booktitle}{Proceedings of the 18th Annual {ACM} {SIGGRAPH}/Eurographics Symposium on Computer Animation}
-      \field{langid}{english}
-      \field{title}{Small Steps in Physics Simulation}
-      \field{year}{2019}
-      \field{pages}{1\bibrangedash 7}
-      \range{pages}{7}
-      \verb{doi}
-      \verb 10.1145/3309486.3340247
-      \endverb
-    \endentry
-    \entry{monaghan1992sph}{article}{}{}
-      \name{author}{1}{}{%
-        {{hash=149e5a5d1cc738697762480865226f39}{%
-           family={Monaghan},
-           familyi={M\bibinitperiod},
-           given={Joe\bibnamedelima J.},
-           giveni={J\bibinitperiod\bibinitdelim J\bibinitperiod}}}%
-      }
-      \strng{namehash}{149e5a5d1cc738697762480865226f39}
-      \strng{fullhash}{149e5a5d1cc738697762480865226f39}
-      \strng{fullhashraw}{149e5a5d1cc738697762480865226f39}
-      \strng{bibnamehash}{149e5a5d1cc738697762480865226f39}
-      \strng{authorbibnamehash}{149e5a5d1cc738697762480865226f39}
-      \strng{authornamehash}{149e5a5d1cc738697762480865226f39}
-      \strng{authorfullhash}{149e5a5d1cc738697762480865226f39}
-      \strng{authorfullhashraw}{149e5a5d1cc738697762480865226f39}
-      \field{sortinit}{7}
-      \field{sortinithash}{108d0be1b1bee9773a1173443802c0a3}
-      \field{labelnamesource}{author}
-      \field{labeltitlesource}{title}
-      \field{journaltitle}{Annual Review of Astronomy and Astrophysics}
-      \field{langid}{english}
-      \field{title}{Smoothed Particle Hydrodynamics}
-      \field{volume}{30}
-      \field{year}{1992}
-      \field{pages}{543\bibrangedash 574}
-      \range{pages}{32}
-      \verb{doi}
-      \verb 10.1146/annurev.aa.30.090192.002551
-      \endverb
-    \endentry
-    \entry{macklin2013pbf}{article}{}{}
-      \name{author}{2}{}{%
-        {{hash=fb9fad16d2ae65ef730edb579c4636cf}{%
-           family={Macklin},
-           familyi={M\bibinitperiod},
-           given={Miles},
-           giveni={M\bibinitperiod}}}%
-        {{hash=81a3feeb579a36f8ed14c22d7264cf2c}{%
-           family={Müller},
-           familyi={M\bibinitperiod},
-           given={Matthias},
-           giveni={M\bibinitperiod}}}%
-      }
-      \strng{namehash}{d8248a86f4346ee6335e4016074e0c64}
-      \strng{fullhash}{d8248a86f4346ee6335e4016074e0c64}
-      \strng{fullhashraw}{d8248a86f4346ee6335e4016074e0c64}
-      \strng{bibnamehash}{d8248a86f4346ee6335e4016074e0c64}
-      \strng{authorbibnamehash}{d8248a86f4346ee6335e4016074e0c64}
-      \strng{authornamehash}{d8248a86f4346ee6335e4016074e0c64}
-      \strng{authorfullhash}{d8248a86f4346ee6335e4016074e0c64}
-      \strng{authorfullhashraw}{d8248a86f4346ee6335e4016074e0c64}
-      \field{sortinit}{7}
-      \field{sortinithash}{108d0be1b1bee9773a1173443802c0a3}
+      \strng{namehash}{6ee3093cca7873d332ae5be26eebd84d}
+      \strng{fullhash}{a417e151e708153441d187642ed7c482}
+      \strng{fullhashraw}{a417e151e708153441d187642ed7c482}
+      \strng{bibnamehash}{a417e151e708153441d187642ed7c482}
+      \strng{authorbibnamehash}{a417e151e708153441d187642ed7c482}
+      \strng{authornamehash}{6ee3093cca7873d332ae5be26eebd84d}
+      \strng{authorfullhash}{a417e151e708153441d187642ed7c482}
+      \strng{authorfullhashraw}{a417e151e708153441d187642ed7c482}
+      \field{sortinit}{5}
+      \field{sortinithash}{20e9b4b0b173788c5dace24730f47d8c}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{journaltitle}{ACM Transactions on Graphics}
       \field{langid}{english}
-      \field{number}{4}
-      \field{title}{Position Based Fluids}
-      \field{volume}{32}
-      \field{year}{2013}
-      \field{pages}{1\bibrangedash 12}
-      \range{pages}{12}
+      \field{number}{3}
+      \field{title}{Nonconvex Rigid Bodies with Stacking}
+      \field{volume}{22}
+      \field{year}{2003}
+      \field{pages}{871\bibrangedash 878}
+      \range{pages}{8}
       \verb{doi}
-      \verb 10.1145/2461912.2461984
+      \verb 10.1145/882262.882358
+      \endverb
+    \endentry
+    \entry{causin2005addedmass}{article}{}{}
+      \name{author}{3}{}{%
+        {{hash=95fbdf2303c7f496e7844d9410ffd542}{%
+           family={Causin},
+           familyi={C\bibinitperiod},
+           given={P.},
+           giveni={P\bibinitperiod}}}%
+        {{hash=f52d00987f993934328485d6d0571ea6}{%
+           family={Gerbeau},
+           familyi={G\bibinitperiod},
+           given={J.-F.},
+           giveni={J\bibinithyphendelim F\bibinitperiod}}}%
+        {{hash=a2e6866d0e7c320f90b048fdcffe9513}{%
+           family={Nobile},
+           familyi={N\bibinitperiod},
+           given={F.},
+           giveni={F\bibinitperiod}}}%
+      }
+      \strng{namehash}{2f331144418d5c418050bc756d012933}
+      \strng{fullhash}{73d5bbad37fc1df02fe89a4827509e41}
+      \strng{fullhashraw}{73d5bbad37fc1df02fe89a4827509e41}
+      \strng{bibnamehash}{73d5bbad37fc1df02fe89a4827509e41}
+      \strng{authorbibnamehash}{73d5bbad37fc1df02fe89a4827509e41}
+      \strng{authornamehash}{2f331144418d5c418050bc756d012933}
+      \strng{authorfullhash}{73d5bbad37fc1df02fe89a4827509e41}
+      \strng{authorfullhashraw}{73d5bbad37fc1df02fe89a4827509e41}
+      \field{sortinit}{6}
+      \field{sortinithash}{b33bc299efb3c36abec520a4c896a66d}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Computer Methods in Applied Mechanics and Engineering}
+      \field{langid}{english}
+      \field{number}{42--44}
+      \field{title}{Added-Mass Effect in the Design of Partitioned Algorithms for Fluid--Structure Problems}
+      \field{volume}{194}
+      \field{year}{2005}
+      \field{pages}{4506\bibrangedash 4527}
+      \range{pages}{22}
+      \verb{doi}
+      \verb 10.1016/j.cma.2004.12.005
       \endverb
     \endentry
   \enddatalist

@@ -44,18 +44,23 @@ Interactive physics simulations for first-year civil-engineering students
   16 px; the formulas start just below the fold), normal scrolling on phones.
   Arrows shown can be toggled (P, N, ΣF, v, a, and the components P_t / P_n
   and a_θ / a_r) in the scene and the free-body diagram; the run can replay in
-  a loop. Experimental game (tab in the header): a bucket with 25 water drops,
-  shown also in a magnified view, (temporary inputs set the number of drops and
-  of rope segments for testing) on a flexible rope at the tip of a 0.9 m bar.
+  a loop. Experimental game (tab in the header): a rigid cylindrical bucket
+  (Ø 26 cm, 0.5 kg empty, with its moment of inertia, hinged at its ears to a
+  bail) holding its real water mass as small balls that push the bucket (also
+  shown in a magnified view; temporary inputs set the number of drops and of
+  rope segments for testing), on a flexible 10-link rope at the tip of a 0.9 m
+  bar. R is the distance to the true centre of mass of the filled bucket.
   Everything starts at rest; the only actuator is a motor at the pivot: it
-  swings the bar at the pendulum's rhythm, then speeds it up so that the rope,
-  pulled by the bar's tip, brings the bucket to the energy ½ v₀², lines the bar
-  up with the rope and lets it turn freely — the bucket then passes the bottom
-  at v₀. It must go round twice without losing a drop (v₀² ≥ 5 g R) or snapping
-  the rope (m (v₀²/R + g) ≤ T_max). Rope = chain of one-sided constraints, water
-  = particles, extended position-based dynamics with a direct tridiagonal
-  solve; each challenge draws the free variable (v₀, L or m), a place (Moon,
-  Mars, Venus, Earth) and is checked solvable by replaying the simulation.
+  swings the bar at the pendulum's rhythm, throws it, lines it up with the rope
+  and lets it go as the bucket passes the lowest point, where v₀ is measured;
+  the throw is tuned by shooting so that the measured v₀ is the chosen one
+  (within 0.3 % at worst, never more than 0.1 % above). The bucket must go round
+  twice without losing a drop (v₀² ≥ 5 g R; measured threshold within ±1.5 % on
+  most setups) or snapping the rope (m (v₀²/R + g) ≤ T_max). Rope = chain of
+  one-sided constraints, extended position-based dynamics with a direct
+  tridiagonal solve, water coupled implicitly to the bucket; each challenge
+  draws the free variable (v₀, L or m), a place (Moon, Mars, Venus, Earth) and
+  is checked solvable by replaying the simulation, computed in a Web Worker.
 
 Each simulation includes editable parameters, animated canvas rendering,
 free-body diagrams, formula panels, playback controls, and French/English UI.

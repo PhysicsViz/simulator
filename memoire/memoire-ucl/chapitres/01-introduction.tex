@@ -1,13 +1,179 @@
-% 01-introduction.tex — squelette (titres seulement).
+% 01-introduction.tex — Introduction : pourquoi (compréhension des étudiants
+% et arrivée de l'IA), pour qui (étudiants de BAC1, enseignants), comment
+% (assistance IA encadrée), objectifs et questions, périmètre, plan.
 
 \chapter{Introduction}\label{chap:introduction}
 
-\section{Contexte}
+\section{Pourquoi ce travail}
 
-\section{Problématique}
+En première année d'université, la mécanique est souvent la première
+rencontre des étudiants avec une physique formalisée : des lois écrites sous
+forme vectorielle, appliquées à des systèmes qui évoluent dans le temps.
+Beaucoup apprennent à appliquer les formules sans se représenter ce qu'elles
+décrivent. Un étudiant peut calculer correctement l'accélération d'un objet
+en mouvement circulaire et penser malgré tout qu'une \enquote{force
+centrifuge} le pousse vers l'extérieur. Ces idées issues du sens commun sont
+connues depuis longtemps et résistent à un enseignement classique
+\cite{halloun1985common}. Les cours où l'étudiant est actif et confronte ses
+idées à ce qui se passe réellement donnent de bien meilleurs résultats
+\cite{hake1998} (chapitre~\ref{chap:mecanique}).
+
+Une partie du problème tient aux supports. Un schéma au tableau ou une
+figure du syllabus est immobile : il montre le système à un instant, pas la
+façon dont la vitesse, l'accélération et les forces évoluent pendant le
+mouvement. Une animation interactive comble ce manque. L'étudiant voit
+l'objet bouger, les vecteurs changer de direction et de longueur, et peut
+modifier un paramètre pour observer son effet. Des simulations conçues de
+cette façon ont montré leur intérêt pour l'apprentissage
+\cite{wieman2008phet, rutten2012} (chapitre~\ref{chap:simulations}).
+
+Produire de telles animations reste pourtant coûteux. Il faut maîtriser la
+physique, pour que le modèle soit juste, et la programmation d'interfaces,
+pour qu'il soit lisible et manipulable. C'est ce coût que l'arrivée de
+l'intelligence artificielle générative remet en question. Depuis 2021, des
+modèles de langage entraînés sur du code écrivent une fonction à partir de
+sa description \cite{chen2021codex}, et les assistants actuels lisent un
+projet entier, le modifient, lancent les tests et corrigent leurs erreurs
+(chapitre~\ref{chap:ia}). Une animation qui demandait des semaines de
+développement devient envisageable en quelques jours. Ce mémoire part de la
+rencontre de ces deux constats : les étudiants ont besoin de \emph{voir} la
+physique, et l'IA pourrait rendre possible de la leur montrer à moindre coût
+\cite{sujet_memoire}.
+
+\section{Pour qui}
+
+Le public visé en premier lieu est celui des étudiants de première année du
+cours de Physique~1 (LEPL1201) de l'École polytechnique de Louvain. Les
+animations reprennent le formulaire et les notations de ce cours
+\cite{formulaire_epl1201}, pour que l'étudiant y retrouve exactement les
+symboles qu'il rencontre au cours et à l'examen. Le cours de physique de la
+Faculté des sciences de la motricité (LFSM1105), qui partage la même
+mécanique, peut utiliser les mêmes pages.
+
+L'objectif pour l'étudiant est de faciliter la compréhension en
+\emph{montrant} ce que les formules calculent. Chaque animation affiche le
+phénomène, toutes les forces qui agissent avec leur direction et leur
+grandeur, et les formules du cours écrites trois fois : sous forme
+symbolique, avec les valeurs numériques du moment remplacées, puis avec le
+résultat (figure~\ref{fig:intro-page}). L'étudiant peut ainsi suivre le lien
+entre le calcul qu'il ferait sur papier et ce qu'il voit à l'écran.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=\linewidth]{looping-ecran-complet.png}
+  \caption{Une page du site (looping avec wagon). À gauche, la scène avec les
+    forces ; au centre, le diagramme du corps libre et les énergies ; à
+    droite, les paramètres et un graphe en fonction du temps ; en bas, les
+    formules avec leurs valeurs substituées. Toutes les vues suivent le même
+    instant de la simulation.}
+  \label{fig:intro-page}
+\end{figure}
+
+Le travail s'adresse aussi aux enseignants. Ce sont eux qui utilisent les
+animations au cours ou les proposent en travail autonome, et ce sont eux qui
+devraient pouvoir en créer de nouvelles pour leurs propres exercices. Le
+site du cours propose déjà deux animations \cite{zoulab_epl1201} ; la
+question est de savoir comment en produire davantage, sans y consacrer un
+temps démesuré et sans sacrifier la justesse.
+
+\section{Comment}
+
+Nous avons développé un site de simulations de mécanique en nous faisant
+assister par l'IA, principalement Claude Code (Anthropic) et ChatGPT Codex
+(OpenAI). L'enjeu n'est pas de \enquote{faire écrire du code} par l'IA.
+Laissé sans cadre, un assistant produit un code qui a l'air juste mais peut
+contenir une formule fausse, une hypothèse cachée ou une structure
+impossible à faire évoluer ; une part importante du code généré contient par
+exemple des failles que l'utilisateur ne voit pas \cite{pearce2022asleep}. En
+physique, une animation fausse est d'autant plus dangereuse qu'elle peut
+avoir l'air juste.
+
+Nous avons donc encadré l'IA pour obtenir trois propriétés à la fois :
+\begin{itemize}
+  \item \textbf{une physique correcte} : les formules exactes du cours sont
+        utilisées quand elles existent, les hypothèses du modèle sont écrites
+        sur la page, et chaque calcul est vérifié par des tests et par un
+        agent séparé qui redérive les formules et les recoupe numériquement ;
+  \item \textbf{un code maintenable} : tous les exercices suivent la même
+        structure (un fichier de calcul, un fichier d'affichage, une page),
+        les calculs physiques ne sont jamais partagés entre exercices pour
+        rester faciles à vérifier, et le site n'utilise aucune bibliothèque
+        externe ;
+  \item \textbf{une création facilitée et en partie automatisée} : les
+        règles du projet sont écrites une seule fois dans un fichier lu par
+        l'assistant à chaque session, et des procédures réutilisables
+        (\emph{skills}) et des agents spécialisés prennent en charge les
+        tâches récurrentes : créer un exercice, écrire les tests, vérifier
+        la physique, contrôler qu'un exercice est terminé.
+\end{itemize}
+Les choix pédagogiques, la validation des résultats et la responsabilité de
+leur exactitude restent les nôtres. L'IA accélère le travail, le cadre en
+garantit la qualité, et ce mémoire évalue les deux. Le site est publié en
+ligne \cite{site_physicsviz}.
 
 \section{Objectifs et questions de recherche}
 
-\section{Démarche}
+Le sujet fixe deux objectifs \cite{sujet_memoire}. Le premier est de
+développer un ensemble d'animations JavaScript interactives pour la physique
+de première année, physiquement justes et utiles en classe. Le second est
+d'évaluer de façon critique ce que les outils d'IA apportent au
+programmeur-concepteur, pour écrire le code comme pour organiser
+l'application. Nous en tirons trois questions :
+\begin{enumerate}
+  \item \textbf{Conception.} Quelles caractéristiques d'une animation aident
+        un étudiant de première année à relier le phénomène, les forces et
+        les formules du cours ?
+  \item \textbf{Développement.} Des enseignants qui programment peuvent-ils
+        produire de telles animations avec un assistant d'IA, avec une
+        physique vérifiée et un code maintenable ? Que gagnent-ils en temps,
+        et à quelle étape ?
+  \item \textbf{Limites.} Où l'assistant se trompe-t-il, et quelles
+        vérifications faut-il pour qu'une erreur n'atteigne pas les
+        étudiants ?
+\end{enumerate}
+L'état de l'art répond en grande partie à la première question et prépare les
+deux autres, qui sont traitées dans les parties Réalisation et Résultats.
+
+\section{Périmètre}
+
+Le site compte aujourd'hui cinq exercices de mécanique : le tir parabolique,
+le pendule, le mouvement circulaire uniforme et deux versions du looping.
+Quatre d'entre eux proposent un mode jeu expérimental, dans lequel
+l'étudiant doit atteindre un objectif en réglant les conditions initiales ;
+dans les deux versions du looping, il s'agit de faire tourner un seau d'eau
+sans le renverser. Le sujet couvre aussi l'électricité élémentaire, que le
+formulaire du cours aborde (force de Coulomb, théorème de Gauss, potentiel
+électrique) \cite{formulaire_epl1201}. [À COMPLÉTER : exercices d'électricité
+ajoutés d'ici le dépôt, ou électricité hors périmètre, et pourquoi.]
 
 \section{Plan du mémoire}
+
+Le mémoire est organisé en trois parties.
+
+La \textbf{partie~I}, \emph{État de l'art}, rassemble ce que l'on sait déjà.
+Le chapitre~\ref{chap:mecanique} résume les difficultés des étudiants en
+mécanique. Le chapitre~\ref{chap:simulations} présente ce que la recherche
+montre de l'apprentissage avec des simulations, ainsi que les outils
+existants. Le chapitre~\ref{chap:ludification} traite des éléments de jeu
+dans l'apprentissage. Le chapitre~\ref{chap:numerique} passe en revue les
+méthodes de calcul et d'affichage utilisables dans un navigateur. Le
+chapitre~\ref{chap:ia} fait le point sur les assistants de programmation et
+se termine par les exigences que nous en tirons pour le site.
+
+La \textbf{partie~II}, \emph{Réalisation}, décrit ce que nous avons
+construit : nos outils et nos choix techniques
+(chapitre~\ref{chap:cahier}), l'architecture du site
+(chapitre~\ref{chap:architecture}), les exercices
+(chapitre~\ref{chap:exercices}), le mode jeu du seau d'eau
+(chapitre~\ref{chap:jeu}), notre façon d'utiliser l'IA avec ses règles,
+skills et agents (chapitre~\ref{chap:methodologie}) et la validation de la
+physique et du code (chapitre~\ref{chap:validation}).
+
+La \textbf{partie~III}, \emph{Résultats}, présente la façon dont nous
+évaluons le travail (chapitre~\ref{chap:protocole}), les résultats mesurés,
+dont la comparaison entre la théorie et la simulation et l'apport réel de
+l'IA (chapitre~\ref{chap:quantitatif}), les retours des utilisateurs
+(chapitre~\ref{chap:qualitatif}) et leur discussion
+(chapitre~\ref{chap:discussion}). La conclusion
+(chapitre~\ref{chap:conclusion}) répond aux trois questions et ouvre sur la
+suite.

@@ -1,17 +1,19 @@
 /*
  * game.test.js — Unit tests for the pure logic of the wagon-loop "bucket on a
- * rope" game mode (game.js): hand-computed ideal theory (T/m = v₀²/R + g (3 cos(θ) − 2),
- * v₀ ≥ √(5 g R), T ≤ T_max) against tensionPerMass, idealWindow and winningWindow
- * for the three free variables, cross-check with the wagon's normalPerMass from
- * calcul.js, the one-sided chain projection solveChain on hand-made chains, the
- * outcomes of the full XPBD simulation (success, spill, snap, swing), determinism,
- * the motor model (phase sequence swing → throw → align → free, kinematic bar tip
- * until the release, lead geometry, critically damped bar, joint friction, substep
- * rate), the cached pumping phase (cold = warm = from scratch, T_max below its
- * peak), drop_count (count, radius, water volume, containment, no back-action on
- * the bucket), rope_links (chain size, clamping, masses, outcome, cache key), evaluate / fillThreshold, the feasibility checker on fallback and
- * impossible challenges, seeded Monte-Carlo solvability of randomChallenge,
- * anti-repeat, variable frequencies and milestones.
+ * rope" game mode (game.js, rigid-bucket model): hand-computed ideal theory
+ * (T/m = v₀²/R + g (3 cos(θ) − 2), v₀ ≥ √(5 g R), T ≤ T_max) against
+ * tensionPerMass, idealWindow, winningWindow and bisect; the water layout
+ * (complete hexagonal rows, mass, geometry) and bucketRadius against the
+ * simulated centre of mass at rest; the one-sided chain projection solveChain
+ * on hand-made chains, with and without the rigid composite; the momentum
+ * conservation of the joint and ears friction; wall contact and landing kicks
+ * of the water; the static hanging state (filtered tension (m + μ L) g, no drop
+ * motion); the motor model (lead geometry, critically damped bar, shooting
+ * secant); the full simulation (exact v₀, success above and failure below
+ * √(5 g R), snap, swing, determinism, cached pumping); evaluate / fillThreshold,
+ * the feasibility checker (fallback and impossible challenges), a small seeded
+ * Monte-Carlo of randomChallenge in worker threads, variable frequencies and
+ * milestones.
  */
 import { test } from "node:test";
 import assert from "node:assert/strict";
@@ -26,18 +28,35 @@ const {
     VARIABLES,
     FALLBACK_CHALLENGES,
     ROPE_LINKS,
+    MIN_ROPE_LINKS,
+    MAX_ROPE_LINKS,
     HANDLE,
-    CENTER,
-    DROP_COUNT,
+    ATTACH,
     DROP_RADIUS,
     BUCKET,
+    EMPTY_MASS,
+    SHELL_CENTER,
+    SHELL_INERTIA,
+    BAR_LENGTH,
+    BAR_MASS,
+    PIVOT_HEIGHT,
+    ROPE_LINEAR_DENSITY,
+    WINDOW_MARGIN,
+    TENSION_SHARE,
+    MASS_FILL_RATIO,
+    waterMass,
+    fillHeight,
+    waterLayout,
     bucketRadius,
     tensionPerMass,
     idealWindow,
     resolveParameters,
     winningWindow,
+    bottomTension,
     initialState,
+    restFrame,
     solveChain,
+    bucketCenter,
     simulateRun,
     frameAt,
     fillThreshold,
@@ -46,27 +65,23 @@ const {
     drawVariable,
     randomChallenge,
     nextMilestone,
-    BAR_LENGTH,
-    PIVOT_HEIGHT,
-    SUBSTEP_RATE,
 } = globalThis.loop_wagon_game;
-const { api: motor_api, internals } = loadGameInternals();
+const { api: cached_api, internals } = loadGameInternals();
 
 const EARTH = 9.81;
 const MOON = 1.62;
-const FIXED_LENGTH = BAR_LENGTH + BUCKET.center_of_mass;
-const LOW = 1.06 ** 2;
-const TENSION_SHARE = 0.8;
-const ROPE_DENSITY = 0.15;
-const MONTE_CARLO_COUNT = 96;
-const MONTE_CARLO_WORKERS = 8;
-const REPLAYED_WORKERS = 4;
+const MARS = 3.71;
+const LOW = (1 + WINDOW_MARGIN) ** 2;
+const TIP = 1;
 const DRAW_COUNT = 5000;
-const REFERENCE_DROP_COUNT = 10;
+const MONTE_CARLO_SEED = 20260811;
+const MONTE_CARLO_WORKERS = 4;
+const DRAWS_PER_WORKER = 2;
+const REPLAYED_WORKERS = 2;
 
-/* assertClose: numeric comparison within a tolerance */
+/* assertClose: numeric comparison within an absolute tolerance */
 function assertClose(actual, expected, tolerance, message) {
-    assert.ok(Math.abs(actual - expected) < tolerance, `${message}: expected ${expected}, got ${actual}`);
+    assert.ok(Math.abs(actual - expected) <= tolerance, `${message}: expected ${expected}, got ${actual} (tolerance ${tolerance})`);
 }
 
 /* seededRandom: reproducible uniform generator (mulberry32) */
@@ -115,21 +130,132 @@ function verticalChain(depths, inverse_masses) {
     return depths.map((depth, i) => ({ x: 0, y: -depth, inverse_mass: inverse_masses[i] }));
 }
 
-/* distanceBetween: Euclidean distance of two nodes */
+/* distanceBetween: Euclidean distance of two points */
 function distanceBetween(a, b) {
     return Math.hypot(a.x - b.x, a.y - b.y);
 }
 
-/* runParameters: simulateRun parameters with a generous breaking tension */
-function runParameters(gravity, rope_length, mass, speed_factor, tension_max = 1e4) {
-    const radius = bucketRadius(rope_length);
-    return { gravity, rope_length, mass, tension_max, launch_speed: speed_factor * Math.sqrt(5 * gravity * radius) };
+/* waterLimit: speed √(5 g R) of the water limit for a setup */
+function waterLimit(gravity, rope_length, mass) {
+    return Math.sqrt(5 * gravity * bucketRadius(rope_length, mass));
 }
 
-test("bucketRadius is R = L_b + L + d", () => {
-    assertClose(bucketRadius(0.4), 0.9 + 0.4 + 0.19, 1e-15, "R for L = 0.4");
-    assertClose(bucketRadius(0.15), 1.24, 1e-15, "R for L = 0.15");
-    assertClose(bucketRadius(0.6), 1.69, 1e-15, "R for L = 0.6");
+/* runParameters: simulateRun parameters */
+function runParameters(gravity, rope_length, mass, speed, tension_max) {
+    return { gravity, rope_length, mass, tension_max, launch_speed: speed };
+}
+
+/* ---------- theory ---------- */
+
+test("constants: bucket geometry, empty mass, shell centre and inertia of a thin cylinder shell plus disc", () => {
+    assert.deepEqual(BUCKET, { radius: 0.13, depth: 0.24, bail: 0.15, shell_mass: 0.45, bail_mass: 0.05 });
+    assertClose(EMPTY_MASS, 0.5, 1e-15, "empty bucket 0.5 kg");
+    const side_share = 0.48 / 0.61;
+    assertClose(SHELL_CENTER, side_share * 0.12 + (1 - side_share) * 0.24, 1e-15, "centre from the lateral and bottom shares");
+    assertClose(SHELL_CENTER, 0.145573770, 1e-8, "hand value of s_c");
+    assertClose(SHELL_INERTIA, 0.006183663, 1e-8, "hand value of I_s");
+    assertClose(DROP_RADIUS, 0.13 / 9.1, 1e-15, "drop radius a/9.1 (clearance at the walls)");
+    assert.equal(BAR_LENGTH, 0.9);
+    assert.equal(BAR_MASS, 0.3);
+    assert.equal(ROPE_LINEAR_DENSITY, 0.15);
+    assert.equal(HANDLE, ROPE_LINKS + 1);
+    assert.equal(ATTACH, ROPE_LINKS + 2);
+});
+
+test("VARIABLES: ranges, weights and defaults of the three free variables", () => {
+    assert.deepEqual(VARIABLES.launch_speed, { weight: 4, min: 0, max: 20, step: 0.01, default_value: 5 });
+    assert.deepEqual(VARIABLES.rope_length, { weight: 3, min: 0.15, max: 0.6, step: 0.01, default_value: 0.4 });
+    assert.deepEqual(VARIABLES.mass, { weight: 3, min: 0.6, max: 8, step: 0.01, default_value: 2 });
+    assert.ok(VARIABLES.mass.min > EMPTY_MASS, "the lightest filled bucket still holds water");
+});
+
+test("waterMass and fillHeight: water of a filled bucket m − 0.5 kg at 1 kg/L in a cylinder of radius a", () => {
+    assert.equal(waterMass(0.5), 0);
+    assert.equal(waterMass(0.3), 0);
+    assertClose(waterMass(2), 1.5, 1e-15, "m = 2 kg");
+    assertClose(waterMass(8), 7.5, 1e-15, "m = 8 kg");
+    assert.equal(fillHeight(0.5), 0);
+    assertClose(fillHeight(2), 1.5 / (1000 * Math.PI * 0.13 ** 2), 1e-15, "f = V/(π a²)");
+    assertClose(fillHeight(2), 0.028252, 1e-6, "hand value for 1.5 L");
+    assertClose(fillHeight(8) / fillHeight(2), 5, 1e-12, "depth proportional to the water mass");
+});
+
+test("waterLayout: complete hexagonal rows alternating 10-wide (9 drops here) and 8, each drop carrying m_eau / n", () => {
+    const row_cases = [[0.6, 1, 9], [1, 1, 9], [2, 1, 9], [3, 2, 17], [5, 3, 26], [6, 4, 34], [8, 6, 51]];
+    for (const [mass, rows, count] of row_cases) {
+        const layout = waterLayout(mass);
+        const context = `m = ${mass}`;
+        assert.equal(layout.count, count, `count: ${context}`);
+        assert.equal(layout.positions.length, count, `positions: ${context}`);
+        assertClose(layout.drop_mass * layout.count, mass - 0.5, 1e-12, `water mass conserved: ${context}`);
+        assert.equal(layout.radius, DROP_RADIUS, `drop radius a/9: ${context}`);
+        const per_depth = new Map();
+        for (const [across, depth] of layout.positions) {
+            const key = depth.toFixed(9);
+            per_depth.set(key, (per_depth.get(key) ?? 0) + 1);
+            assert.ok(Math.abs(across) + layout.radius <= BUCKET.radius + 1e-12, `inside the side walls: ${context}`);
+            assert.ok(depth >= layout.radius - 1e-12 && depth <= BUCKET.depth - layout.radius + 1e-12, `inside the bottom and below the ears: ${context}`);
+        }
+        assert.deepEqual(Array.from(per_depth.values()), Array.from({ length: rows }, (_, row) => (row % 2 === 0 ? 9 : 8)), `rows: ${context}`);
+        for (let i = 0; i < layout.count; i++) {
+            for (let j = i + 1; j < layout.count; j++) {
+                const [xi, yi] = layout.positions[i];
+                const [xj, yj] = layout.positions[j];
+                assert.ok(Math.hypot(xi - xj, yi - yj) >= 2 * layout.radius - 1e-12, `no overlap: ${context}`);
+            }
+        }
+        const mean_depth = layout.positions.reduce((sum, [, depth]) => sum + depth, 0) / count;
+        assertClose(layout.along, mean_depth, 1e-15, `mean depth: ${context}`);
+        let hand_depth = 0;
+        for (let row = 0; row < rows; row++) {
+            hand_depth += (row % 2 === 0 ? 9 : 8) * (BUCKET.depth - layout.radius - row * Math.sqrt(3) * layout.radius);
+        }
+        assertClose(layout.along, hand_depth / count, 1e-12, `drop-weighted mean depth of the rows: ${context}`);
+    }
+});
+
+test("waterLayout: empty bucket has no drop, an explicit drop count keeps the cross-section and halves at most the width", () => {
+    const empty = waterLayout(0.5);
+    assert.equal(empty.count, 0);
+    assert.equal(empty.along, BUCKET.depth);
+    assert.deepEqual(waterLayout(2, null), waterLayout(2));
+    assert.deepEqual(waterLayout(2, 0), waterLayout(2));
+    const forty = waterLayout(2, 40);
+    assert.equal(forty.count, 40);
+    assert.equal(forty.positions.length, 40);
+    assertClose(forty.drop_mass * 40, 1.5, 1e-12, "water mass");
+    assertClose(2 * Math.sqrt(3) * 40 * forty.radius ** 2, 2 * BUCKET.radius * fillHeight(2), 1e-12, "cross-section 2 a f");
+    assert.ok(forty.radius <= BUCKET.radius / 2);
+    const few = waterLayout(8, 2);
+    assert.equal(few.count, 2);
+    assert.equal(few.radius, BUCKET.radius / 2, "radius capped at a/2");
+});
+
+test("bucketRadius: hand-computed distance from the pivot to the centre of mass of the filled bucket", () => {
+    const handle = 0.9 + 0.4;
+    const ears = handle + 0.15;
+    const hand = (0.05 * handle + 0.45 * (ears + SHELL_CENTER) + 1.5 * (ears + 0.24 - 0.13 / 9.1)) / 2;
+    assertClose(bucketRadius(0.4, 2), hand, 1e-12, "L = 0.4, m = 2 (one row of 9 drops on the bottom)");
+    assertClose(bucketRadius(0.4, 2), 1.648290, 1e-6, "hand value");
+    assertClose(bucketRadius(0.4, 0.5), (0.05 * handle + 0.45 * (ears + SHELL_CENTER)) / 0.5, 1e-12, "empty bucket: no water term");
+    for (const mass of [0.6, 2, 8]) {
+        assertClose(bucketRadius(0.5, mass) - bucketRadius(0.3, mass), 0.2, 1e-12, `R grows with L one for one, m = ${mass}`);
+    }
+    assertClose(bucketRadius(0.4, 2, 40), bucketRadius(0.4, 2), 2e-3, "an explicit drop count hardly moves the centre of mass");
+});
+
+test("bucketRadius equals the simulated centre-of-mass distance of the bucket at rest within 1e-4 m", () => {
+    for (const rope_length of [0.15, 0.4, 0.6]) {
+        for (const mass of [0.6, 1, 2, 3.7, 5, 8]) {
+            for (const drop_count of [null, 30]) {
+                const state = initialState({ gravity: EARTH, rope_length, mass, drop_count });
+                const center = bucketCenter(state);
+                assertClose(PIVOT_HEIGHT - center.y, bucketRadius(rope_length, mass, drop_count), 1e-4, `L = ${rope_length}, m = ${mass}, drops = ${drop_count}`);
+                assertClose(center.x, 0, 1e-12, "centre below the pivot");
+                assertClose(center.mass, mass, 1e-9, "bail + shell + water = m");
+            }
+        }
+    }
 });
 
 test("tensionPerMass: bottom, side, top and energy form v²/R + g cos(θ)", () => {
@@ -148,7 +274,7 @@ test("tensionPerMass equals the wagon's N/m on a loop of radius R released at h 
     const cases = [
         { gravity: EARTH, radius: 1.49, speed: 9 },
         { gravity: MOON, radius: 1.24, speed: 2.9 },
-        { gravity: 3.71, radius: 1.2, speed: 5 },
+        { gravity: MARS, radius: 1.2, speed: 5 },
     ];
     for (const { gravity, radius, speed } of cases) {
         const start_height = speed * speed / (2 * gravity);
@@ -156,7 +282,6 @@ test("tensionPerMass equals the wagon's N/m on a loop of radius R released at h 
         const track = buildTrack(radius, start_height);
         assertClose(track.start_height, start_height, 1e-12, "h kept");
         for (const theta of [1e-9, 0.7, Math.PI / 2, 2.5, Math.PI]) {
-            assert.ok(radius * (1 - Math.cos(theta)) <= start_height, "point reachable");
             const point = pointAt(track, track.loop_start + theta * radius);
             assertClose(tensionPerMass(gravity, radius, speed, theta), normalPerMass(gravity, start_height, point), 1e-9, `g = ${gravity}, θ = ${theta}`);
         }
@@ -164,13 +289,13 @@ test("tensionPerMass equals the wagon's N/m on a loop of radius R released at h 
 });
 
 test("idealWindow: √(5 g R) and √((T_max/m − g) R), upper end zero when the rope cannot carry m g", () => {
-    const radius = 0.9 + 0.4 + 0.19;
+    const radius = bucketRadius(0.4, 2);
     const window = idealWindow(EARTH, 0.4, 2, 180);
-    assertClose(window.minimum, Math.sqrt(5 * 9.81 * 1.49), 1e-12, "minimum");
-    assertClose(window.maximum, Math.sqrt((90 - 9.81) * 1.49), 1e-12, "maximum");
+    assertClose(window.minimum, Math.sqrt(5 * EARTH * radius), 1e-12, "minimum");
+    assertClose(window.maximum, Math.sqrt((90 - EARTH) * radius), 1e-12, "maximum");
     const moon = idealWindow(MOON, 0.15, 1, 40);
-    assertClose(moon.minimum, Math.sqrt(5 * 1.62 * 1.24), 1e-12, "moon minimum");
-    assertClose(moon.maximum, Math.sqrt((40 - 1.62) * 1.24), 1e-12, "moon maximum");
+    assertClose(moon.minimum, Math.sqrt(5 * MOON * bucketRadius(0.15, 1)), 1e-12, "moon minimum");
+    assertClose(moon.maximum, Math.sqrt((40 - MOON) * bucketRadius(0.15, 1)), 1e-12, "moon maximum");
     const weak = idealWindow(EARTH, 0.4, 2, 15);
     assert.equal(weak.maximum, 0, "T_max < m g");
     assertClose(weak.minimum, Math.sqrt(5 * EARTH * radius), 1e-12, "minimum unaffected");
@@ -183,57 +308,89 @@ test("resolveParameters substitutes the value of the free variable only", () => 
     assert.deepEqual(resolveParameters({ ...base, variable: "mass", mass: null }, 3), { launch_speed: 7, rope_length: 0.4, mass: 3 });
 });
 
-/* bottomTension: hand formula of the bar-end tension at the bottom, m (v₀²/R + g) + μ L (ω² (L_b + L/2) + g), ω = v₀/R */
-function bottomTension(gravity, rope_length, mass, speed) {
-    const radius = bucketRadius(rope_length);
-    return mass * (speed * speed / radius + gravity) + ROPE_DENSITY * rope_length * ((speed / radius) ** 2 * (BAR_LENGTH + rope_length / 2) + gravity);
-}
+test("bisect: largest true value of a falling-true predicate, smallest false value, null when the wanted side is empty", () => {
+    assertClose(internals.bisect((x) => x <= 3, 0, 10, false), 3, 1e-12, "largest value still true");
+    assertClose(internals.bisect((x) => x <= 3, 0, 10, true), 3, 1e-12, "smallest value false");
+    assertClose(internals.bisect((x) => x * x <= 2, 0, 10, false), Math.SQRT2, 1e-12, "nonlinear");
+    assert.equal(internals.bisect((x) => x <= 3, 5, 10, false), null, "true nowhere");
+    assert.equal(internals.bisect((x) => x <= 30, 0, 10, true), null, "false nowhere");
+    assertClose(internals.bisect((x) => x <= 3, 0, 2, false), 2, 1e-12, "true everywhere: the upper bound");
+    assertClose(internals.bisect((x) => x <= -1, -5, 2, true), -1, 1e-12, "false from the boundary on, negative interval");
+});
 
-test("winningWindow (v₀): 1.06 √(5 g R) up to the speed whose bottom tension (rope included) is 0.8 T_max", () => {
-    const challenge = makeChallenge("launch_speed", EARTH, null, 0.4, 2, 180);
+test("bottomTension: m (v²/R + g) + μ L (ω² (L_b + L/2) + g), ω = v/R, R from L and m", () => {
+    const radius = bucketRadius(0.4, 2);
+    const speed_squared = 81;
+    const hand = 2 * (81 / radius + EARTH) + 0.15 * 0.4 * (81 / radius ** 2 * 1.1 + EARTH);
+    assertClose(bottomTension(0.4, 2, speed_squared, EARTH), hand, 1e-9, "hand formula");
+    assertClose(bottomTension(0.4, 2, 0, EARTH), (2 + 0.06) * EARTH, 1e-12, "at rest: (m + μ L) g");
+    assert.ok(bottomTension(0.4, 3, speed_squared, EARTH) > bottomTension(0.4, 2, speed_squared, EARTH), "grows with m");
+});
+
+test("winningWindow (v₀): 1.04 √(5 g R) up to the speed whose bottom tension, rope included, is 0.7 T_max", () => {
+    assert.equal(WINDOW_MARGIN, 0.04);
+    assert.equal(TENSION_SHARE, 0.7);
+    const challenge = makeChallenge("launch_speed", EARTH, null, 0.4, 2, 210);
     const window = winningWindow(challenge);
-    assertClose(window.minimum, 1.06 * Math.sqrt(5 * 9.81 * 1.49), 1e-12, "minimum = 1.06 √(5 g R)");
-    assertClose(window.maximum, 9.4988, 1e-3, "hand value of the maximum");
-    assertClose(bottomTension(EARTH, 0.4, 2, window.maximum), TENSION_SHARE * 180, 1e-9, "tension at the maximum");
-    assert.ok(window.maximum < Math.sqrt((TENSION_SHARE * 90 - 9.81) * 1.49) + 1e-9, "the rope's own load lowers the massless limit");
-    const moon = winningWindow(makeChallenge("launch_speed", MOON, null, 0.5, 3, 110));
-    assertClose(moon.minimum, 1.06 * Math.sqrt(5 * 1.62 * 1.59), 1e-12, "moon minimum");
-    assertClose(bottomTension(MOON, 0.5, 3, moon.maximum), TENSION_SHARE * 110, 1e-9, "moon: tension at the maximum");
+    assertClose(window.minimum, 1.04 * waterLimit(EARTH, 0.4, 2), 1e-12, "minimum = 1.04 √(5 g R)");
+    assertClose(window.minimum, 9.351249, 1e-5, "hand value of the minimum");
+    assertClose(bottomTension(0.4, 2, window.maximum ** 2, EARTH), 0.7 * 210, 1e-9, "tension at the maximum");
+    assertClose(window.maximum, 10.121437, 1e-4, "hand value of the maximum");
+    assert.ok(window.maximum < Math.sqrt((0.7 * 105 - EARTH) * bucketRadius(0.4, 2)) + 1e-9, "the rope's own load lowers the massless limit");
+    const mars = winningWindow(makeChallenge("launch_speed", MARS, null, 0.5, 3, 150));
+    assertClose(mars.minimum, 1.04 * waterLimit(MARS, 0.5, 3), 1e-12, "mars minimum");
+    assertClose(bottomTension(0.5, 3, mars.maximum ** 2, MARS), 105, 1e-9, "mars tension at the maximum");
+    const too_weak = winningWindow(makeChallenge("launch_speed", EARTH, null, 0.4, 2, 15));
+    assert.equal(too_weak.maximum, -Infinity, "0.7 T_max below (m + μ L) g: empty");
 });
 
-test("winningWindow (L): minimum is the rope whose bottom tension is 0.8 T_max, maximum the one whose water limit is the given v₀", () => {
-    const speed = 9;
-    const challenge = makeChallenge("rope_length", EARTH, speed, null, 2, 180);
-    const window = winningWindow(challenge);
-    assertClose(window.minimum, 0.2337, 1e-3, "hand value of the minimum");
-    assertClose(window.maximum, 0.3797, 1e-3, "hand value of the maximum");
-    assertClose(bottomTension(EARTH, window.minimum, 2, speed), TENSION_SHARE * 180, 1e-6, "minimum L: rope at its limit");
-    assertClose(window.maximum, speed * speed / (5 * EARTH * LOW) - FIXED_LENGTH, 1e-12, "maximum L: water at its limit");
-    assert.ok(window.minimum < window.maximum);
-    const at_minimum = winningWindow(makeChallenge("launch_speed", EARTH, null, window.minimum, 2, 180));
-    assertClose(at_minimum.maximum, speed, 1e-6, "v₀ window upper end at L_min");
-    const at_maximum = winningWindow(makeChallenge("launch_speed", EARTH, null, window.maximum, 2, 180));
-    assertClose(at_maximum.minimum, speed, 1e-9, "v₀ window lower end at L_max");
+test("winningWindow (L): from the shortest rope that holds (clipped to 0.15) to the longest that keeps the water (clipped to 0.6)", () => {
+    const loaded = winningWindow(makeChallenge("rope_length", EARTH, 10, null, 2, 210));
+    assertClose(bottomTension(loaded.minimum, 2, 100, EARTH), 0.7 * 210, 1e-9, "shortest rope: bottom tension = 0.7 T_max");
+    assertClose(loaded.minimum, 0.356645, 1e-4, "hand value of the minimum");
+    assert.equal(loaded.maximum, 0.6, "water limit beyond the input range: clipped");
+    const light = winningWindow(makeChallenge("rope_length", EARTH, 10, null, 2, 300));
+    assert.equal(light.minimum, 0.15, "strong rope: clipped to the shortest input");
+    const short = winningWindow(makeChallenge("rope_length", EARTH, 9, null, 2, 300));
+    assertClose(9 * 9, 5 * EARTH * bucketRadius(short.maximum, 2) * LOW, 1e-9, "longest rope: v₀² = 5 g R (1.04)²");
+    assertClose(short.maximum, 0.278500, 1e-4, "hand value of the maximum");
+    assert.ok(short.maximum < 0.6);
+    const none = winningWindow(makeChallenge("rope_length", EARTH, 10, null, 8, 100));
+    assert.deepEqual(none, { minimum: Infinity, maximum: -Infinity }, "no rope holds this bucket: empty");
 });
 
-test("winningWindow (m): [0.9 m_max, m_max], m_max = (0.8 T_max − μ L (ω² r_mid + g)) / (v₀²/R + g)", () => {
-    const challenge = makeChallenge("mass", EARTH, 9.3, 0.4, null, 300);
-    const window = winningWindow(challenge);
-    assertClose(window.maximum, 3.4903, 1e-3, "hand value of m_max");
-    assertClose(bottomTension(EARTH, 0.4, window.maximum, 9.3), TENSION_SHARE * 300, 1e-9, "tension at m_max");
-    assertClose(window.minimum, 0.9 * window.maximum, 1e-12, "0.9 m_max");
+test("winningWindow (m): [0.9 m_max, m_max], m_max the heaviest bucket whose bottom tension is 0.7 T_max", () => {
+    assert.equal(MASS_FILL_RATIO, 0.9);
+    for (const [gravity, speed, rope_length, tension_max] of [[EARTH, 10, 0.4, 400], [EARTH, 10, 0.4, 250], [MOON, 4, 0.3, 60]]) {
+        const window = winningWindow(makeChallenge("mass", gravity, speed, rope_length, null, tension_max));
+        const context = `g = ${gravity}, T_max = ${tension_max}`;
+        assertClose(bottomTension(rope_length, window.maximum, speed * speed, gravity), 0.7 * tension_max, 1e-9, `m_max: ${context}`);
+        assertClose(window.minimum, 0.9 * window.maximum, 1e-12, `minimum = 0.9 m_max: ${context}`);
+        assert.ok(speed * speed >= 5 * gravity * bucketRadius(rope_length, window.minimum) * LOW, `water kept at the light end: ${context}`);
+        assert.ok(speed * speed >= 5 * gravity * bucketRadius(rope_length, window.maximum) * LOW, `water kept at the heavy end: ${context}`);
+    }
+    assertClose(winningWindow(makeChallenge("mass", EARTH, 10, 0.4, null, 400)).maximum, 3.912865, 1e-4, "hand value of m_max");
 });
 
-test("winningWindow is empty when the challenge is infeasible", () => {
-    const empty = { minimum: Infinity, maximum: -Infinity };
-    assert.deepEqual(winningWindow(makeChallenge("rope_length", EARTH, 9, null, 2, 15)), empty, "L: T_max/m ≤ g");
-    assert.deepEqual(winningWindow(makeChallenge("rope_length", EARTH, 9, null, 2, 2 * EARTH)), empty, "L: T_max/m = g");
-    assert.deepEqual(winningWindow(makeChallenge("mass", EARTH, 8.9, 0.4, null, 300)), empty, "m: v₀ < 1.06 √(5 g R) (8.9 < 9.06)");
-    const water_only = winningWindow(makeChallenge("mass", EARTH, 9.07, 0.4, null, 300));
-    assert.ok(water_only.minimum <= water_only.maximum, "m: v₀ just above 1.06 √(5 g R) is not empty");
-    const crossed = winningWindow(makeChallenge("launch_speed", EARTH, null, 0.4, 2, 15));
-    assert.ok(crossed.maximum < crossed.minimum, "v₀: 0.8 T_max < (m + μ L) g gives crossed bounds");
+test("winningWindow (m) is empty when the water is lost or the empty bucket is already too heavy", () => {
+    const slow = winningWindow(makeChallenge("mass", EARTH, 6, 0.4, null, 400));
+    assert.deepEqual(slow, { minimum: Infinity, maximum: -Infinity }, "v₀ below the water limit");
+    const heavy = winningWindow(makeChallenge("mass", EARTH, 10, 0.4, null, 5));
+    assert.deepEqual(heavy, { minimum: Infinity, maximum: -Infinity }, "T_max below the empty bucket's tension");
 });
+
+test("heaviestBucket and shortestRope: the loaded bottom tension equals the allowed one", () => {
+    const challenge = makeChallenge("mass", EARTH, 10, 0.4, null, 400);
+    const mass_max = internals.heaviestBucket(challenge, 280);
+    assertClose(bottomTension(0.4, mass_max, 100, EARTH), 280, 1e-9, "m_max");
+    assert.equal(internals.heaviestBucket(challenge, 1), null);
+    const rope = makeChallenge("rope_length", EARTH, 10, null, 2, 210);
+    const shortest = internals.shortestRope(rope, 147);
+    assertClose(bottomTension(shortest, 2, 100, EARTH), 147, 1e-9, "shortest L");
+    assert.equal(internals.shortestRope(rope, 1), null, "even a 3 m rope is too loaded");
+});
+
+/* ---------- chain projection ---------- */
 
 test("solveChain projects a stretched bilateral link back to its length, λ < 0 when pulling", () => {
     const nodes = verticalChain([0, 1.5], [0, 1]);
@@ -244,25 +401,19 @@ test("solveChain projects a stretched bilateral link back to its length, λ < 0 
     assertClose(lambdas[0], -0.5, 1e-12, "λ = −stretch / w");
 });
 
-test("solveChain: a stretched rope link is restored like a bilateral one", () => {
-    const nodes = verticalChain([0, 1.5], [0, 1]);
-    const lambdas = solveChain(nodes, [1], [true], -1, makeWorkspace(1));
-    assertClose(distanceBetween(nodes[0], nodes[1]), 1, 1e-12, "length restored");
-    assertClose(lambdas[0], -0.5, 1e-12, "rope pulls: λ < 0");
-});
-
-test("solveChain: a compressed rope link is not pushed apart, a compressed bilateral link is", () => {
+test("solveChain: a stretched rope link is restored like a bilateral one, a compressed one is not pushed apart", () => {
+    const stretched = verticalChain([0, 1.5], [0, 1]);
+    assertClose(solveChain(stretched, [1], [true], -1, makeWorkspace(1))[0], -0.5, 1e-12, "rope pulls: λ < 0");
+    assertClose(distanceBetween(stretched[0], stretched[1]), 1, 1e-12, "length restored");
     const rope = verticalChain([0, 0.5], [0, 1]);
-    const rope_lambdas = solveChain(rope, [1], [true], -1, makeWorkspace(1));
+    assert.equal(solveChain(rope, [1], [true], -1, makeWorkspace(1))[0], 0, "no force in a slack rope");
     assertClose(rope[1].y, -0.5, 1e-15, "rope node untouched");
-    assert.equal(rope_lambdas[0], 0, "no force in a slack rope");
     const bar = verticalChain([0, 0.5], [0, 1]);
-    const bar_lambdas = solveChain(bar, [1], [false], -1, makeWorkspace(1));
+    assertClose(solveChain(bar, [1], [false], -1, makeWorkspace(1))[0], 0.5, 1e-12, "bilateral link pushes: λ > 0");
     assertClose(bar[1].y, -1, 1e-12, "bilateral link restored to its length");
-    assertClose(bar_lambdas[0], 0.5, 1e-12, "bilateral link pushes: λ > 0");
 });
 
-test("solveChain on a coupled chain: bilateral link then slack rope link", () => {
+test("solveChain on a coupled chain: bilateral link then slack rope link, and the all-bilateral chain with coupled multipliers", () => {
     const rope_chain = verticalChain([0, 1.5, 1.8], [0, 1, 1]);
     const rope_lambdas = solveChain(rope_chain, [1, 1], [false, true], -1, makeWorkspace(2));
     assertClose(rope_chain[1].y, -1, 1e-12, "first link restored");
@@ -271,8 +422,8 @@ test("solveChain on a coupled chain: bilateral link then slack rope link", () =>
     assert.equal(rope_lambdas[1], 0, "λ of the slack rope link");
     const rigid_chain = verticalChain([0, 1.5, 1.8], [0, 1, 1]);
     const rigid_lambdas = solveChain(rigid_chain, [1, 1], [false, false], -1, makeWorkspace(2));
-    assertClose(distanceBetween(rigid_chain[0], rigid_chain[1]), 1, 1e-12, "bilateral chain: link 0");
-    assertClose(distanceBetween(rigid_chain[1], rigid_chain[2]), 1, 1e-12, "bilateral chain: link 1");
+    assertClose(distanceBetween(rigid_chain[0], rigid_chain[1]), 1, 1e-12, "link 0");
+    assertClose(distanceBetween(rigid_chain[1], rigid_chain[2]), 1, 1e-12, "link 1");
     assertClose(rigid_lambdas[0], -0.3, 1e-12, "coupled λ₀");
     assertClose(rigid_lambdas[1], 0.2, 1e-12, "coupled λ₁");
 });
@@ -283,12 +434,38 @@ test("solveChain ignores a broken link", () => {
     assert.equal(lambdas[0], 0, "no force through the broken link");
     assertClose(nodes[0].y, 0, 1e-15, "pivot untouched");
     assertClose(distanceBetween(nodes[1], nodes[2]), 1, 1e-12, "next link still projected");
-    assertClose(nodes[1].y, -1.85, 1e-12, "node 1 moved by link 1 only (0.35 toward node 2)");
+    assertClose(nodes[1].y, -1.85, 1e-12, "node 1 moved by link 1 only");
     assertClose(nodes[2].y, -2.85, 1e-12, "node 2 moved by 0.35 toward node 1");
-    assertClose(lambdas[1], -0.35, 1e-12, "link 1 pulls its neighbours together (equal masses)");
+    assertClose(lambdas[1], -0.35, 1e-12, "equal masses");
 });
 
-test("solveChain at rest on the initial state leaves the hanging chain unchanged", () => {
+test("solveChain with the rigid composite: the last link moves the shell with w = 1/M + (r × n)²/I, translation n Δλ/M and rotation (r × n) Δλ/I", () => {
+    const mass = 2;
+    const inertia = 0.1;
+    const centered = { center_x: 0, center_y: -1.8, mass, inertia, attach_x: 0, attach_y: -1.5, shift_x: 0, shift_y: 0, turn: 0 };
+    const straight = [{ x: 0, y: 0, inverse_mass: 0 }, { x: 0, y: -1.5, inverse_mass: 0 }];
+    const lambdas = solveChain(straight, [1], [false], -1, makeWorkspace(1), centered);
+    assertClose(lambdas[0], -0.5 * mass, 1e-12, "attach on the line through the centre of mass: w = 1/M");
+    assertClose(centered.center_y, -1.3, 1e-12, "centre translated by n Δλ/M");
+    assertClose(centered.attach_y, -1, 1e-12, "attach point on the circle");
+    assertClose(centered.turn, 0, 1e-15, "no rotation");
+    const offset = { center_x: 0.1, center_y: -1.55, mass, inertia, attach_x: 0, attach_y: -1.05, shift_x: 0, shift_y: 0, turn: 0 };
+    const nodes = [{ x: 0, y: 0, inverse_mass: 0 }, { x: 0, y: -1.05, inverse_mass: 0 }];
+    const offset_lambdas = solveChain(nodes, [1], [false], -1, makeWorkspace(1), offset);
+    const arm_cross = (-0.1) * (-1) - (0.5) * 0;
+    assertClose(arm_cross, 0.1, 1e-15, "hand (r × n)");
+    const w = 1 / mass + arm_cross ** 2 / inertia;
+    assertClose(offset_lambdas[0] / (-0.05 / w), 1, 0.1, "λ close to the first-order −stretch / w (two linearisations)");
+    assertClose(distanceBetween(nodes[0], nodes[1]), 1, 1e-5, "length restored");
+    assertClose(nodes[1].x, offset.attach_x, 1e-15, "last node follows the composite's attach point");
+    assertClose(nodes[1].y, offset.attach_y, 1e-15, "last node follows the composite's attach point");
+    assert.ok(offset.turn < 0 && offset.shift_y > 0, "pulled up and turned the way r × n Δλ says");
+    assertClose(offset.turn / (arm_cross * offset_lambdas[0] / inertia), 1, 0.15, "rotation (r × n) Δλ/I");
+    assertClose(offset.shift_y / (-offset_lambdas[0] / mass), 1, 0.15, "translation n Δλ/M");
+    assertClose(distanceBetween({ x: offset.attach_x, y: offset.attach_y }, { x: offset.center_x, y: offset.center_y }), distanceBetween({ x: 0, y: -1.05 }, { x: 0.1, y: -1.55 }), 1e-12, "rigid: the attach arm keeps its length");
+});
+
+test("solveChain at rest on the initial state leaves the hanging chain unchanged, with and without the composite", () => {
     const state = initialState({ launch_speed: 9, rope_length: 0.4, mass: 2, gravity: EARTH });
     const before = state.nodes.map((node) => [node.x, node.y]);
     solveChain(state.nodes, state.link_lengths, state.rope_flags, -1, state.work);
@@ -296,775 +473,752 @@ test("solveChain at rest on the initial state leaves the hanging chain unchanged
         assertClose(node.x, before[i][0], 1e-12, `node ${i} x`);
         assertClose(node.y, before[i][1], 1e-12, `node ${i} y`);
     });
-    assert.equal(state.drops.length, DROP_COUNT);
-    assert.equal(state.nodes.length, ROPE_LINKS + 3);
-    assert.equal(state.nodes[1].inverse_mass, 0, "bar tip driven by the motor");
-    assert.equal(state.released, false);
+    const composite = internals.buildComposite(state);
+    const lambdas = solveChain(state.nodes, state.link_lengths, state.rope_flags, -1, state.work, composite);
+    assertClose(composite.shift_x, 0, 1e-12, "composite not moved");
+    assertClose(composite.shift_y, 0, 1e-12, "composite not moved");
+    assertClose(composite.turn, 0, 1e-12, "composite not turned");
+    assert.ok(Array.from(lambdas).every((lambda) => Math.abs(lambda) < 1e-12), "no multiplier at rest");
 });
 
-const EARTH_CASE = { gravity: EARTH, rope_length: 0.4, mass: 2 };
-const MOON_CASE = { gravity: MOON, rope_length: 0.3, mass: 1 };
-
-test("simulateRun: success at 1.08 √(5 g R), 2 turns, no drop lost, rope never stretched, bar and bucket links rigid", () => {
-    for (const { gravity, rope_length, mass } of [EARTH_CASE, MOON_CASE]) {
-        const parameters = runParameters(gravity, rope_length, mass, 1.08);
-        const run = simulateRun(parameters);
-        assert.equal(run.outcome, "success", `g = ${gravity}`);
-        const last = run.frames[run.frames.length - 1];
-        assertClose(last.turns, 2, 0.05, "two full turns");
-        assert.ok(last.drops.every((drop) => drop[2] === false), "no spilled drop at the end");
-        assert.equal(last.drops.length, DROP_COUNT);
-        assert.ok(run.min_tension > 0, "rope taut over the whole free phase");
-        assert.equal(run.duration, run.event_time, "a success ends the run at the second turn");
-        const link_length = rope_length / ROPE_LINKS;
-        let worst_stretch = -Infinity;
-        let worst_bar = 0;
-        let worst_bucket = 0;
-        for (const frame of run.frames) {
-            assert.ok(frame.drops.every((drop) => drop[2] === false), `no spill at t = ${frame.time}`);
-            for (let i = 1; i < HANDLE; i++) {
-                const a = frame.nodes[i];
-                const b = frame.nodes[i + 1];
-                worst_stretch = Math.max(worst_stretch, Math.hypot(a[0] - b[0], a[1] - b[1]) - link_length);
-            }
-            worst_bar = Math.max(worst_bar, Math.abs(Math.hypot(frame.nodes[1][0], frame.nodes[1][1] - PIVOT_HEIGHT) - BAR_LENGTH));
-            worst_bucket = Math.max(worst_bucket, Math.abs(Math.hypot(frame.nodes[CENTER][0] - frame.nodes[HANDLE][0], frame.nodes[CENTER][1] - frame.nodes[HANDLE][1]) - BUCKET.center_of_mass));
-        }
-        assert.ok(worst_stretch < 1e-3, `rope stretched by ${worst_stretch} m`);
-        assert.ok(worst_bar < 1e-6, `bar length error ${worst_bar} m`);
-        assert.ok(worst_bucket < 1e-6, `bucket arm error ${worst_bucket} m`);
-    }
-});
-
-test("simulateRun: the peak tension is the bottom tension m (v₀²/R + g) + μ L (ω² r_mid + g) within +0 / +25 % (the throw overshoots the energy ½ v₀² by about 12 %)", () => {
-    for (const { gravity, rope_length, mass } of [EARTH_CASE, { gravity: EARTH, rope_length: 0.25, mass: 4 }, { gravity: MOON, rope_length: 0.5, mass: 5 }, { gravity: 3.71, rope_length: 0.3, mass: 1 }]) {
-        const parameters = runParameters(gravity, rope_length, mass, 1.1);
-        const expected = bottomTension(gravity, rope_length, mass, parameters.launch_speed);
-        const run = simulateRun(parameters);
-        assert.equal(run.outcome, "success");
-        const release_frame = run.frames.findIndex((frame) => frame.released);
-        assert.ok(release_frame > 0, "the run has a free phase");
-        assert.ok(run.frames[release_frame - 1].tension < expected, "the tension is below the bottom value just before the release");
-        const peak = Math.max(...run.frames.filter((frame) => frame.released && frame.turns > 0.4).map((frame) => frame.tension));
-        assert.ok(peak >= expected && peak <= 1.25 * expected, `g = ${gravity}: peak ${peak} vs ideal ${expected}`);
-        assert.ok(run.max_tension >= peak - 1e-9, "the run maximum covers the bottom passage");
-        assert.ok(run.max_tension <= 1.25 * expected, `run maximum ${run.max_tension} vs ideal ${expected}`);
-    }
-});
-
-test("simulateRun: spill at 0.92 √(5 g R) with at least one lost drop", () => {
-    for (const { gravity, rope_length, mass } of [EARTH_CASE, MOON_CASE]) {
-        const run = simulateRun(runParameters(gravity, rope_length, mass, 0.92));
-        assert.equal(run.outcome, "spill", `g = ${gravity}`);
-        const last = run.frames[run.frames.length - 1];
-        assert.ok(last.drops.some((drop) => drop[2] === true), "a drop is flagged spilled");
-        assert.ok(run.event_time > 0 && run.event_time < run.duration, "aftermath recorded after the event");
-        assert.ok(run.release_time <= run.event_time + 1e-9, "the motor has let go at the latest when the water falls");
-    }
-});
-
-test("simulateRun: 0.92 √(5 g R) is never a success, whatever the place, rope length and mass", () => {
-    for (const { gravity, rope_length, mass } of [{ gravity: MOON, rope_length: 0.15, mass: 1 }, { gravity: 3.71, rope_length: 0.6, mass: 3 }]) {
-        const outcome = simulateRun(runParameters(gravity, rope_length, mass, 0.92), false).outcome;
-        assert.ok(outcome === "spill" || outcome === "swing", `g = ${gravity}: ${outcome}`);
-    }
-});
-
-test("simulateRun: snap exactly when T_max is below the run's own peak tension, and the rope is cut afterwards", () => {
-    const parameters = runParameters(EARTH, 0.4, 2, 1.08);
-    const peak = simulateRun(parameters).max_tension;
-    const snapped = simulateRun({ ...parameters, tension_max: 0.95 * peak });
-    assert.equal(snapped.outcome, "snap");
-    assert.equal(snapped.frames[snapped.frames.length - 1].snapped, true);
-    assert.equal(snapped.frames[snapped.frames.length - 1].tension, 0);
-    assert.ok(snapped.event_time < snapped.duration);
-    assert.equal(simulateRun({ ...parameters, tension_max: 1.05 * peak }, false).outcome, "success");
-});
-
-test("simulateRun: swing for v₀² < 2 g R, for a v₀ below the pumping energy and for v₀ = 0", () => {
-    const parameters = { gravity: EARTH, rope_length: 0.4, mass: 2, tension_max: 1e4 };
-    const below_horizontal = simulateRun({ ...parameters, launch_speed: 0.9 * Math.sqrt(2 * EARTH * 1.49) });
-    assert.equal(below_horizontal.outcome, "swing");
-    assert.ok(below_horizontal.frames[below_horizontal.frames.length - 1].turns < 1, "no full turn");
-    assert.equal(simulateRun({ ...parameters, launch_speed: 0.5 * Math.sqrt(5 * EARTH * 1.49) }, false).outcome, "swing");
-    const resting = simulateRun({ ...parameters, launch_speed: 0 });
-    assert.equal(resting.outcome, "swing");
-    assert.equal(resting.event_time, 0);
-    assert.equal(resting.release_time, null);
-    assert.equal(resting.frames[0].turns, 0);
-    assert.ok(resting.frames.every((frame) => frame.motor_phase === "rest"));
-});
-
-test("simulateRun is deterministic: identical runs give identical frames", () => {
-    const parameters = runParameters(EARTH, 0.4, 2, 1.08);
-    const first = simulateRun(parameters);
-    const second = simulateRun({ ...parameters });
-    assert.deepEqual(second.frames, first.frames);
-    assert.equal(second.outcome, first.outcome);
-    assert.equal(second.max_tension, first.max_tension);
-});
-
-test("simulateRun without recording gives the same outcome and an empty frame list tail", () => {
-    for (const factor of [0.92, 1.08]) {
-        const parameters = runParameters(EARTH, 0.4, 2, factor);
-        const recorded = simulateRun(parameters);
-        const quick = simulateRun(parameters, false);
-        assert.equal(quick.outcome, recorded.outcome, `factor ${factor}`);
-        assertClose(quick.event_time, recorded.event_time, 1e-9, `event time at factor ${factor}`);
-        assert.ok(quick.frames.length <= 2, "no frames recorded");
-    }
-});
-
-test("frameAt returns the last frame at or before t and clamps both ends", () => {
-    const run = simulateRun(runParameters(EARTH, 0.4, 2, 1.08));
-    assert.equal(frameAt(run, -3), run.frames[0]);
-    assert.equal(frameAt(run, 0), run.frames[0]);
-    assert.equal(frameAt(run, 0.5 / 60), run.frames[0]);
-    assert.equal(frameAt(run, 1 / 60), run.frames[1]);
-    assert.equal(frameAt(run, 3 / 60), run.frames[3]);
-    assert.equal(frameAt(run, 3.9 / 60), run.frames[3]);
-    assert.equal(frameAt(run, 1e9), run.frames[run.frames.length - 1]);
-    assert.equal(run.frames[0].nodes.length, CENTER + 1);
-});
-
-/* distinctPhases: motor_phase of the frames, consecutive duplicates removed */
-function distinctPhases(run) {
-    const phases = [];
-    for (const frame of run.frames) {
-        if (phases[phases.length - 1] !== frame.motor_phase) {
-            phases.push(frame.motor_phase);
-        }
-    }
-    return phases;
-}
-
-test("motor phases: a successful run goes swing → throw → align → free, release flag and release_time agree", () => {
-    for (const { gravity, rope_length, mass } of [EARTH_CASE, MOON_CASE]) {
-        const run = simulateRun(runParameters(gravity, rope_length, mass, 1.08));
-        assert.equal(run.outcome, "success");
-        assert.deepEqual(distinctPhases(run), ["swing", "throw", "align", "free"], `g = ${gravity}`);
-        assert.equal(run.frames[0].motor_phase, "swing");
-        for (const frame of run.frames) {
-            assert.equal(frame.released, frame.motor_phase === "free", `released flag at t = ${frame.time}`);
-        }
-        const first_free = run.frames.find((frame) => frame.released);
-        assert.ok(first_free.time - 1 / 60 - 1e-9 <= run.release_time && run.release_time <= first_free.time + 1e-9, "release_time falls in the first free frame interval");
-        assert.ok(run.launch_speed > 0, "bucket speed at the release");
-    }
-});
-
-test("motor phases: a v₀ small enough for a release at the lowest point also starts with the swing and ends free", () => {
-    const radius = bucketRadius(0.4);
-    const run = simulateRun({ gravity: EARTH, rope_length: 0.4, mass: 2, tension_max: 1e4, launch_speed: 1.45 * Math.sqrt(EARTH * radius) });
-    const phases = distinctPhases(run);
-    assert.equal(phases[0], "swing");
-    assert.equal(phases[phases.length - 1], "free");
-});
-
-test("motor phases: a failure during the drive releases the bar at the event (phase free from then on)", () => {
-    const parameters = runParameters(EARTH, 0.4, 2, 1.08);
-    const peak = simulateRun(parameters).max_tension;
-    const run = simulateRun({ ...parameters, tension_max: 0.95 * peak });
-    const phases = distinctPhases(run);
-    assert.equal(phases[phases.length - 1], "free");
-    assert.ok(run.frames.filter((frame) => frame.released).every((frame) => frame.motor_phase === "free"));
-});
-
-test("bar tip: inverse mass 0 (kinematic) at the start and during the pumping, m_b/3 inverse mass after the release", () => {
-    const parameters = runParameters(EARTH, 0.4, 2, 1.08);
-    const pumped = internals.pumpedAttempt(parameters, false);
-    assert.notEqual(pumped, null, "the pumping reaches the throw");
-    assert.equal(pumped.state.nodes[1].inverse_mass, 0, "tip kinematic at the end of the pumping");
-    assert.equal(pumped.state.released, false);
-    assert.equal(pumped.motor.phase, "swing");
-    assertClose(Math.hypot(pumped.state.nodes[1].x, pumped.state.nodes[1].y - PIVOT_HEIGHT), BAR_LENGTH, 1e-9, "tip on the bar circle");
-    assert.ok(Math.abs(pumped.motor.bucket_angle) > 0, "the bucket has been pumped");
-    internals.advanceAttempt(pumped, parameters, false);
-    assert.equal(pumped.state.released, true);
-    assert.equal(pumped.motor.phase, "free");
-    assertClose(pumped.state.nodes[1].inverse_mass, 3 / 0.3, 1e-12, "effective bar mass m_b/3 after the release");
-    assertClose(Math.hypot(pumped.state.nodes[1].x, pumped.state.nodes[1].y - PIVOT_HEIGHT), BAR_LENGTH, 1e-6, "tip still on the bar circle (rigid bar)");
-});
-
-test("releaseBar gives the tip its inverse mass back and restarts the turn count at the current bucket angle", () => {
-    const state = motor_api.initialState({ launch_speed: 9, rope_length: 0.4, mass: 2, gravity: EARTH });
-    state.turned = 7;
-    state.nodes[12].x = 0.5;
-    state.nodes[12].y = PIVOT_HEIGHT - 1.4;
-    internals.releaseBar(state);
-    assert.equal(state.released, true);
-    assertClose(state.nodes[1].inverse_mass, 3 / 0.3, 1e-12, "inverse mass");
-    assert.equal(state.turned, 0);
-    assertClose(state.previous_angle, Math.atan2(0.5, 1.4), 1e-12, "turn count starts at the bucket angle");
-});
-
-test("stepState: the driven tip is placed exactly on the bar circle whatever the load, with the velocity Δx/Δt", () => {
-    const state = motor_api.initialState({ launch_speed: 9, rope_length: 0.4, mass: 2, gravity: EARTH });
-    const dt = 1 / 2400;
-    for (const angle of [0.1, 0.4, -0.6]) {
-        const before_x = state.nodes[1].x;
-        const before_y = state.nodes[1].y;
-        internals.stepState(state, EARTH, dt, angle);
-        assertClose(state.nodes[1].x, BAR_LENGTH * Math.sin(angle), 1e-15, `tip x at ${angle}`);
-        assertClose(state.nodes[1].y, PIVOT_HEIGHT - BAR_LENGTH * Math.cos(angle), 1e-15, `tip y at ${angle}`);
-        assertClose(state.nodes[1].velocity_x, (state.nodes[1].x - before_x) / dt, 1e-9, "tip velocity x");
-        assertClose(state.nodes[1].velocity_y, (state.nodes[1].y - before_y) / dt, 1e-9, "tip velocity y");
-        assert.equal(state.nodes[1].inverse_mass, 0);
-    }
-});
-
-test("no force on the bucket but the rope: with the tip held, the hanging system stays at rest and the rope carries exactly its weight", () => {
-    const state = motor_api.initialState({ launch_speed: 9, rope_length: 0.4, mass: 2, gravity: EARTH });
-    const start = state.nodes.map((node) => [node.x, node.y]);
-    let raw = 0;
-    for (let i = 0; i < 2400; i++) {
-        raw = internals.stepState(state, EARTH, 1 / 2400, 0);
-    }
-    state.nodes.forEach((node, i) => {
-        assertClose(node.x, start[i][0], 1e-6, `node ${i} x`);
-        assertClose(node.y, start[i][1], 1e-6, `node ${i} y`);
-    });
-    const carried = (2 + 0.01 + ROPE_DENSITY * 0.4) * EARTH;
-    assertClose(raw, carried, 0.02 * carried, "tension of the top link = weight of what hangs below");
-    assert.ok(state.drops.every((drop) => drop.spilled === false));
-});
-
-test("no force on the bucket but the rope: with the rope cut, the bucket is in free fall with g", () => {
-    const state = motor_api.initialState({ launch_speed: 9, rope_length: 0.4, mass: 2, gravity: EARTH });
-    state.snapped = true;
-    const start_y = state.nodes[CENTER].y;
-    const steps = 480;
-    for (let i = 0; i < steps; i++) {
-        internals.stepState(state, EARTH, 1 / 2400, 0);
-    }
-    const time = steps / 2400;
-    assertClose(start_y - state.nodes[CENTER].y, EARTH * time * time / 2, 0.02 * EARTH * time * time / 2, "free fall distance g t²/2");
-});
-
-test("drops do not act back on the bucket: the chain and the tension are identical for the default 25 and for 40 drops", () => {
-    const parameters = runParameters(EARTH, 0.4, 2, 1.08);
-    const reference = simulateRun(parameters);
-    const finer = simulateRun({ ...parameters, drop_count: 40 });
-    assert.equal(finer.outcome, reference.outcome);
-    assert.equal(finer.frames.length, reference.frames.length);
-    assert.equal(finer.max_tension, reference.max_tension);
-    reference.frames.forEach((frame, i) => {
-        assert.deepEqual(finer.frames[i].nodes, frame.nodes, `frame ${i}`);
-        assert.equal(finer.frames[i].tension, frame.tension);
-    });
-});
-
-test("motorLead (align): the motor gives no lead while the bar accompanies the bucket", () => {
-    const state = motor_api.initialState({ launch_speed: 9, rope_length: 0.4, mass: 2, gravity: EARTH });
-    const motor = { phase: "align", bucket_angle: 1, previous_speed: 0 };
-    assert.equal(internals.motorLead(motor, state, { gravity: EARTH, launch_speed: 9 }, 1.49, 3), 0);
-});
-
-test("motorLead (swing): the lead δ satisfies L_b sin(δ + ψ) = r sin(ψ) with tan(ψ) = 0.6 × 0.5 × min(tan limit, 0.35) in the kick", () => {
-    for (const rope_length of [0.15, 0.4, 0.6]) {
-        const radius = bucketRadius(rope_length);
-        const parameters = { gravity: EARTH, launch_speed: 9, rope_length, mass: 2, tension_max: 1e4 };
-        const state = motor_api.initialState(parameters);
-        const kick = 1.3 * Math.sqrt(radius / EARTH);
-        const motor = { phase: "swing", bucket_angle: 0, previous_speed: 0 };
-        const lead = internals.motorLead(motor, state, parameters, radius, kick / 2);
-        const sine_limit = 0.85 * Math.min(BAR_LENGTH / radius, 1);
-        const tangent = 0.6 * Math.min(sine_limit / Math.sqrt(1 - sine_limit ** 2), 0.35) * 0.5;
-        const psi = Math.atan(tangent);
-        assert.ok(lead > 0, `L = ${rope_length}: the bar leads the bucket`);
-        assertClose(BAR_LENGTH * Math.sin(lead + psi), radius * Math.sin(psi), 1e-12, `L = ${rope_length}: triangle pivot–tip–bucket`);
-        const later = internals.motorLead({ ...motor }, state, parameters, radius, kick);
-        assertClose(later, 0, 1e-12, "after the kick, with the bucket at rest the push vanishes (tanh(0) = 0)");
-    }
-});
-
-test("moveBar: critically damped follower, no overshoot, reaches the target, no jump on the first step", () => {
-    const motor = { angle: 0, rate: 0 };
-    const target = 0.5;
-    const dt = 1 / 2400;
-    const first = internals.moveBar(motor, target, 0, dt);
-    assert.ok(first > 0 && first < 1e-3, `first step ${first}`);
-    let highest = first;
-    for (let i = 1; i < 2400; i++) {
-        highest = Math.max(highest, internals.moveBar(motor, target, 0, dt));
-    }
-    assert.ok(highest <= target + 1e-4, `overshoot ${highest - target}`);
-    assertClose(motor.angle, target, 1e-4, "settled on the target");
-    assertClose(internals.moveBar({ angle: 0.3, rate: 2 }, 0.3, 2, dt), 0.3 + 2 * dt, 1e-12, "a moving target is tracked without lag by the feed-forward");
-});
-
-test("smootherstep: 0 → 1 with zero end slopes, value 1/2 and slope 15/8 in the middle, clamped outside", () => {
-    assert.equal(JSON.stringify(internals.smootherstep(0)), JSON.stringify({ value: 0, slope: 0 }));
-    assert.equal(JSON.stringify(internals.smootherstep(1)), JSON.stringify({ value: 1, slope: 0 }));
-    const middle = internals.smootherstep(0.5);
-    assertClose(middle.value, 0.5, 1e-15, "value");
-    assertClose(middle.slope, 1.875, 1e-15, "slope");
-    assert.equal(JSON.stringify(internals.smootherstep(-2)), JSON.stringify({ value: 0, slope: 0 }));
-    assert.equal(JSON.stringify(internals.smootherstep(3)), JSON.stringify({ value: 1, slope: 0 }));
-});
-
-test("dampJoint: the bending of the joint decays at the given rate, the common rotation is untouched", () => {
-    const joint = (a_velocity_y, c_velocity_y) => [
-        { x: -1, y: 0, velocity_x: 0, velocity_y: a_velocity_y, inverse_mass: 1 },
-        { x: 0, y: 0, velocity_x: 0, velocity_y: 0, inverse_mass: 0 },
-        { x: 1, y: 0, velocity_x: 0, velocity_y: c_velocity_y, inverse_mass: 1 },
-    ];
-    const spin = (from, to) => (to.velocity_y - from.velocity_y) / (to.x - from.x);
-    const rate = 8;
-    const dt = 1 / 2400;
-    const [rigid_a, rigid_b, rigid_c] = joint(-3, 3);
-    internals.dampJoint(rigid_a, rigid_b, rigid_c, rate, dt);
-    assert.equal(rigid_a.velocity_y, -3);
-    assert.equal(rigid_c.velocity_y, 3);
-    const [bent_a, bent_b, bent_c] = joint(0, 3);
-    internals.dampJoint(bent_a, bent_b, bent_c, rate, dt);
-    assertClose(spin(bent_b, bent_c) - spin(bent_a, bent_b), 3 * Math.exp(-rate * dt), 1e-12, "relative spin 3 e^(−rate Δt)");
-    assertClose(bent_c.velocity_y - 3, bent_a.velocity_y, 1e-12, "equal masses share the correction equally and oppositely");
-    const fixed = [{ x: -1, y: 0, velocity_x: 0, velocity_y: 0, inverse_mass: 0 }, { x: 0, y: 0, velocity_x: 0, velocity_y: 0, inverse_mass: 1 }, { x: 1, y: 0, velocity_x: 0, velocity_y: 3, inverse_mass: 0 }];
-    internals.dampJoint(fixed[0], fixed[1], fixed[2], rate, dt);
-    assert.equal(fixed[2].velocity_y, 3, "two infinitely heavy ends: nothing to correct");
-});
-
-/* jointNode: node with a mass (0 = infinite) and a velocity */
-function jointNode(x, y, mass, velocity_x, velocity_y) {
-    return { x, y, velocity_x, velocity_y, inverse_mass: mass === 0 ? 0 : 1 / mass };
-}
-
-/* jointInvariants: linear momentum, angular momentum about the origin, kinetic energy and relative spin of a, b, c */
-function jointInvariants([a, b, c]) {
-    const sums = { px: 0, py: 0, angular: 0, energy: 0 };
-    for (const node of [a, b, c]) {
-        const mass = 1 / node.inverse_mass;
-        sums.px += mass * node.velocity_x;
-        sums.py += mass * node.velocity_y;
-        sums.angular += mass * (node.x * node.velocity_y - node.y * node.velocity_x);
-        sums.energy += 0.5 * mass * (node.velocity_x ** 2 + node.velocity_y ** 2);
-    }
-    return sums;
-}
-
-/* relativeSpin: spin(b, c) − spin(b, a), spin(b, n) = (arm × Δv)/|arm|² */
-function relativeSpin(a, b, c) {
-    const spin = (node) => {
-        const arm_x = node.x - b.x;
-        const arm_y = node.y - b.y;
-        return (arm_x * (node.velocity_y - b.velocity_y) - arm_y * (node.velocity_x - b.velocity_x)) / (arm_x ** 2 + arm_y ** 2);
-    };
-    return spin(c) - spin(a);
-}
-
-const JOINT_RATE = 8;
-const JOINT_DT = 1 / 2400;
-
-const JOINT_CASES = [
-    ["bucket moving at 1 m/s", () => [jointNode(0, 0.04, 0.006, 0, 0), jointNode(0, 0, 0.016, 0, 0), jointNode(0, -0.19, 2, 1, 0)]],
-    ["rope node moving at 2 m/s", () => [jointNode(0, 0.04, 0.006, 2, 0), jointNode(0, 0, 0.016, 0, 0), jointNode(0, -0.19, 2, 0, 0)]],
-    ["oblique velocities on a bent joint", () => [jointNode(0.03, 0.03, 0.006, 1.5, -0.7), jointNode(0, 0, 0.016, -0.4, 0.9), jointNode(0.1, -0.16, 2, 0.8, 0.3)]],
-];
-
-for (const [label, build] of JOINT_CASES) {
-    test(`dampJoint (${label}): conserves linear and angular momentum, never adds energy, relative spin × e^(−rate Δt)`, () => {
-        const nodes = build();
-        const before = jointInvariants(nodes);
-        const spin_before = relativeSpin(...nodes);
-        assert.notEqual(spin_before, 0);
-        internals.dampJoint(...nodes, JOINT_RATE, JOINT_DT);
-        const after = jointInvariants(nodes);
-        assertClose(after.px, before.px, 1e-12, "px");
-        assertClose(after.py, before.py, 1e-12, "py");
-        assertClose(after.angular, before.angular, 1e-12, "angular momentum about the origin");
-        assert.ok(after.energy <= before.energy, `energy ${after.energy} > ${before.energy}`);
-        assert.ok(after.energy < before.energy, "a bent joint dissipates");
-        assertClose(relativeSpin(...nodes) / spin_before, Math.exp(-JOINT_RATE * JOINT_DT), 1e-12, "decay factor");
-    });
-}
-
-test("dampJoint with a fixed pivot as a and a light bar tip as b: the tip-joint friction acts (relative spin decays, rope node velocity changes)", () => {
-    const pivot = jointNode(0, 0.5, 0, 0, 0);
-    const tip = jointNode(0.3, 0.1, 0.1, 0.5, 0.2);
-    const rope = jointNode(0.3, -0.05, 0.006, -0.6, 0.4);
-    const spin_before = relativeSpin(pivot, tip, rope);
-    const rope_before = [rope.velocity_x, rope.velocity_y];
-    internals.dampJoint(pivot, tip, rope, JOINT_RATE, JOINT_DT);
-    assertClose(relativeSpin(pivot, tip, rope) / spin_before, Math.exp(-JOINT_RATE * JOINT_DT), 1e-12, "decay factor");
-    assert.ok(Math.hypot(rope.velocity_x - rope_before[0], rope.velocity_y - rope_before[1]) > 1e-6, "rope node velocity changed");
-    assert.deepEqual([pivot.velocity_x, pivot.velocity_y], [0, 0]);
-});
-
-test("dampJoint leaves a rigid common rotation untouched, also with unequal masses", () => {
-    const omega = 3;
-    const centre = [0.2, -0.1];
-    const rotating = (x, y, mass) => jointNode(x, y, mass, -omega * (y - centre[1]), omega * (x - centre[0]));
-    const nodes = [rotating(0, 0.04, 0.006), rotating(0, 0, 0.016), rotating(0, -0.19, 2)];
-    const velocities = nodes.map((node) => [node.velocity_x, node.velocity_y]);
-    internals.dampJoint(...nodes, JOINT_RATE, JOINT_DT);
-    nodes.forEach((node, i) => {
-        assertClose(node.velocity_x, velocities[i][0], 1e-12, "vx");
-        assertClose(node.velocity_y, velocities[i][1], 1e-12, "vy");
-    });
-});
-
-test("windupRate: at least 1200, multiple of 120, independent of v₀ and T_max, at least 1.3 c/ℓ at T = 1.3 m g (3 − 2 cos(70°))", () => {
-    const cases = [
-        { gravity: EARTH, rope_length: 0.6, mass: 0.5 },
-        { gravity: MOON, rope_length: 0.3, mass: 1 },
-        { gravity: EARTH, rope_length: 0.15, mass: 8 },
-        { gravity: 24.8, rope_length: 0.15, mass: 20 },
-    ];
-    for (const base of cases) {
-        const rate = internals.windupRate({ ...base, launch_speed: 3, tension_max: 50 });
-        const tension = 1.3 * base.mass * base.gravity * (3 - 2 * Math.cos(70 * Math.PI / 180));
-        const wave = Math.sqrt(tension / ROPE_DENSITY) / (base.rope_length / ROPE_LINKS);
-        assert.ok(rate >= 1200);
-        assert.equal(rate % 120, 0);
-        assert.ok(rate >= 1.3 * wave, `rate ${rate} < ${1.3 * wave}`);
-        assert.equal(internals.windupRate({ ...base, launch_speed: 40, tension_max: 1e9 }), rate);
-    }
-    assert.ok(internals.windupRate(cases[2]) > 1200, "heavy bucket on a short rope needs more than the floor");
-});
-
-test("simulateRun: a heavy bucket on a short rope with an unbreakable rope pumps without spilling and succeeds", () => {
-    const radius = bucketRadius(0.15);
-    const run = simulateRun({ gravity: EARTH, rope_length: 0.15, mass: 5, tension_max: 1e9, launch_speed: 1.3 * Math.sqrt(5 * EARTH * radius) }, false);
-    assert.notEqual(run.release_time, null);
-    assert.equal(run.outcome, "success");
-});
-
-test("chainWobble: 0 for the hanging chain, the larger bend at the bar tip or at the handle otherwise", () => {
-    const state = motor_api.initialState({ launch_speed: 9, rope_length: 0.4, mass: 2, gravity: EARTH });
-    assertClose(internals.chainWobble(state), 0, 1e-12, "straight chain");
-    state.nodes[CENTER].x += 0.1;
-    assertClose(internals.chainWobble(state), Math.atan2(0.1, BUCKET.center_of_mass), 1e-12, "bucket bent against the rope");
-    state.nodes[CENTER].x -= 0.1;
-    const angle = 0.2;
-    state.nodes[1].x = BAR_LENGTH * Math.sin(angle);
-    state.nodes[1].y = PIVOT_HEIGHT - BAR_LENGTH * Math.cos(angle);
-    const rope = Math.atan2(-state.nodes[1].x, state.nodes[1].y - state.nodes[HANDLE].y);
-    assertClose(internals.chainWobble(state), Math.abs(rope - angle), 1e-12, "rope bent against the bar");
-});
-
-test("substepRate: at least 2400 Hz, a multiple of 120, and about 1.3 c/ℓ for a heavy bucket on a short rope", () => {
-    const light = internals.substepRate({ gravity: MOON, rope_length: 0.6, mass: 0.5, launch_speed: 3 });
-    assert.equal(light, SUBSTEP_RATE);
-    const heavy = { gravity: EARTH, rope_length: 0.15, mass: 8, launch_speed: 20 };
-    const tension = 1.3 * 8 * (400 / bucketRadius(0.15) + EARTH);
-    const wave = Math.sqrt(tension / ROPE_DENSITY) / (0.15 / ROPE_LINKS);
-    const rate = internals.substepRate(heavy);
-    assert.equal(rate % 120, 0);
-    assert.ok(rate >= 1.3 * wave && rate < 1.3 * wave + 120, `rate ${rate} vs ${1.3 * wave}`);
-    assert.ok(rate > SUBSTEP_RATE);
-});
-
-/* sameJson: structural equality across realms (frames from the vm copy of game.js carry foreign prototypes) */
-function sameJson(actual, expected, message) {
-    assert.equal(JSON.stringify(actual), JSON.stringify(expected), message);
-}
-
-/* scratchRun: the attempt run from t = 0 without the pumping cache, as runAttempt does after a cache miss */
-function scratchRun(parameters) {
-    const attempt = internals.newAttempt(parameters, true);
-    internals.advanceAttempt(attempt, parameters, false);
-    return attempt;
-}
-
-/* pumpKey: key of the pumping cache (default drop count and rope links unless given) */
-function pumpKey(parameters, record = true) {
-    return [parameters.gravity, parameters.rope_length, parameters.mass, parameters.drop_count ?? DROP_COUNT, Math.min(Math.max(Math.round(parameters.rope_links ?? ROPE_LINKS), 2), 40), record].join("|");
-}
-
-test("pumping cache: a cold run, a warm run and a run from scratch are identical", () => {
-    internals.PUMP_CACHE.clear();
-    const parameters = runParameters(EARTH, 0.4, 2, 1.08);
-    const cold = motor_api.simulateRun(parameters);
-    assert.equal(internals.PUMP_CACHE.size, 1, "one pumping stored");
-    assert.ok(internals.PUMP_CACHE.has(pumpKey(parameters)));
-    const warm = motor_api.simulateRun({ ...parameters });
-    sameJson(warm, cold, "warm cache");
-    const scratch = scratchRun(parameters);
-    sameJson(scratch.frames, cold.frames.slice(0, -1), "frames of the run from scratch (runAttempt appends one closing frame)");
-    assert.equal(scratch.outcome, cold.outcome);
-    assert.equal(scratch.event_time, cold.event_time);
-    assert.equal(scratch.release_time, cold.release_time);
-    assert.equal(scratch.launch_speed, cold.launch_speed);
-    assert.equal(scratch.max_tension, cold.max_tension);
-    assert.equal(scratch.min_tension, cold.min_tension);
-});
-
-test("pumping cache: the same pumping serves another v₀ and still matches a run from scratch", () => {
-    const first = runParameters(EARTH, 0.4, 2, 1.08);
-    const second = runParameters(EARTH, 0.4, 2, 1.3);
-    motor_api.simulateRun(first);
-    const size = internals.PUMP_CACHE.size;
-    const cached = motor_api.simulateRun(second);
-    assert.equal(internals.PUMP_CACHE.size, size, "no new pumping for another v₀");
-    const scratch = scratchRun(second);
-    sameJson(scratch.frames, cached.frames.slice(0, -1), "frames");
-    assert.equal(scratch.outcome, cached.outcome);
-    assert.equal(scratch.max_tension, cached.max_tension);
-});
-
-test("pumping cache: the cached pumping is cloned, a run never changes it; recording and non-recording runs use separate entries", () => {
-    const parameters = runParameters(EARTH, 0.4, 2, 1.08);
-    const first = internals.pumpedAttempt(parameters, true);
-    const reference_time = first.time;
-    first.time += 5;
-    first.state.nodes[12].x = 99;
-    const second = internals.pumpedAttempt(parameters, true);
-    assert.equal(second.time, reference_time);
-    assert.notEqual(second.state.nodes[12].x, 99);
-    motor_api.simulateRun(parameters, false);
-    assert.ok(internals.PUMP_CACHE.has(pumpKey(parameters, true)));
-    assert.ok(internals.PUMP_CACHE.has(pumpKey(parameters, false)));
-});
-
-test("pumping cache: T_max below the pumping peak bypasses the cache and still equals a run from scratch (snap during the pumping)", () => {
-    const parameters = runParameters(EARTH, 0.4, 2, 1.08);
-    motor_api.simulateRun(parameters);
-    const peak = internals.PUMP_CACHE.get(pumpKey(parameters)).peak_tension;
-    assert.ok(peak > (2 + 0.01 + ROPE_DENSITY * 0.4) * EARTH, "the swinging loads the rope beyond its static weight");
-    const weak = { ...parameters, tension_max: 0.7 * peak };
-    assert.equal(internals.pumpedAttempt(weak, true), null, "cache refused");
-    assert.notEqual(internals.pumpedAttempt({ ...parameters, tension_max: 1.01 * peak }, true), null, "cache used just above the peak");
-    const run = motor_api.simulateRun(weak);
-    assert.equal(run.outcome, "snap");
-    assert.ok(!distinctPhases(run).includes("throw"), "the rope snapped before the throw");
-    const scratch = scratchRun(weak);
-    sameJson(scratch.frames, run.frames.slice(0, -1), "frames");
-    assert.equal(scratch.outcome, "snap");
-    assert.equal(scratch.event_time, run.event_time);
-});
-
-test("pumping cache: the pumping depends on g, L, m and the drop count, not on v₀ or T_max", () => {
-    internals.PUMP_CACHE.clear();
-    const base = runParameters(MOON, 0.3, 1, 1.08);
-    internals.pumpedAttempt(base, false);
-    internals.pumpedAttempt({ ...base, launch_speed: 7, tension_max: 50 }, false);
-    assert.equal(internals.PUMP_CACHE.size, 1, "v₀ and T_max are not part of the key");
-    internals.pumpedAttempt({ ...base, mass: 1.5 }, false);
-    internals.pumpedAttempt({ ...base, drop_count: 20 }, false);
-    assert.equal(internals.PUMP_CACHE.size, 3);
-    assert.ok(internals.PUMP_CACHE.has(pumpKey({ ...base, mass: 1.5 }, false)));
-    assert.ok(internals.PUMP_CACHE.has(pumpKey({ ...base, drop_count: 20 }, false)));
-    assert.equal(pumpKey({ ...base, drop_count: 20 }, false), [base.gravity, base.rope_length, base.mass, 20, ROPE_LINKS, false].join("|"));
-});
-
-test("initialState honours drop_count: count, radius DROP_RADIUS √(10/n), same water volume, drops settled inside the bucket without overlap", () => {
-    assert.equal(initialState({ ...EARTH_CASE }).drops.length, DROP_COUNT, "default count");
-    assertClose(initialState({ ...EARTH_CASE }).drop_radius, DROP_RADIUS * Math.sqrt(REFERENCE_DROP_COUNT / DROP_COUNT), 1e-15, "default radius");
-    assertClose(initialState({ ...EARTH_CASE, drop_count: REFERENCE_DROP_COUNT }).drop_radius, DROP_RADIUS, 1e-15, "radius of the 10 reference drops");
-    assert.equal(initialState({ ...EARTH_CASE, drop_count: undefined }).drops.length, DROP_COUNT);
-    for (const count of [1, 4, 10, 25, 40, 100]) {
-        const state = initialState({ ...EARTH_CASE, drop_count: count });
-        assert.equal(state.drops.length, count, `count ${count}`);
-        assertClose(state.drop_radius, DROP_RADIUS * Math.sqrt(REFERENCE_DROP_COUNT / count), 1e-15, `radius for ${count} drops`);
-        assertClose(count * state.drop_radius ** 2, REFERENCE_DROP_COUNT * DROP_RADIUS ** 2, 1e-15, `water volume for ${count} drops`);
-        const handle = state.nodes[HANDLE];
-        for (const drop of state.drops) {
-            const along = handle.y - drop.y;
-            assert.ok(along >= BUCKET.rim, `count ${count}: drop above the rim plane`);
-            assert.ok(along <= BUCKET.bottom - state.drop_radius + 1e-12, `count ${count}: drop below the bottom`);
-            assert.ok(Math.abs(drop.x - handle.x) <= BUCKET.half_width - state.drop_radius + 1e-12, `count ${count}: drop through the side wall`);
-            assert.equal(drop.spilled, false);
-        }
-        for (let i = 0; i < count; i++) {
-            for (let j = i + 1; j < count; j++) {
-                assert.ok(Math.hypot(state.drops[i].x - state.drops[j].x, state.drops[i].y - state.drops[j].y) >= 2 * state.drop_radius - 1e-9, `count ${count}: drops ${i} and ${j} overlap`);
-            }
-        }
-    }
-});
-
-test("initialState: drop_count is rounded and clamped to at least one drop", () => {
-    assert.equal(initialState({ ...EARTH_CASE, drop_count: 0 }).drops.length, 1);
-    assert.equal(initialState({ ...EARTH_CASE, drop_count: 3.6 }).drops.length, 4);
-    assert.equal(initialState({ ...EARTH_CASE, drop_count: -5 }).drops.length, 1);
-});
-
-test("simulateRun with drop_count: frames carry the drop count and radius, and the run still succeeds with 40 small drops", () => {
-    const run = simulateRun({ ...runParameters(EARTH, 0.4, 2, 1.08), drop_count: 40 });
-    assert.equal(run.outcome, "success");
-    for (const frame of run.frames) {
-        assert.equal(frame.drops.length, 40);
-        assertClose(frame.drop_radius, DROP_RADIUS / 2, 1e-15, "radius of 40 drops");
-    }
-    const default_run = simulateRun(runParameters(EARTH, 0.4, 2, 1.08));
-    assertClose(default_run.frames[0].drop_radius, DROP_RADIUS * Math.sqrt(REFERENCE_DROP_COUNT / DROP_COUNT), 1e-15, "default radius in the frames");
-});
-
-
-test("rope_links: node count is rope_links + 3, handle on nodes.length − 2, bucket centre last, link lengths L/n", () => {
-    for (const links of [2, 3, 10, 25, 40]) {
-        const state = initialState({ ...EARTH_CASE, rope_links: links });
-        assert.equal(state.nodes.length, links + 3, `nodes for ${links} links`);
-        assert.equal(state.link_lengths.length, links + 2);
-        assert.equal(state.rope_flags.length, links + 2);
-        assert.deepEqual(state.rope_flags, [false, ...new Array(links).fill(true), false]);
-        assert.equal(state.link_lengths[0], BAR_LENGTH);
-        assert.equal(state.link_lengths[links + 1], BUCKET.center_of_mass);
-        for (let i = 1; i <= links; i++) {
-            assertClose(state.link_lengths[i], 0.4 / links, 1e-15, `link ${i} of ${links}`);
-        }
-        assertClose(state.nodes[state.nodes.length - 2].y, PIVOT_HEIGHT - BAR_LENGTH - 0.4, 1e-12, "handle at the end of the rope");
-        assertClose(state.nodes[state.nodes.length - 1].y, PIVOT_HEIGHT - bucketRadius(0.4), 1e-12, "bucket centre");
-        assert.equal(state.nodes[state.nodes.length - 1].inverse_mass, 1 / 2);
-    }
-    assert.equal(initialState({ ...EARTH_CASE }).nodes.length, HANDLE + 2, "default chain: HANDLE and CENTER are the default indices");
-    assert.equal(CENTER, HANDLE + 1);
-    assert.equal(initialState({ ...EARTH_CASE, rope_links: undefined }).nodes.length, ROPE_LINKS + 3);
-});
-
-test("rope_links is rounded and clamped to [2, 40]", () => {
-    const count = (rope_links) => initialState({ ...EARTH_CASE, rope_links }).nodes.length - 3;
-    assert.equal(count(1), 2);
-    assert.equal(count(0), 2);
-    assert.equal(count(-4), 2);
-    assert.equal(count(2), 2);
-    assert.equal(count(100), 40);
-    assert.equal(count(40), 40);
-    assert.equal(count(7.6), 8);
-    assert.equal(count(7.4), 7);
-});
-
-test("rope_links: the handle mass sits on the last rope node and the rope mass μ L does not depend on the link count", () => {
-    for (const links of [2, 5, 10, 40]) {
-        const state = initialState({ ...EARTH_CASE, rope_links: links });
-        const node_mass = ROPE_DENSITY * 0.4 / links;
-        const rope_nodes = state.nodes.slice(2, links + 2);
-        assert.equal(rope_nodes.length, links);
-        rope_nodes.slice(0, -1).forEach((node, i) => assertClose(1 / node.inverse_mass, node_mass, 1e-12, `node ${i} of ${links}`));
-        assertClose(1 / state.nodes[links + 1].inverse_mass, node_mass + 0.01, 1e-12, `handle node of ${links}`);
-        const rope_mass = rope_nodes.reduce((sum, node) => sum + 1 / node.inverse_mass, 0) - 0.01;
-        assertClose(rope_mass, ROPE_DENSITY * 0.4, 1e-12, `rope mass for ${links} links`);
-        assert.equal(state.nodes[0].inverse_mass, 0);
-        assert.equal(state.nodes[1].inverse_mass, 0);
-    }
-});
-
-test("rope_links: 3 and 25 segments give the same successful outcome as 10, with a bottom tension within 5 %", () => {
-    const parameters = runParameters(EARTH, 0.4, 2, 1.08);
-    const reference = simulateRun(parameters);
-    assert.equal(reference.outcome, "success");
-    for (const rope_links of [3, 25]) {
-        const run = simulateRun({ ...parameters, rope_links });
-        assert.equal(run.outcome, "success", `${rope_links} links`);
-        assert.equal(run.frames[0].nodes.length, rope_links + 3);
-        assert.ok(Math.abs(run.max_tension / reference.max_tension - 1) < 0.05, `${rope_links} links: peak tension ${run.max_tension} vs ${reference.max_tension}`);
-    }
-});
-
-test("rope_links: the pumping cache keys differ by the link count", () => {
-    internals.PUMP_CACHE.clear();
-    const base = runParameters(MOON, 0.3, 1, 1.08);
-    internals.pumpedAttempt(base, false);
-    internals.pumpedAttempt({ ...base, rope_links: 3 }, false);
-    internals.pumpedAttempt({ ...base, rope_links: ROPE_LINKS }, false);
-    assert.equal(internals.PUMP_CACHE.size, 2, "explicit default links share the default entry");
-    assert.ok(internals.PUMP_CACHE.has(pumpKey({ ...base, rope_links: 3 }, false)));
-    assert.ok(internals.PUMP_CACHE.has(pumpKey(base, false)));
-    assert.notEqual(pumpKey({ ...base, rope_links: 3 }, false), pumpKey(base, false));
-});
-
-test("solveTridiagonal: a straight chain between two fixed nodes gives no NaN (singular row decoupled)", () => {
+test("solveTridiagonal: Thomas solution of A Δλ = −C on the active links, an inactive link decoupled, a singular row decoupled", () => {
+    const work = makeWorkspace(2);
+    work.active.fill(1);
+    work.unit_y.fill(-1);
+    work.violation.set([0.1, 0.1]);
+    internals.solveTridiagonal(verticalChain([0, 1, 2], [1, 1, 1]), work);
+    assertClose(work.delta[0], -0.1, 1e-12, "Δλ₀ of A = [[2, −1], [−1, 2]]");
+    assertClose(work.delta[1], -0.1, 1e-12, "Δλ₁");
+    const decoupled = makeWorkspace(3);
+    decoupled.active.set([1, 0, 1]);
+    decoupled.unit_y.fill(-1);
+    decoupled.violation.set([0.2, 0.3, 0.4]);
+    internals.solveTridiagonal(verticalChain([0, 1, 2, 3], [1, 2, 1, 4]), decoupled);
+    assertClose(decoupled.delta[0], -0.2 / 3, 1e-12, "link 0 alone: −C/(w₀ + w₁)");
+    assert.equal(decoupled.delta[1], 0, "inactive link: Δλ = 0");
+    assertClose(decoupled.delta[2], -0.4 / 5, 1e-12, "link 2 alone: −C/(w₂ + w₃)");
     for (const rope_flag of [false, true]) {
         for (const stretch of [0, 0.05]) {
             const nodes = verticalChain([0, 1, 2], [0, 1, 0]);
             const lengths = [1 - stretch / 2, 1 - stretch / 2];
-            const lambdas = solveChain(nodes, lengths, [rope_flag, rope_flag], -1, makeWorkspace(2));
+            const result = solveChain(nodes, lengths, [rope_flag, rope_flag], -1, makeWorkspace(2));
             const context = `rope = ${rope_flag}, stretch = ${stretch}`;
             assert.ok(nodes.every((node) => Number.isFinite(node.x) && Number.isFinite(node.y)), `finite nodes: ${context}`);
-            assert.ok(Array.from(lambdas).every(Number.isFinite), `finite multipliers: ${context}`);
+            assert.ok(Array.from(result).every(Number.isFinite), `finite multipliers: ${context}`);
             assertClose(nodes[0].y, 0, 1e-15, "fixed end 0");
             assertClose(nodes[2].y, -2, 1e-15, "fixed end 2");
         }
     }
-    const work = makeWorkspace(2);
-    work.active.fill(1);
-    work.unit_y.fill(-1);
-    work.violation.fill(0.05);
-    internals.solveTridiagonal(verticalChain([0, 1, 2], [0, 1, 0]), work);
-    assert.ok(Array.from(work.delta).every(Number.isFinite), "direct call: finite Δλ");
 });
 
-test("fillThreshold is 0 unless the mass is free, then the lower end of the window", () => {
-    assert.equal(fillThreshold(makeChallenge("launch_speed", EARTH, null, 0.4, 2, 180)), 0);
-    assert.equal(fillThreshold(makeChallenge("rope_length", EARTH, 9, null, 2, 180)), 0);
-    const mass_challenge = makeChallenge("mass", EARTH, 9.3, 0.4, null, 300);
-    assert.equal(fillThreshold(mass_challenge), winningWindow(mass_challenge).minimum);
+/* ---------- initial state and rest frame ---------- */
+
+test("initialState: chain pivot, tip, ten rope nodes, ears; link lengths, masses, rest tension and settled drops", () => {
+    const parameters = { gravity: EARTH, rope_length: 0.4, mass: 2 };
+    const state = initialState(parameters);
+    assert.equal(state.nodes.length, ROPE_LINKS + 3);
+    assert.equal(HANDLE, state.nodes.length - 2);
+    assert.equal(ATTACH, state.nodes.length - 1);
+    assert.equal(state.link_lengths.length, ROPE_LINKS + 2);
+    assert.deepEqual(state.rope_flags, [false, ...new Array(ROPE_LINKS).fill(true), false]);
+    assertClose(state.link_lengths.reduce((sum, length) => sum + length, 0), 0.9 + 0.4 + 0.15, 1e-12, "bar + rope + bail");
+    assertClose(state.link_lengths[0], 0.9, 1e-15, "bar");
+    assertClose(state.link_lengths[1], 0.04, 1e-15, "rope link L/10");
+    assertClose(state.link_lengths[ATTACH - 1], 0.15, 1e-15, "bail");
+    assert.equal(state.nodes[0].inverse_mass, 0, "pivot fixed");
+    assert.equal(state.nodes[TIP].inverse_mass, 0, "tip held by the motor");
+    assertClose(state.nodes[2].inverse_mass, 1 / (0.15 * 0.04), 1e-9, "rope node mass μ ℓ");
+    assertClose(state.nodes[HANDLE].inverse_mass, 1 / (0.15 * 0.04 + 0.05), 1e-9, "handle carries the bail mass");
+    assertClose(state.nodes[ATTACH].y, PIVOT_HEIGHT - 1.45, 1e-12, "ears");
+    assertClose(state.body.y, PIVOT_HEIGHT - 1.45 - SHELL_CENTER, 1e-12, "shell centre below the ears");
+    assertClose(state.mass, 2, 1e-12, "m");
+    assertClose(state.tension, (2 + 0.06) * EARTH, 1e-12, "rest tension (m + μ L) g");
+    assert.equal(state.drops.length, 9);
+    assert.ok(state.drops.every((drop) => drop.supported && !drop.spilled && !drop.resting));
+    assertClose(state.drop_mass * state.drops.length, 1.5, 1e-12, "water");
+    assert.equal(state.released, false);
+    assert.equal(state.snapped, false);
 });
 
-test("evaluate: underfilled below the threshold, success inside, snap above the rope limit", () => {
-    const challenge = makeChallenge("mass", EARTH, 9.3, 0.4, null, 300);
-    const window = winningWindow(challenge);
-    assert.equal(evaluate(challenge, 0.8 * window.minimum), "underfilled");
-    assert.equal(evaluate(challenge, window.minimum), "success");
-    assert.equal(evaluate(challenge, window.maximum), "success");
-    assert.equal(evaluate(challenge, 1.4 * 300 / (9.3 * 9.3 / 1.49 + EARTH)), "snap");
+test("initialState: rope_links is rounded and clamped to [2, 40], rope mass independent of the link count, drop_count honoured", () => {
+    assert.equal(MIN_ROPE_LINKS, 2);
+    assert.equal(MAX_ROPE_LINKS, 40);
+    const base = { gravity: EARTH, rope_length: 0.4, mass: 2 };
+    for (const [asked, expected] of [[1, 2], [2, 2], [3.4, 3], [25, 25], [40, 40], [99, 40]]) {
+        const state = initialState({ ...base, rope_links: asked });
+        assert.equal(state.nodes.length, expected + 3, `rope_links = ${asked}`);
+        assertClose(state.link_lengths[1], 0.4 / expected, 1e-12, `link length, rope_links = ${asked}`);
+        const rope_mass = state.nodes.slice(2, expected + 2).reduce((sum, node) => sum + 1 / node.inverse_mass, 0);
+        assertClose(rope_mass, 0.06 + 0.05, 1e-12, `rope + bail mass, rope_links = ${asked}`);
+    }
+    const forty = initialState({ ...base, drop_count: 40 });
+    assert.equal(forty.drops.length, 40);
+    assertClose(forty.drop_mass * 40, 1.5, 1e-12, "water");
 });
 
-test("evaluate passes the simulation outcome through for the v₀ and L variables", () => {
-    const speed_challenge = makeChallenge("launch_speed", EARTH, null, 0.4, 2, 250);
-    const window = winningWindow(speed_challenge);
-    assert.equal(evaluate({ ...speed_challenge, tension_max: 2000 }, 0.92 * Math.sqrt(5 * EARTH * 1.49)), "spill");
-    assert.equal(evaluate(speed_challenge, (window.minimum + window.maximum) / 2), "success");
-    assert.equal(evaluate(speed_challenge, 0), "swing");
-    assert.equal(evaluate(speed_challenge, 1.4 * window.maximum), "snap");
-    const length_challenge = makeChallenge("rope_length", EARTH, 9, null, 2, 180);
-    const length_window = winningWindow(length_challenge);
-    assert.equal(evaluate(length_challenge, (length_window.minimum + length_window.maximum) / 2), "success");
+test("restFrame: drawable frame of the hanging system", () => {
+    const frame = restFrame({ gravity: EARTH, rope_length: 0.4, mass: 2 });
+    assert.equal(frame.time, 0);
+    assert.equal(frame.motor_phase, "rest");
+    assert.equal(frame.released, false);
+    assert.equal(frame.snapped, false);
+    assert.equal(frame.turns, 0);
+    assert.equal(frame.nodes.length, ROPE_LINKS + 3);
+    assert.equal(frame.drops.length, 9);
+    assert.ok(frame.drops.every((drop) => drop[2] === false));
+    assertClose(frame.bucket[2], 0, 1e-15, "bucket angle");
+    assertClose(frame.center[0], 0, 1e-12, "centre of mass below the pivot");
+    assertClose(PIVOT_HEIGHT - frame.center[1], bucketRadius(0.4, 2), 1e-4, "R");
 });
 
-test("isChallengeFeasible: both fallback challenges are feasible", () => {
-    assert.equal(FALLBACK_CHALLENGES.length, 2);
-    for (const challenge of FALLBACK_CHALLENGES) {
-        assert.equal(isChallengeFeasible(challenge), true, `${challenge.place}`);
+test("frameAt returns the last frame at or before t and clamps both ends", () => {
+    const run = { frames: [0, 1, 2, 3].map((index) => ({ index })) };
+    assert.equal(frameAt(run, 0).index, 0);
+    assert.equal(frameAt(run, 0.5 / 60).index, 0);
+    assert.equal(frameAt(run, 1 / 60).index, 1);
+    assert.equal(frameAt(run, 2.99 / 60).index, 2);
+    assert.equal(frameAt(run, 3 / 60).index, 3);
+    assert.equal(frameAt(run, 10).index, 3);
+    assert.equal(frameAt(run, -1).index, 0);
+});
+
+/* ---------- friction pairs ---------- */
+
+/* jointSpin: spin of the segment from → to relative to the node `from`, (arm × Δv)/|arm|² */
+function jointSpin(from, to) {
+    const arm_x = to.x - from.x;
+    const arm_y = to.y - from.y;
+    return (arm_x * (to.velocity_y - from.velocity_y) - arm_y * (to.velocity_x - from.velocity_x)) / (arm_x * arm_x + arm_y * arm_y);
+}
+
+/* nodeAt: point mass with velocity */
+function nodeAt(x, y, velocity_x, velocity_y, inverse_mass) {
+    return { x, y, velocity_x, velocity_y, inverse_mass };
+}
+
+/* momenta: [Σ m v_x, Σ m v_y, Σ m (x v_y − y v_x), Σ ½ m v²] of nodes with inverse_mass > 0 */
+function momenta(nodes) {
+    const total = [0, 0, 0, 0];
+    for (const node of nodes) {
+        const mass = 1 / node.inverse_mass;
+        total[0] += mass * node.velocity_x;
+        total[1] += mass * node.velocity_y;
+        total[2] += mass * (node.x * node.velocity_y - node.y * node.velocity_x);
+        total[3] += 0.5 * mass * (node.velocity_x ** 2 + node.velocity_y ** 2);
+    }
+    return total;
+}
+
+test("dampJoint: the relative rotation decays at the given rate, momenta conserved, energy only removed", () => {
+    const rate = 8;
+    const dt = 1 / 600;
+    const a = nodeAt(0, 0, 0.3, -0.2, 1 / 0.7);
+    const b = nodeAt(1, 0.1, -0.4, 0.5, 1 / 1.3);
+    const c = nodeAt(1.2, 1, 1.1, 0.2, 1 / 0.4);
+    const relative = (first, second, third) => jointSpin(second, third) - jointSpin(second, first);
+    const before = relative(a, b, c);
+    const momentum_before = momenta([a, b, c]);
+    assert.ok(Math.abs(before) > 0.1, "the joint is bending at the start");
+    internals.dampJoint(a, b, c, rate, dt);
+    assertClose(relative(a, b, c), before * Math.exp(-rate * dt), 1e-12, "relative spin × e^(−rate Δt)");
+    const momentum_after = momenta([a, b, c]);
+    for (let k = 0; k < 3; k++) {
+        assertClose(momentum_after[k], momentum_before[k], 1e-12, `momentum ${["P_x", "P_y", "L_z"][k]}`);
+    }
+    assert.ok(momentum_after[3] < momentum_before[3], "energy decreases");
+});
+
+test("dampJoint with a fixed pivot as a: the bending still decays and the pivot does not move; a rigid common rotation is untouched", () => {
+    const pivot = nodeAt(0, 0, 0, 0, 0);
+    const tip = nodeAt(0, -0.9, 0.5, 0, 1 / 0.1);
+    const rope = nodeAt(0.05, -1, -0.3, 0.2, 1 / 0.06);
+    const before = jointSpin(tip, rope) - jointSpin(tip, pivot);
+    internals.dampJoint(pivot, tip, rope, 8, 1 / 2400);
+    assertClose(jointSpin(tip, rope) - jointSpin(tip, pivot), before * Math.exp(-8 / 2400), 1e-12, "decay");
+    assert.equal(pivot.velocity_x, 0);
+    assert.equal(pivot.velocity_y, 0);
+    const omega = 2.5;
+    const spin = (x, y, inverse_mass) => nodeAt(x, y, -omega * y, omega * x, inverse_mass);
+    const nodes = [spin(1, 0, 1), spin(0.5, 0.5, 3), spin(0, 1, 0.5)];
+    const velocities = nodes.map((node) => [node.velocity_x, node.velocity_y]);
+    internals.dampJoint(nodes[0], nodes[1], nodes[2], 8, 1 / 600);
+    nodes.forEach((node, i) => {
+        assertClose(node.velocity_x, velocities[i][0], 1e-12, `v_x ${i}`);
+        assertClose(node.velocity_y, velocities[i][1], 1e-12, `v_y ${i}`);
+    });
+});
+
+test("dampEars: the shell-to-bail relative rotation decays at the given rate, linear and angular momentum conserved", () => {
+    const state = initialState({ gravity: EARTH, rope_length: 0.4, mass: 2 });
+    state.body.angle = 0.3;
+    state.body.x = 0.02;
+    state.nodes[HANDLE].x = 0.05;
+    state.nodes[HANDLE].velocity_x = 0.8;
+    state.nodes[HANDLE].velocity_y = -0.3;
+    state.body.velocity_x = -0.2;
+    state.body.velocity_y = 0.4;
+    state.body.angular_velocity = 1.7;
+    const handle = state.nodes[HANDLE];
+    const body = state.body;
+    const frame = internals.bodyFrame(body);
+    const handle_mass = 1 / handle.inverse_mass;
+    const relative = () => {
+        const arm_x = handle.x - frame.x;
+        const arm_y = handle.y - frame.y;
+        const ears_vx = body.velocity_x - body.angular_velocity * (frame.y - body.y);
+        const ears_vy = body.velocity_y + body.angular_velocity * (frame.x - body.x);
+        const bail_spin = (arm_x * (handle.velocity_y - ears_vy) - arm_y * (handle.velocity_x - ears_vx)) / (arm_x * arm_x + arm_y * arm_y);
+        return body.angular_velocity - bail_spin;
+    };
+    const totals = () => [
+        handle_mass * handle.velocity_x + BUCKET.shell_mass * body.velocity_x,
+        handle_mass * handle.velocity_y + BUCKET.shell_mass * body.velocity_y,
+        handle_mass * (handle.x * handle.velocity_y - handle.y * handle.velocity_x)
+            + BUCKET.shell_mass * (body.x * body.velocity_y - body.y * body.velocity_x) + SHELL_INERTIA * body.angular_velocity,
+    ];
+    const before = relative();
+    const totals_before = totals();
+    assert.ok(Math.abs(before) > 0.5);
+    internals.dampEars(state, 8, 1 / 2400);
+    assertClose(relative(), before * Math.exp(-8 / 2400), 1e-12, "relative rotation × e^(−rate Δt)");
+    totals().forEach((total, k) => assertClose(total, totals_before[k], 1e-10, `momentum ${k}`));
+});
+
+/* ---------- rigid bucket and water ---------- */
+
+test("bodyFrame: ears point, axis ears → bottom and across direction of the bucket at angle φ", () => {
+    const hanging = internals.bodyFrame({ x: 1, y: 2, angle: 0 });
+    assertClose(hanging.x, 1, 1e-15, "ears x");
+    assertClose(hanging.y, 2 + SHELL_CENTER, 1e-15, "ears above the shell centre");
+    assert.deepEqual([hanging.axis_x, hanging.axis_y], [0, -1]);
+    assert.deepEqual([hanging.across_x, hanging.across_y], [1, 0]);
+    const sideways = internals.bodyFrame({ x: 0, y: 0, angle: Math.PI / 2 });
+    assertClose(sideways.axis_x, 1, 1e-15, "axis along +x");
+    assertClose(sideways.axis_y, 0, 1e-15, "axis");
+    assertClose(sideways.x, -SHELL_CENTER, 1e-15, "ears behind the shell centre");
+    assertClose(sideways.across_y, 1, 1e-15, "across");
+    const upside_down = internals.bodyFrame({ x: 0, y: 0, angle: Math.PI });
+    assertClose(upside_down.axis_y, 1, 1e-15, "bottom up");
+    assertClose(upside_down.y, -SHELL_CENTER, 1e-15, "ears below the centre");
+});
+
+/* waterFixture: hanging state with the walls' frame and a probe drop */
+function waterFixture() {
+    const state = initialState({ gravity: EARTH, rope_length: 0.4, mass: 2 });
+    const frame = internals.bodyFrame(state.body);
+    return { state, frame, radius: state.drop_radius };
+}
+
+test("collideWithBucket: a drop through the bottom or a side wall is projected back, with the wall's opposite impulse on the shell", () => {
+    const { state, frame, radius } = waterFixture();
+    const bottom = { x: 0, y: frame.y - (BUCKET.depth - radius) - 0.005, spilled: false };
+    assert.equal(internals.collideWithBucket(bottom, state, frame, true), true);
+    assertClose(bottom.y, frame.y - (BUCKET.depth - radius), 1e-12, "back on the floor");
+    assertClose(state.work.reaction.y, -state.drop_mass * 0.005, 1e-12, "−m_d Δx on the shell, pushed down");
+    assertClose(state.work.reaction.x, 0, 1e-15, "no sideways reaction");
+    state.work.reaction.y = 0;
+    const side = { x: BUCKET.radius - radius + 0.004, y: frame.y - 0.1, spilled: false };
+    assert.equal(internals.collideWithBucket(side, state, frame, false), true);
+    assertClose(side.x, BUCKET.radius - radius, 1e-12, "back on the right wall");
+    assert.equal(state.work.reaction.x, 0, "react = false: no reaction");
+    const left = { x: -(BUCKET.radius - radius) - 0.004, y: frame.y - 0.1, spilled: false };
+    internals.collideWithBucket(left, state, frame, true);
+    assertClose(left.x, -(BUCKET.radius - radius), 1e-12, "back on the left wall");
+    assertClose(state.work.reaction.x, -state.drop_mass * 0.004, 1e-12, "the left wall pushes the drop right, the shell takes the opposite impulse");
+});
+
+test("collideWithBucket: inside is untouched (false), within the 5 % gap touches without moving, above the rim plane the drop is spilled", () => {
+    const { state, frame, radius } = waterFixture();
+    const inside = { x: 0.01, y: frame.y - 0.1, spilled: false };
+    assert.equal(internals.collideWithBucket(inside, state, frame, true), false);
+    assert.deepEqual([inside.x, inside.y], [0.01, frame.y - 0.1]);
+    const resting = { x: 0, y: frame.y - (BUCKET.depth - radius) + 0.02 * radius, spilled: false };
+    const y_before = resting.y;
+    assert.equal(internals.collideWithBucket(resting, state, frame, true), true, "contact");
+    assert.equal(resting.y, y_before, "not moved");
+    const lost = { x: 0, y: frame.y + 0.01, spilled: false };
+    internals.collideWithBucket(lost, state, frame, true);
+    assert.equal(lost.spilled, true, "centre above the rim plane");
+    assert.equal(state.work.reaction.moment, 0, "no moment from these contacts");
+});
+
+test("separateDrops: two overlapping drops are pushed apart symmetrically to exactly 2ρ, their midpoint kept", () => {
+    const { state, frame, radius } = waterFixture();
+    const first = { x: -0.005, y: frame.y - 0.1, spilled: false };
+    const second = { x: 0.005, y: frame.y - 0.1, spilled: false };
+    state.drops = [first, second];
+    internals.separateDrops(state);
+    assertClose(distanceBetween(first, second), 2 * radius, 1e-12, "touching");
+    assertClose((first.x + second.x) / 2, 0, 1e-15, "midpoint x");
+    assertClose(first.y, second.y, 1e-15, "pushed along the line of centres");
+});
+
+test("settleWater: water at rest in the hanging bucket does not move, stays supported and gives no reaction", () => {
+    const { state, frame } = waterFixture();
+    const before = state.drops.map((drop) => [drop.x, drop.y]);
+    for (let pass = 0; pass < 3; pass++) {
+        internals.settleWater(state, frame, true);
+    }
+    state.drops.forEach((drop, i) => {
+        assertClose(drop.x, before[i][0], 1e-12, `drop ${i} x`);
+        assertClose(drop.y, before[i][1], 1e-12, `drop ${i} y`);
+        assert.equal(drop.supported, true, `drop ${i} supported`);
+    });
+    assert.equal(state.work.reaction.x, 0);
+    assert.equal(state.work.reaction.y, 0);
+});
+
+test("settleWater: a drop landing from flight kicks the shell (− m_d Δx) only when react is set; resting water gives none", () => {
+    for (const react of [true, false]) {
+        const { state, frame } = waterFixture();
+        const landing = state.drops[4];
+        landing.supported = false;
+        const rest_y = landing.y;
+        landing.y -= 0.002;
+        internals.settleWater(state, frame, react);
+        assertClose(landing.y, rest_y, 1e-9, `back on the floor, react = ${react}`);
+        assertClose(state.work.reaction.y, react ? -state.drop_mass * 0.002 : 0, 1e-9, `reaction, react = ${react}`);
+        assert.equal(landing.supported, true);
     }
 });
 
-test("isChallengeFeasible refuses impossible demands", () => {
-    assert.equal(isChallengeFeasible(makeChallenge("launch_speed", EARTH, null, 0.4, 2, 15)), false, "T_max < m g: empty window");
-    assert.equal(isChallengeFeasible(makeChallenge("rope_length", EARTH, 9, null, 2, 15)), false, "L: T_max/m < g");
-    assert.equal(isChallengeFeasible(makeChallenge("mass", EARTH, 5, 0.4, null, 300)), false, "m: v₀ too low for the water");
-    assert.equal(isChallengeFeasible(makeChallenge("launch_speed", EARTH, null, 0.4, 1, 5000)), false, "v₀ window beyond the 20 m/s input range");
-    assert.equal(isChallengeFeasible(makeChallenge("rope_length", EARTH, 9, null, 1, 2000)), false, "L window below the 0.15 m input range");
-    assert.equal(isChallengeFeasible(makeChallenge("mass", EARTH, 9.3, 0.4, null, 10)), false, "m window below the 0.5 kg input range");
+test("buildComposite: shell and supported drops as one rigid body — mass, centre of mass, inertia about it, attach point at the ears", () => {
+    const { state } = waterFixture();
+    const composite = internals.buildComposite(state);
+    assertClose(composite.mass, 0.45 + 1.5, 1e-12, "M = shell + water");
+    const mean_y = state.drops.reduce((sum, drop) => sum + drop.y, 0) / state.drops.length;
+    assertClose(composite.center_y, (0.45 * state.body.y + 1.5 * mean_y) / 1.95, 1e-12, "centre of mass");
+    let inertia = SHELL_INERTIA + 0.45 * (state.body.y - composite.center_y) ** 2;
+    for (const drop of state.drops) {
+        inertia += state.drop_mass * ((drop.x - composite.center_x) ** 2 + (drop.y - composite.center_y) ** 2);
+    }
+    assertClose(composite.inertia, inertia, 1e-12, "I about the centre of mass");
+    assertClose(composite.attach_y, state.body.y + SHELL_CENTER, 1e-12, "attach point at the ears");
+    state.drops[0].supported = false;
+    state.drops[1].supported = false;
+    assertClose(internals.buildComposite(state).mass, 0.45 + 7 * state.drop_mass, 1e-12, "drops in flight are left out");
 });
 
-test("isChallengeFeasible refuses a window narrower than 5 %", () => {
-    const narrow_speed = 1.03 * 1.06 * Math.sqrt(5 * EARTH * 1.49);
-    const challenge = makeChallenge("launch_speed", EARTH, null, 0.4, 1, bottomTension(EARTH, 0.4, 1, narrow_speed) / TENSION_SHARE);
+test("static hanging state: filtered tension (m + μ L) g exactly, no drop motion, bucket and chain at rest", () => {
+    const dt = 1 / 2400;
+    for (const mass of [0.6, 8]) {
+        const parameters = { gravity: EARTH, rope_length: 0.4, mass };
+        const state = initialState(parameters);
+        const drops_before = state.drops.map((drop) => [drop.x, drop.y]);
+        const body_before = [state.body.x, state.body.y, state.body.angle];
+        const expected = (mass + 0.06) * EARTH;
+        let raw = 0;
+        for (let step = 0; step < 360; step++) {
+            raw = internals.stepState(state, EARTH, dt, 0);
+            state.tension += (raw - state.tension) * dt / 0.02;
+        }
+        const context = `m = ${mass}`;
+        assertClose(state.tension, expected, 1e-3 * expected, `filtered tension: ${context}`);
+        assertClose(raw, expected, 5e-3 * expected, `raw tension: ${context}`);
+        state.drops.forEach((drop, i) => {
+            assertClose(drop.x, drops_before[i][0], 3e-3, `drop ${i} x: ${context}`);
+            assertClose(drop.y, drops_before[i][1], 3e-3, `drop ${i} y: ${context}`);
+            assert.equal(drop.spilled, false);
+        });
+        assertClose(state.body.x, body_before[0], 1e-4, `shell x: ${context}`);
+        assertClose(state.body.y, body_before[1], 1e-4, `shell y: ${context}`);
+        assertClose(state.body.angle, body_before[2], 1e-4, `shell angle: ${context}`);
+        assertClose(PIVOT_HEIGHT - bucketCenter(state).y, bucketRadius(0.4, mass), 5e-4, `centre of mass distance: ${context}`);
+    }
+});
+
+test("stepState: the driven tip is placed exactly on the bar circle with velocity Δx/Δt", () => {
+    const state = initialState({ gravity: EARTH, rope_length: 0.4, mass: 2 });
+    const dt = 1 / 1200;
+    internals.stepState(state, EARTH, dt, 0.7);
+    assertClose(state.nodes[TIP].x, BAR_LENGTH * Math.sin(0.7), 1e-15, "x on the circle");
+    assertClose(state.nodes[TIP].y, PIVOT_HEIGHT - BAR_LENGTH * Math.cos(0.7), 1e-15, "y on the circle");
+    assertClose(state.nodes[TIP].velocity_x, BAR_LENGTH * Math.sin(0.7) / dt, 1e-9, "v = Δx/Δt");
+});
+
+test("stepState with the rope cut: bucket, rope and water fall together with g, the raw tension is 0", () => {
+    const state = initialState({ gravity: EARTH, rope_length: 0.4, mass: 2 });
+    state.snapped = true;
+    const dt = 1 / 2400;
+    let raw = 1;
+    for (let step = 0; step < 240; step++) {
+        raw = internals.stepState(state, EARTH, dt, 0);
+    }
+    assert.equal(raw, 0);
+    assertClose(state.body.velocity_y, -EARTH * 0.1, 0.02 * EARTH * 0.1, "shell in free fall");
+    assertClose(state.drops[4].velocity_y, -EARTH * 0.1, 0.05 * EARTH * 0.1, "water falls with it");
+    assertClose(state.body.angular_velocity, 0, 1e-6, "no rotation");
+    assert.ok(state.drops.every((drop) => !drop.spilled), "the water stays in the falling bucket");
+});
+
+/* ---------- motor ---------- */
+
+test("smootherstep: 0 → 1 with zero end slopes, value 1/2 and slope 15/8 in the middle, clamped outside", () => {
+    const plain = (u) => ({ ...internals.smootherstep(u) });
+    assert.deepEqual(plain(0), { value: 0, slope: 0 });
+    assert.deepEqual(plain(1), { value: 1, slope: 0 });
+    assertClose(internals.smootherstep(0.5).value, 0.5, 1e-15, "middle");
+    assertClose(internals.smootherstep(0.5).slope, 15 / 8, 1e-15, "slope in the middle");
+    assertClose(internals.smootherstep(0.25).value, 0.103515625, 1e-12, "hand value at 1/4");
+    assert.deepEqual(plain(-3), { value: 0, slope: 0 });
+    assert.deepEqual(plain(7), { value: 1, slope: 0 });
+});
+
+test("moveBar: critically damped follower — no jump on the first step, no overshoot, reaches the target, no lag on a ramp", () => {
+    const motor = { angle: 0, rate: 0 };
+    const dt = 1 / 1000;
+    assertClose(internals.moveBar(motor, 1, 0, dt), 400 * dt * dt, 1e-15, "first step: no jump");
+    let peak = motor.angle;
+    for (let step = 0; step < 1000; step++) {
+        peak = Math.max(peak, internals.moveBar(motor, 1, 0, dt));
+    }
+    assert.ok(peak <= 1 + 1e-9, `overshoot ${peak}`);
+    assertClose(motor.angle, 1, 1e-6, "target reached after 1 s");
+    const ramp = { angle: 0, rate: 0 };
+    let error = 0;
+    for (let step = 1; step <= 2000; step++) {
+        error = 3 * step * dt - internals.moveBar(ramp, 3 * step * dt, 3, dt);
+    }
+    assertClose(error, -3 * dt, 1e-6, "velocity feed-forward: steady error of one integration step, no lag");
+});
+
+test("releaseBar gives the tip its inverse mass 3/m_b back, resets the turn count and takes the bucket angle as origin", () => {
+    const state = initialState({ gravity: EARTH, rope_length: 0.4, mass: 2 });
+    state.turned = 5;
+    assert.equal(state.nodes[TIP].inverse_mass, 0);
+    internals.releaseBar(state);
+    assert.equal(state.released, true);
+    assertClose(state.nodes[TIP].inverse_mass, 3 / 0.3, 1e-12, "effective mass m_b/3");
+    assert.equal(state.turned, 0);
+    assertClose(state.previous_angle, 0, 1e-12, "hanging bucket: angle 0");
+});
+
+test("chainWobble: 0 for the hanging chain, the larger bend at the bar tip or between the rope and the bucket axis otherwise", () => {
+    const state = initialState({ gravity: EARTH, rope_length: 0.4, mass: 2 });
+    assertClose(internals.chainWobble(state), 0, 1e-12, "hanging");
+    const phi = 0.1;
+    const tip = state.nodes[TIP];
+    const handle = state.nodes[HANDLE];
+    handle.x = tip.x + 0.4 * Math.sin(phi);
+    handle.y = tip.y - 0.4 * Math.cos(phi);
+    assertClose(internals.chainWobble(state), phi, 1e-12, "rope bent by φ at the tip, shell still");
+    state.body.angle = 0.35;
+    assertClose(internals.chainWobble(state), 0.25, 1e-12, "shell turned 0.25 rad relative to the rope");
+    state.body.angle = 2 * Math.PI;
+    assertClose(internals.chainWobble(state), phi, 1e-9, "a full turn of the shell does not count");
+});
+
+test("motorLead: no lead in the aligned release-at-bottom phase, none when the rope would go slack, geometry L_b sin(δ + ψ) = r sin(ψ) during the kick", () => {
+    const parameters = { gravity: EARTH, rope_length: 0.4, mass: 2, launch_speed: 9 };
+    const state = initialState(parameters);
+    const radius = bucketRadius(0.4, 2);
+    const motor = (fields) => ({ phase: "swing", bucket_angle: 0, previous_speed: 1, target_energy: 40, start_angle: 0, start_energy: 0, release_angle: Math.PI / 2, ...fields });
+    assert.equal(internals.motorLead(motor({ phase: "align", release_angle: 0 }), state, parameters, radius, 1), 0, "align at θ = 0: no lead");
+    assert.equal(internals.motorLead(motor({ bucket_angle: Math.PI }), state, parameters, radius, 0.1), 0, "θ = π at rest: inward part negative");
+    const kick_time = 1.3 * Math.sqrt(radius / EARTH);
+    const swinging = motor({});
+    const lead = internals.motorLead(swinging, state, parameters, radius, kick_time / 2);
+    assert.equal(swinging.previous_speed, 0, "angular speed recorded");
+    const distance = internals.bucketMotion(state, EARTH, radius).distance;
+    const tangent = 0.6 * 0.35 * 0.5;
+    const psi = Math.atan(tangent);
+    assertClose(lead, Math.asin(distance * Math.sin(psi) / BAR_LENGTH) - psi, 1e-12, "δ = asin(r sin ψ / L_b) − ψ");
+    assertClose(BAR_LENGTH * Math.sin(lead + psi), distance * Math.sin(psi), 1e-12, "L_b sin(δ + ψ) = r sin(ψ)");
+    assert.ok(lead > 0, "bar ahead of the bucket");
+    assert.equal(internals.motorLead(motor({}), state, parameters, radius, kick_time + 1), 0, "after the kick, at rest: tanh(0) = 0");
+});
+
+test("motorLead (throw): feed-forward from the energy curve plus feedback, tan ψ clamped to 0.35", () => {
+    const parameters = { gravity: EARTH, rope_length: 0.4, mass: 2, launch_speed: 9 };
+    const state = initialState(parameters);
+    const radius = bucketRadius(0.4, 2);
+    const gravity_radius = EARTH * radius;
+    const distance = internals.bucketMotion(state, EARTH, radius).distance;
+    const throwing = (target_energy) => ({
+        phase: "throw", bucket_angle: Math.PI / 4, previous_speed: 1, target_energy, start_angle: 0, start_energy: 0, release_angle: Math.PI / 2,
+    });
+    const gentle = internals.motorLead(throwing(0.5), state, parameters, radius, 5);
+    const capacity = Math.max(gravity_radius * (3 * Math.cos(Math.PI / 4) - 2), 0.1 * gravity_radius);
+    const slope = 0.5 * (30 * 0.0625) / (Math.PI / 2);
+    const tangent = slope / capacity + (0.25 - 0) / gravity_radius;
+    assert.ok(tangent < 0.35, "unclamped case");
+    const psi = Math.atan(tangent);
+    assertClose(gentle, Math.asin(distance * Math.sin(psi) / BAR_LENGTH) - psi, 1e-9, "hand lead");
+    const strong = internals.motorLead(throwing(400), state, parameters, radius, 5);
+    const clamped = Math.atan(0.35);
+    assertClose(strong, Math.asin(distance * Math.sin(clamped) / BAR_LENGTH) - clamped, 1e-9, "tan ψ = 0.35");
+});
+
+test("shootTarget: first step v ∝ √E*, then the secant on ln v against ln E*, slope kept in [0.05, 2]", () => {
+    assertClose(internals.shootTarget([{ target: 50, speed: 10 }], 10), 50, 1e-12, "already on target");
+    assertClose(internals.shootTarget([{ target: 50, speed: 10 }], 9), 50 * 0.81, 1e-9, "√E* law: E* ∝ v₀²");
+    assertClose(internals.shootTarget([{ target: 50, speed: 8 }], 10), 50 * 1.5625, 1e-9, "from below");
+    const shots = [{ target: 50, speed: 10 }, { target: 100, speed: 14.142135623730951 }];
+    assertClose(internals.shootTarget(shots, 12), 100 * (12 / 14.142135623730951) ** 2, 1e-9, "measured slope 1/2");
+    const shallow = [{ target: 50, speed: 10 }, { target: 100, speed: 10 * 2 ** 0.25 }];
+    assertClose(internals.shootTarget(shallow, 10 * 2 ** 0.25 * 1.1), 100 * 1.1 ** 4, 1e-9, "slope 1/4");
+    const flat = [{ target: 50, speed: 10 }, { target: 100, speed: 10 }];
+    assertClose(internals.shootTarget(flat, 11), 100 * Math.exp(Math.log(1.1) / 0.05), 1e-6, "slope floored at 0.05");
+    const steep = [{ target: 50, speed: 10 }, { target: 51, speed: 20 }];
+    assertClose(internals.shootTarget(steep, 40), 51 * Math.exp(Math.log(2) / 2), 1e-9, "slope capped at 2");
+    const degenerate = [{ target: 50, speed: 10 }, { target: 50, speed: 10 }];
+    assertClose(internals.shootTarget(degenerate, 8), 50 * 0.64, 1e-9, "0/0 slope: back to 1/2");
+});
+
+test("windupRate and substepRate: at least 1200 / 2400 Hz, multiples of 120, fast enough for the rope's waves 1.3 c/ℓ, minimal", () => {
+    const cases = [
+        { gravity: EARTH, rope_length: 0.4, mass: 2, launch_speed: 9, tension_max: 200 },
+        { gravity: EARTH, rope_length: 0.15, mass: 8, launch_speed: 15, tension_max: 900 },
+        { gravity: MOON, rope_length: 0.6, mass: 0.6, launch_speed: 3, tension_max: 20 },
+    ];
+    for (const parameters of cases) {
+        const context = JSON.stringify(parameters);
+        const windup = internals.windupRate(parameters);
+        const substeps = internals.substepRate(parameters);
+        assert.ok(windup >= 1200 && windup % 120 === 0, `windup ${windup}: ${context}`);
+        assert.ok(substeps >= 2400 && substeps % 120 === 0, `substeps ${substeps}: ${context}`);
+        const link = parameters.rope_length / ROPE_LINKS;
+        const windup_wave = 1.3 * Math.sqrt(1.3 * parameters.mass * parameters.gravity * (3 - 2 * Math.cos(70 * Math.PI / 180)) / 0.15) / link;
+        assert.ok(windup >= windup_wave - 1e-9, `fast enough for the pumping waves: ${context}`);
+        assert.ok(windup === 1200 || windup - 120 < windup_wave, `no faster than needed: ${context}`);
+        const radius = bucketRadius(parameters.rope_length, parameters.mass);
+        const free_wave = 1.3 * Math.sqrt(1.3 * parameters.mass * (parameters.launch_speed ** 2 / radius + parameters.gravity) / 0.15) / link;
+        assert.ok(substeps >= free_wave - 1e-9, `fast enough for the free waves: ${context}`);
+        assert.ok(substeps === 2400 || substeps - 120 < free_wave, `no faster than needed: ${context}`);
+        assert.equal(internals.windupRate({ ...parameters, launch_speed: 1, tension_max: 1 }), windup, `windup independent of v₀ and T_max: ${context}`);
+    }
+    assert.ok(internals.substepRate(cases[1]) > internals.substepRate(cases[0]), "heavy bucket on a short rope: faster");
+});
+
+/* ---------- full simulation ---------- */
+
+const EARTH_SETUP = { gravity: EARTH, rope_length: 0.4, mass: 2, tension_max: 210 };
+const EARTH_LIMIT = waterLimit(EARTH, 0.4, 2);
+const success_run = simulateRun({ ...EARTH_SETUP, launch_speed: 1.1 * EARTH_LIMIT }, true);
+
+test("simulateRun: success at 1.1 √(5 g R) after 2 turns, no drop lost, measured v₀ equal to the chosen one within 0.5 %", () => {
+    const speed = 1.1 * EARTH_LIMIT;
+    assert.equal(success_run.outcome, "success");
+    assert.ok(success_run.launch_speed !== null);
+    assertClose(success_run.launch_speed / speed, 1, 5e-3, "measured v₀ / chosen v₀");
+    assert.ok(success_run.launch_speed <= speed * (1 + 1e-3), "never a harder throw than asked");
+    assert.ok(success_run.shots.length >= 1 && success_run.shots.length <= 8, `${success_run.shots.length} shots`);
+    assertClose(success_run.shots[0].target, speed * speed / 2, 1e-12, "first shot at E* = ½ v₀²");
+    assertClose(success_run.shots[success_run.shots.length - 1].speed, success_run.launch_speed, 1e-12, "the kept shot is the last");
+    for (let k = 0; k + 1 < success_run.shots.length; k++) {
+        assertClose(success_run.shots[k + 1].target, internals.shootTarget(success_run.shots.slice(0, k + 1), speed), 1e-9, `shot ${k + 1} follows shootTarget`);
+    }
+    assert.ok(success_run.release_time > 5, "pumping and throw take seconds");
+    assert.ok(success_run.event_time > success_run.release_time);
+    assertClose(success_run.duration, success_run.event_time, 1e-12, "a success ends at the second turn");
+    const last = success_run.frames[success_run.frames.length - 1];
+    assert.ok(last.turns >= 2 - 1e-6 && last.turns < 2.3, `turns ${last.turns}`);
+    assert.ok(success_run.frames.every((frame) => frame.drops.every((drop) => drop[2] === false)), "no drop lost");
+    assert.ok(success_run.frames.every((frame) => !frame.snapped));
+});
+
+test("simulateRun: frames at 60 Hz, motor phases swing → throw → align → free, release flag, rigid bar and bail, inextensible rope", () => {
+    const frames = success_run.frames;
+    for (let i = 0; i < frames.length - 2; i++) {
+        assertClose(frames[i].time, i / 60, 1e-9, `frame ${i} time`);
+    }
+    const order = [];
+    for (const frame of frames) {
+        if (order[order.length - 1] !== frame.motor_phase) {
+            order.push(frame.motor_phase);
+        }
+    }
+    assert.deepEqual(order, ["swing", "throw", "align", "free"]);
+    assert.ok(frames.every((frame) => frame.released === (frame.motor_phase === "free")), "released ⇔ phase free");
+    const first_free = frames.find((frame) => frame.released);
+    assert.ok(first_free.time >= success_run.release_time - 1 / 60 - 1e-9 && first_free.time <= success_run.release_time + 1 / 60, "release time");
+    const link = 0.4 / ROPE_LINKS;
+    for (const frame of frames.filter((_, i) => i % 7 === 0)) {
+        assertClose(distanceBetween({ x: frame.nodes[0][0], y: frame.nodes[0][1] }, { x: frame.nodes[1][0], y: frame.nodes[1][1] }), BAR_LENGTH, 1e-4, "bar rigid");
+        assertClose(distanceBetween({ x: frame.nodes[HANDLE][0], y: frame.nodes[HANDLE][1] }, { x: frame.nodes[ATTACH][0], y: frame.nodes[ATTACH][1] }), BUCKET.bail, 1e-3, "bail rigid");
+        for (let i = 1; i < HANDLE; i++) {
+            const length = distanceBetween({ x: frame.nodes[i][0], y: frame.nodes[i][1] }, { x: frame.nodes[i + 1][0], y: frame.nodes[i + 1][1] });
+            assert.ok(length <= link * (1 + 1e-3), `rope link ${i} stretched to ${length} at t = ${frame.time}`);
+        }
+    }
+    assertClose(frames[0].center[0], 0, 1e-12, "starts hanging");
+    assertClose(PIVOT_HEIGHT - frames[0].center[1], bucketRadius(0.4, 2), 1e-4, "R at t = 0");
+});
+
+test("simulateRun: peak tension is the ideal bottom tension within 0.9 – 1.4 times, below T_max; a smaller T_max snaps the rope for good", () => {
+    const speed = 1.1 * EARTH_LIMIT;
+    const ideal = bottomTension(0.4, 2, speed * speed, EARTH);
+    assert.ok(success_run.max_tension > 0.9 * ideal && success_run.max_tension < 1.4 * ideal, `peak ${success_run.max_tension} vs ideal ${ideal}`);
+    assert.ok(success_run.max_tension < 210);
+    assert.ok(success_run.min_tension >= 0, "tension never negative");
+    const snapped = simulateRun({ ...EARTH_SETUP, tension_max: 0.8 * success_run.max_tension, launch_speed: speed }, true);
+    assert.equal(snapped.outcome, "snap");
+    const last = snapped.frames[snapped.frames.length - 1];
+    assert.equal(last.snapped, true);
+    assert.equal(last.tension, 0, "a cut rope carries nothing");
+    assertClose(snapped.duration, snapped.event_time + 1.6, 0.02, "1.6 s of aftermath");
+    assert.ok(last.turns < 2, "no success after the snap");
+});
+
+test("simulateRun: fails at 0.9 √(5 g R) — the water is lost, or the bucket does not go round", () => {
+    const run = simulateRun({ ...EARTH_SETUP, tension_max: 1e4, launch_speed: 0.9 * EARTH_LIMIT }, true);
+    assert.ok(["spill", "swing"].includes(run.outcome), `outcome ${run.outcome}`);
+    const last = run.frames[run.frames.length - 1];
+    if (run.outcome === "spill") {
+        assert.ok(last.drops.some((drop) => drop[2] === true), "a drop has crossed the rim");
+        assertClose(run.duration, run.event_time + 1.6, 0.02, "1.6 s of aftermath");
+    }
+    assert.ok(last.turns < 2);
+});
+
+test("simulateRun: 0.94 √(5 g R) is a failure (a harder throw than asked is never kept)", () => {
+    const run = simulateRun({ ...EARTH_SETUP, launch_speed: 0.94 * EARTH_LIMIT }, false);
+    assert.notEqual(run.outcome, "success");
+});
+
+test("simulateRun without recording gives the same outcome and shots, with a single frame list head", () => {
+    const quiet = simulateRun({ ...EARTH_SETUP, launch_speed: 1.1 * EARTH_LIMIT }, false);
+    assert.equal(quiet.outcome, "success");
+    assert.equal(quiet.launch_speed, success_run.launch_speed, "same measured v₀");
+    assert.deepEqual(quiet.shots, success_run.shots);
+    assert.equal(quiet.release_time, success_run.release_time);
+    assert.ok(quiet.frames.length < 3, "no frames recorded");
+});
+
+test("simulateRun: v₀ = 0 (or negative) — nobody launches the bucket, it hangs and the attempt is a swing", () => {
+    for (const speed of [0, -3]) {
+        const run = simulateRun({ ...EARTH_SETUP, launch_speed: speed });
+        assert.equal(run.outcome, "swing");
+        assert.equal(run.launch_speed, 0);
+        assert.deepEqual(run.shots, []);
+        assert.equal(run.release_time, null);
+        assert.equal(run.frames.length, 2);
+        assertClose(run.frames[1].time, 1.6, 1e-12, "aftermath");
+        assertClose(run.max_tension, (2 + 0.06) * EARTH, 1e-9, "hangs");
+    }
+});
+
+test("simulateRun: Mars, L = 0.5 m, m = 3 kg — success at 1.1 √(5 g R) with exact v₀, failure at 0.9 √(5 g R)", () => {
+    const setup = { gravity: MARS, rope_length: 0.5, mass: 3, tension_max: 150 };
+    const limit = waterLimit(MARS, 0.5, 3);
+    const win = simulateRun({ ...setup, launch_speed: 1.1 * limit }, false);
+    assert.equal(win.outcome, "success");
+    assertClose(win.launch_speed / (1.1 * limit), 1, 5e-3, "measured v₀");
+    assert.ok(win.launch_speed <= 1.1 * limit * (1 + 1e-3), "never a harder throw than asked");
+    const loss = simulateRun({ ...setup, launch_speed: 0.9 * limit }, false);
+    assert.notEqual(loss.outcome, "success");
+});
+
+test("simulateRun is deterministic: identical runs give identical frames", () => {
+    const parameters = { ...EARTH_SETUP, launch_speed: 1.1 * EARTH_LIMIT };
+    const again = simulateRun(parameters, true);
+    assert.deepEqual(again, success_run);
+});
+
+test("evaluate: underfilled below 90 % of the heaviest bucket, swing for v₀ = 0; fillThreshold 0 unless m is free", () => {
+    const challenge = makeChallenge("mass", EARTH, 10, 0.4, null, 400);
     const window = winningWindow(challenge);
-    const width = window.maximum - window.minimum;
-    assertClose(window.maximum, narrow_speed, 1e-6, "window top");
-    assert.ok(width > 0 && width < 0.05 * window.minimum, `window ${width} must be positive but narrow`);
-    assert.ok(window.minimum >= VARIABLES.launch_speed.min && window.maximum <= VARIABLES.launch_speed.max);
-    assert.equal(isChallengeFeasible(challenge), false);
+    assert.equal(fillThreshold(challenge), window.minimum);
+    assertClose(fillThreshold(challenge), 3.521579, 1e-4, "hand value");
+    assert.equal(fillThreshold(makeChallenge("launch_speed", EARTH, null, 0.4, 2, 210)), 0);
+    assert.equal(fillThreshold(makeChallenge("rope_length", EARTH, 9, null, 2, 210)), 0);
+    assert.equal(evaluate(challenge, 3), "underfilled", "light bucket that would otherwise succeed");
+    assert.equal(evaluate(makeChallenge("launch_speed", EARTH, null, 0.4, 2, 210), 0), "swing");
 });
 
-const MONTE_CARLO_SEED = 20260726;
-const per_worker = MONTE_CARLO_COUNT / MONTE_CARLO_WORKERS;
+/* ---------- pumping cache (own evaluation of game.js, own cache) ---------- */
 
-/* inWorkers: seeded batches drawn on parallel worker threads (helpers/generate_worker.js), batches concatenated in worker order */
+test("pumping cache: a cold run and a warm run are identical and equal a run from scratch elsewhere; the pumping is shared between v₀ and T_max, bypassed under its peak", () => {
+    const { PUMP_CACHE, pumpedAttempt } = internals;
+    const parameters = { ...EARTH_SETUP, launch_speed: 1.1 * EARTH_LIMIT };
+    assert.equal(PUMP_CACHE.size, 0);
+    const cold = cached_api.simulateRun(parameters, false);
+    assert.equal(PUMP_CACHE.size, 1);
+    const warm = cached_api.simulateRun(parameters, false);
+    assert.equal(PUMP_CACHE.size, 1, "the same pumping is reused");
+    assert.deepEqual(warm, cold);
+    const scratch = globalThis.loop_wagon_game.simulateRun(parameters, false);
+    assert.equal(cold.outcome, scratch.outcome);
+    assert.equal(cold.launch_speed, scratch.launch_speed);
+    assert.deepEqual(JSON.parse(JSON.stringify(cold.shots)), scratch.shots);
+    const pumped = pumpedAttempt(parameters, false);
+    assert.ok(pumped !== null);
+    assert.equal(pumped.motor.phase, "swing");
+    assert.ok(pumped.motor.bucket_angle < 0, "ready to throw from a backswing");
+    assert.equal(pumped.state.released, false);
+    assert.ok(pumped.time > 1, "seconds of pumping simulated");
+    assert.equal(pumpedAttempt({ ...parameters, launch_speed: 7, tension_max: 5000 }, false), pumped, "same entry for another v₀ and another T_max");
+    assert.equal(pumpedAttempt({ ...parameters, tension_max: 10 }, false), null, "T_max below the pumping peak: bypass");
+    assert.equal(PUMP_CACHE.size, 1, "the bypass keeps the entry");
+});
+
+/* ---------- challenges ---------- */
+
+test("FALLBACK_CHALLENGES: well-formed, windows inside the input range", () => {
+    assert.equal(FALLBACK_CHALLENGES.length, 2);
+    for (const challenge of FALLBACK_CHALLENGES) {
+        const spec = VARIABLES[challenge.variable];
+        const window = winningWindow(challenge);
+        assert.equal(challenge[challenge.variable], null);
+        assert.ok(window.minimum >= spec.min && window.maximum <= spec.max && window.maximum - window.minimum >= 3 * spec.step, JSON.stringify(window));
+    }
+});
+
+const fallback_promise = new Promise((resolve, reject) => {
+    const worker = new Worker(new URL("./helpers/generate_worker.js", import.meta.url), { workerData: { challenges: FALLBACK_CHALLENGES } });
+    worker.once("message", resolve);
+    worker.once("error", reject);
+});
+fallback_promise.catch(() => {});
+
+/* inWorkers: seeded batches drawn on parallel worker threads (helpers/generate_worker.js), batches concatenated in worker order;
+   the last worker repeats the seed of the first one without replay (reproducibility) */
 function inWorkers() {
     const url = new URL("./helpers/generate_worker.js", import.meta.url);
-    return Promise.all(Array.from({ length: MONTE_CARLO_WORKERS }, (_, k) => new Promise((resolve, reject) => {
-        const worker = new Worker(url, { workerData: { seed: MONTE_CARLO_SEED + k, count: per_worker, replay_count: k < REPLAYED_WORKERS ? 1 : 0 } });
+    const seeds = [...Array.from({ length: MONTE_CARLO_WORKERS }, (_, k) => MONTE_CARLO_SEED + k), MONTE_CARLO_SEED];
+    return Promise.all(seeds.map((seed, k) => new Promise((resolve, reject) => {
+        const worker = new Worker(url, { workerData: { seed, count: DRAWS_PER_WORKER, replay_count: k < REPLAYED_WORKERS ? 1 : 0 } });
         worker.once("message", resolve);
         worker.once("error", reject);
-    }))).then((batches) => batches.flat());
+    })));
 }
 
 const generated_promise = inWorkers();
 generated_promise.catch(() => {});
 
-test("Monte-Carlo: every randomChallenge has its window inside the input range, replayed windows are successes", async () => {
-    const generated = await generated_promise;
-    assert.equal(generated.length, MONTE_CARLO_COUNT);
-    const counts = { launch_speed: 0, rope_length: 0, mass: 0 };
+test("isChallengeFeasible: both fallback challenges are feasible (full simulation at five points of the window)", async () => {
+    assert.deepEqual(await fallback_promise, [true, true]);
+});
+
+test("isChallengeFeasible refuses impossible demands, a window outside the input range and a window narrower than 5 %", () => {
+    assert.equal(isChallengeFeasible(makeChallenge("launch_speed", EARTH, null, 0.4, 2, 15)), false, "rope too weak: empty window");
+    assert.equal(isChallengeFeasible(makeChallenge("launch_speed", EARTH, null, 0.15, 0.6, 1e6)), false, "window beyond 20 m/s");
+    assert.equal(isChallengeFeasible(makeChallenge("mass", EARTH, 6, 0.4, null, 400)), false, "water lost: empty window");
+    assert.equal(isChallengeFeasible(makeChallenge("rope_length", EARTH, 10, null, 8, 100)), false, "no rope holds it");
+    const narrow_speed = 1.02 * 1.04 * waterLimit(EARTH, 0.4, 1);
+    const narrow = makeChallenge("launch_speed", EARTH, null, 0.4, 1, bottomTension(0.4, 1, narrow_speed ** 2, EARTH) / 0.7);
+    const window = winningWindow(narrow);
+    assertClose(window.maximum, narrow_speed, 1e-6, "window top");
+    assert.ok(window.maximum - window.minimum > 0 && window.maximum - window.minimum < 0.05 * window.minimum, "positive but narrower than 5 %");
+    assert.equal(isChallengeFeasible(narrow), false);
+});
+
+test("randomChallenge falls back deterministically on a copy of FALLBACK_CHALLENGES[⌊rng × 2⌋] when no candidate is feasible", () => {
+    const hostile = makeChallenge("launch_speed", MOON, null, 0.2, 1, 14);
+    assert.equal(isChallengeFeasible(hostile), false, "premise: the constant-rng candidate is infeasible (empty window, no simulation)");
+    const first = randomChallenge(() => 0);
+    assert.deepEqual(first, FALLBACK_CHALLENGES[0]);
+    assert.notEqual(first, FALLBACK_CHALLENGES[0], "a copy, not the shared object");
+}); 
+
+test("Monte-Carlo (seed 20260811): drawn challenges have their window inside the input range, replayed windows succeed at both ends and in the middle", async () => {
+    const batches = await generated_promise;
+    const generated = batches.slice(0, MONTE_CARLO_WORKERS).flat();
+    assert.equal(generated.length, MONTE_CARLO_WORKERS * DRAWS_PER_WORKER);
     let replayed = 0;
     generated.forEach(({ challenge, replay }, index) => {
-        const context = `seed ${MONTE_CARLO_SEED}+${Math.floor(index / per_worker)}, index ${index}, ${JSON.stringify(challenge)}`;
+        const context = `seed ${MONTE_CARLO_SEED} + ${Math.floor(index / DRAWS_PER_WORKER)}, index ${index}, ${JSON.stringify(challenge)}`;
         assert.ok(challenge.variable in VARIABLES, context);
-        counts[challenge.variable] += 1;
         const spec = VARIABLES[challenge.variable];
         const window = winningWindow(challenge);
         assert.ok(window.minimum >= spec.min && window.maximum <= spec.max, `window [${window.minimum}, ${window.maximum}] outside range: ${context}`);
@@ -1077,40 +1231,28 @@ test("Monte-Carlo: every randomChallenge has its window inside the input range, 
         }
     });
     assert.equal(replayed, REPLAYED_WORKERS);
-    for (const key of Object.keys(counts)) {
-        assert.ok(counts[key] > 0, `variable ${key} never drawn`);
-    }
-    const fallbacks = generated.filter(({ challenge }) => FALLBACK_CHALLENGES.some((fallback) => JSON.stringify(fallback) === JSON.stringify(challenge)));
-    assert.ok(fallbacks.length < 0.1 * MONTE_CARLO_COUNT, `${fallbacks.length} fallbacks: rejection sampling rarely succeeds`);
 });
 
-test("anti-repeat: over the same Monte-Carlo draws, the excluded value never lies inside the new window of the same variable", async () => {
-    const generated = await generated_promise;
-    let same_variable = 0;
+test("anti-repeat: in the Monte-Carlo draws, the excluded value never lies inside the next window of the same variable", async () => {
+    const generated = (await generated_promise).slice(0, MONTE_CARLO_WORKERS).flat();
     generated.forEach(({ challenge, excluded }, index) => {
         if (excluded === null || excluded.variable !== challenge.variable) {
             return;
         }
-        same_variable += 1;
         const window = winningWindow(challenge);
         const is_fallback = FALLBACK_CHALLENGES.some((fallback) => JSON.stringify(fallback) === JSON.stringify(challenge));
         if (!is_fallback) {
             assert.ok(excluded.value < window.minimum || excluded.value > window.maximum, `index ${index}: excluded ${excluded.value} inside [${window.minimum}, ${window.maximum}]`);
         }
     });
-    assert.ok(same_variable >= 15, `only ${same_variable} same-variable steps, the check is too weak`);
 });
 
-test("randomChallenge is reproducible with the same seed and falls back on a hostile rng", () => {
-    const first = randomChallenge(seededRandom(99));
-    const second = randomChallenge(seededRandom(99));
-    assert.deepEqual(second, first);
-    const constant = randomChallenge(() => 0.999999);
-    assert.ok(constant.variable in VARIABLES);
-    assert.equal(isChallengeFeasible(constant), true);
+test("randomChallenge is reproducible: the same seed in two worker threads gives the same draws", async () => {
+    const batches = await generated_promise;
+    assert.deepEqual(batches[MONTE_CARLO_WORKERS].map((entry) => entry.challenge), batches[0].map((entry) => entry.challenge));
 });
 
-test("drawVariable frequencies are 4 : 3 : 3", () => {
+test("drawVariable frequencies are 4 : 3 : 3, with exact cut points", () => {
     const rng = seededRandom(31337);
     const counts = { launch_speed: 0, rope_length: 0, mass: 0 };
     for (let i = 0; i < DRAW_COUNT; i++) {

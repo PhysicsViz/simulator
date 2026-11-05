@@ -1,9 +1,114 @@
-% 02-apprentissage-mecanique.tex — squelette (titres seulement).
+% 02-apprentissage-mecanique.tex — État de l'art 1/5 : le cours de Physique 1,
+% les conceptions erronées en dynamique, la mesure de la compréhension et ce
+% qu'elles demandent à une animation.
 
 \chapter{Apprendre la mécanique en première année}\label{chap:mecanique}
 
+Ce chapitre résume ce que la recherche en didactique de la physique sait des
+difficultés des étudiants en mécanique. Il en tire les premières exigences
+pour nos animations.
+
 \section{Le cours de Physique~1 (BAC1 ingénieur civil)}
+
+Le cours LEPL1201 couvre la mécanique du point et du solide, puis
+l'électricité élémentaire. Son formulaire, autorisé à l'examen, fixe le
+contenu et les notations \cite{formulaire_epl1201} :
+\begin{itemize}
+  \item la cinématique, dont le mouvement d'un projectile écrit composante
+        par composante : \(x(t) = u_0 t + x_0\) et
+        \(y(t) = -g t^2/2 + v_0 t + y_0\), avec le vocabulaire du mouvement
+        rectiligne uniforme (MRU) et uniformément accéléré (MRUA) ;
+  \item le mouvement circulaire, avec \(v = r \omega\), l'accélération
+        radiale \(a_r = -r \omega^2\) et tangentielle \(a_\theta = r \alpha\) ;
+  \item la dynamique (lois de Newton, moment cinétique) et le théorème de
+        l'énergie mécanique ;
+  \item la force de gravitation et la force électrique, le théorème de Gauss
+        et le potentiel électrique.
+\end{itemize}
+Ces notations comptent pour une animation. Un étudiant qui voit \(v_{0x}\)
+dans une simulation et \(u_0\) au cours doit faire une traduction de plus,
+qui n'apporte rien et peut l'induire en erreur. Toutes nos pages reprennent
+donc les symboles du formulaire.
 
 \section{Conceptions erronées en dynamique}
 
+Les étudiants n'arrivent pas en mécanique sans idées. Ils ont une
+\enquote{physique du sens commun}, construite par l'expérience quotidienne,
+et elle contredit souvent les lois de Newton. Halloun et Hestenes l'ont
+mesurée chez des étudiants d'université avant et après un cours classique :
+beaucoup pensent qu'un mouvement exige une force dans le sens de la vitesse,
+et cette idée change peu après le cours \cite{halloun1985common}. Viennot
+avait observé le même raisonnement chez des étudiants de plusieurs pays
+\cite{viennot1979}. On retrouve dans ces travaux, et dans l'expérience
+courante des enseignants, les conceptions suivantes :
+\begin{itemize}
+  \item une force est nécessaire pour entretenir le mouvement, et elle pointe
+        dans le sens de la vitesse ;
+  \item la vitesse et l'accélération ont la même direction, en particulier
+        dans un virage ;
+  \item dans un mouvement circulaire, une \enquote{force centrifuge} pousse
+        l'objet vers l'extérieur ;
+  \item la réaction normale est toujours égale au poids.
+\end{itemize}
+
+Le mouvement circulaire réunit plusieurs de ces difficultés. L'accélération
+pointe vers le centre alors que la vitesse est tangente, ce qui contredit
+l'idée que l'accélération suit la vitesse. Il n'existe pas de \enquote{force
+centripète} qui s'ajouterait aux autres : c'est la résultante du poids, de la
+réaction normale ou de la tension qui joue ce rôle.
+
+Le looping en est l'exemple classique. Prenons un wagon assimilé à un point,
+lâché sans vitesse à la hauteur \(h\) au-dessus du bas d'un looping
+circulaire de rayon \(R\), sans frottement. Pour savoir s'il fait le tour, il
+faut combiner deux principes. La conservation de l'énergie donne sa vitesse
+au sommet, \(v_s^2 = 2 g (h - 2R)\). La deuxième loi de Newton selon le rayon
+donne alors la réaction du rail au sommet, \(N_s = m (v_s^2/R - g)\), qui doit
+rester positive ou nulle : sinon, le rail devrait tirer le wagon, ce qu'il ne
+peut pas faire. On obtient la hauteur minimale \(h_{\min} = 5R/2\). Le seau
+d'eau que l'on fait tourner dans un plan vertical obéit à la même condition,
+avec la tension de la corde à la place de la réaction normale. Les vrais
+loopings ne sont d'ailleurs pas circulaires, pour limiter l'accélération
+subie par les passagers \cite{pendrill2005loops}, ce qui ouvre l'exercice sur
+une situation réelle.
+
 \section{Mesurer la compréhension conceptuelle}
+
+Pour mesurer ces conceptions, Hestenes, Wells et Swackhamer ont construit le
+\emph{Force Concept Inventory} (FCI) \cite{hestenes1992fci}. C'est un
+questionnaire à choix multiples sans calcul, dont chaque mauvaise réponse
+correspond à une conception erronée précise. Il est devenu l'instrument de
+référence pour comparer des méthodes d'enseignement de la mécanique.
+
+Hake l'a utilisé sur plus de six mille étudiants, dans des cours d'écoles
+secondaires, de collèges et d'universités \cite{hake1998}. Pour comparer des
+groupes qui partent de niveaux différents, il utilise le \emph{gain
+normalisé} : la part de ce qui restait à apprendre qui a été acquise pendant
+le cours,
+\[
+  \langle g \rangle = \frac{\text{score final} - \text{score initial}}
+                           {100\,\% - \text{score initial}} .
+\]
+Ce gain vaut en moyenne \num{0,23} dans les cours magistraux classiques et
+\num{0,48} dans les cours à \enquote{engagement interactif}, où l'étudiant
+est actif et reçoit un retour immédiat sur ses raisonnements. Le constat est
+net : un cours magistral, même bien donné, corrige peu les conceptions
+erronées ; il faut que l'étudiant confronte ses idées à ce qui se passe
+réellement.
+
+Ce type de mesure servira à évaluer nos animations si un test avec des
+étudiants est possible (chapitre~\ref{chap:protocole}).
+
+\section{Ce que cela demande à une animation}
+
+Ces travaux donnent trois exigences directes :
+\begin{itemize}
+  \item montrer \emph{toutes} les forces, avec leur direction et leur
+        grandeur, pour que l'étudiant voie qu'aucune force centrifuge
+        n'apparaît, et que la réaction normale varie ;
+  \item montrer la vitesse et l'accélération séparément, pour que leur
+        différence de direction soit visible ;
+  \item laisser l'étudiant prédire puis vérifier : changer un paramètre, voir
+        si le wagon fait le tour, et comprendre pourquoi.
+\end{itemize}
+À ces exigences s'ajoute celle de la section précédente : parler la langue du
+cours, avec ses notations.

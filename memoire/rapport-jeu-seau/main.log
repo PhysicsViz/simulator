@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (MiKTeX 26.5) (preloaded format=pdflatex 2026.10.27)  4 NOV 2026 14:27
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (MiKTeX 26.5) (preloaded format=pdflatex 2026.10.27)  4 NOV 2026 20:51
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -474,6 +474,17 @@ Package: booktabs 2020/01/12 v1.61803398 Publication quality tables
 \@lastruleclass=\count333
 \@thisrulewidth=\dimen263
 )
+(C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/latex/tools\tabular
+x.sty
+Package: tabularx 2023/12/11 v2.12a `tabularx' package (DPC)
+\TX@col@width=\dimen264
+\TX@old@table=\dimen265
+\TX@old@col=\dimen266
+\TX@target=\dimen267
+\TX@delta=\dimen268
+\TX@cols=\count334
+\TX@ftn=\toks30
+)
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/latex/xcolor\xcolor
 .sty
 Package: xcolor 2024/09/29 v3.02 LaTeX color extensions (UK)
@@ -496,6 +507,38 @@ Package xcolor Info: Model `HSB' substituted by `hsb' on input line 1370.
 Package xcolor Info: Model `Gray' substituted by `gray' on input line 1371.
 Package xcolor Info: Model `wave' substituted by `hsb' on input line 1372.
 )
+(C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/latex/listings\list
+ings.sty
+\lst@mode=\count335
+\lst@gtempboxa=\box66
+\lst@token=\toks31
+\lst@length=\count336
+\lst@currlwidth=\dimen269
+\lst@column=\count337
+\lst@pos=\count338
+\lst@lostspace=\dimen270
+\lst@width=\dimen271
+\lst@newlines=\count339
+\lst@lineno=\count340
+\lst@maxwidth=\dimen272
+
+(C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/latex/listings\lstp
+atch.sty
+File: lstpatch.sty 2025/11/14 1.11b (Carsten Heinz)
+)
+(C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/latex/listings\lstm
+isc.sty
+File: lstmisc.sty 2025/11/14 1.11b (Carsten Heinz)
+\c@lstnumber=\count341
+\lst@skipnumbers=\count342
+\lst@framebox=\box67
+)
+(C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/latex/listings\list
+ings.cfg
+File: listings.cfg 2025/11/14 1.11b listings configuration
+))
+Package: listings 2025/11/14 1.11b (Carsten Heinz)
+
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/latex/pgf/frontendl
 ayer\tikz.sty
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/latex/pgf/basiclaye
@@ -504,13 +547,13 @@ r\pgf.sty
 \pgfrcs.sty
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utiliti
 es\pgfutil-common.tex
-\pgfutil@everybye=\toks30
-\pgfutil@tempdima=\dimen264
-\pgfutil@tempdimb=\dimen265
+\pgfutil@everybye=\toks32
+\pgfutil@tempdima=\dimen273
+\pgfutil@tempdimb=\dimen274
 )
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utiliti
 es\pgfutil-latex.def
-\pgfutil@abb=\box66
+\pgfutil@abb=\box68
 )
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utiliti
 es\pgfrcs.code.tex
@@ -530,33 +573,33 @@ Package: pgfsys 2026-08-01 v3.1.12 (3.1.12)
 
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utiliti
 es\pgfkeys.code.tex
-\pgfkeys@pathtoks=\toks31
-\pgfkeys@temptoks=\toks32
+\pgfkeys@pathtoks=\toks33
+\pgfkeys@temptoks=\toks34
 
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utiliti
 es\pgfkeyslibraryfiltered.code.tex
-\pgfkeys@tmptoks=\toks33
+\pgfkeys@tmptoks=\toks35
 ))
-\pgf@x=\dimen266
-\pgf@y=\dimen267
-\pgf@xa=\dimen268
-\pgf@ya=\dimen269
-\pgf@xb=\dimen270
-\pgf@yb=\dimen271
-\pgf@xc=\dimen272
-\pgf@yc=\dimen273
-\pgf@xd=\dimen274
-\pgf@yd=\dimen275
+\pgf@x=\dimen275
+\pgf@y=\dimen276
+\pgf@xa=\dimen277
+\pgf@ya=\dimen278
+\pgf@xb=\dimen279
+\pgf@yb=\dimen280
+\pgf@xc=\dimen281
+\pgf@yc=\dimen282
+\pgf@xd=\dimen283
+\pgf@yd=\dimen284
 \w@pgf@writea=\write3
 \r@pgf@reada=\read3
-\c@pgf@counta=\count334
-\c@pgf@countb=\count335
-\c@pgf@countc=\count336
-\c@pgf@countd=\count337
-\t@pgf@toka=\toks34
-\t@pgf@tokb=\toks35
-\t@pgf@tokc=\toks36
-\pgf@sys@id@count=\count338
+\c@pgf@counta=\count343
+\c@pgf@countb=\count344
+\c@pgf@countc=\count345
+\c@pgf@countd=\count346
+\t@pgf@toka=\toks36
+\t@pgf@tokb=\toks37
+\t@pgf@tokc=\toks38
+\pgf@sys@id@count=\count347
 
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systeml
 ayer\pgf.cfg
@@ -575,8 +618,8 @@ File: pgfsys-common-pdf.def 2026-08-01 v3.1.12 (3.1.12)
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systeml
 ayer\pgfsyssoftpath.code.tex
 File: pgfsyssoftpath.code.tex 2026-08-01 v3.1.12 (3.1.12)
-\pgfsyssoftpath@smallbuffer@items=\count339
-\pgfsyssoftpath@bigbuffer@items=\count340
+\pgfsyssoftpath@smallbuffer@items=\count348
+\pgfsyssoftpath@bigbuffer@items=\count349
 )
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systeml
 ayer\pgfsysprotocol.code.tex
@@ -592,12 +635,12 @@ fmath.code.tex
 fmathutil.code.tex)
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pg
 fmathparser.code.tex
-\pgfmath@dimen=\dimen276
-\pgfmath@count=\count341
-\pgfmath@box=\box67
-\pgfmath@toks=\toks37
-\pgfmath@stack@operand=\toks38
-\pgfmath@stack@operation=\toks39
+\pgfmath@dimen=\dimen285
+\pgfmath@count=\count350
+\pgfmath@box=\box69
+\pgfmath@toks=\toks39
+\pgfmath@stack@operand=\toks40
+\pgfmath@stack@operation=\toks41
 )
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pg
 fmathfunctions.code.tex)
@@ -621,59 +664,59 @@ fmathfunctions.integerarithmetics.code.tex)
 fmathcalc.code.tex)
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pg
 fmathfloat.code.tex
-\c@pgfmathroundto@lastzeros=\count342
+\c@pgfmathroundto@lastzeros=\count351
 ))
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pg
 fint.code.tex)
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basicla
 yer\pgfcorepoints.code.tex
 File: pgfcorepoints.code.tex 2026-08-01 v3.1.12 (3.1.12)
-\pgf@picminx=\dimen277
-\pgf@picmaxx=\dimen278
-\pgf@picminy=\dimen279
-\pgf@picmaxy=\dimen280
-\pgf@pathminx=\dimen281
-\pgf@pathmaxx=\dimen282
-\pgf@pathminy=\dimen283
-\pgf@pathmaxy=\dimen284
-\pgf@xx=\dimen285
-\pgf@xy=\dimen286
-\pgf@yx=\dimen287
-\pgf@yy=\dimen288
-\pgf@zx=\dimen289
-\pgf@zy=\dimen290
+\pgf@picminx=\dimen286
+\pgf@picmaxx=\dimen287
+\pgf@picminy=\dimen288
+\pgf@picmaxy=\dimen289
+\pgf@pathminx=\dimen290
+\pgf@pathmaxx=\dimen291
+\pgf@pathminy=\dimen292
+\pgf@pathmaxy=\dimen293
+\pgf@xx=\dimen294
+\pgf@xy=\dimen295
+\pgf@yx=\dimen296
+\pgf@yy=\dimen297
+\pgf@zx=\dimen298
+\pgf@zy=\dimen299
 )
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basicla
 yer\pgfcorepathconstruct.code.tex
 File: pgfcorepathconstruct.code.tex 2026-08-01 v3.1.12 (3.1.12)
-\pgf@path@lastx=\dimen291
-\pgf@path@lasty=\dimen292
+\pgf@path@lastx=\dimen300
+\pgf@path@lasty=\dimen301
 )
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basicla
 yer\pgfcorepathusage.code.tex
 File: pgfcorepathusage.code.tex 2026-08-01 v3.1.12 (3.1.12)
-\pgf@shorten@end@additional=\dimen293
-\pgf@shorten@start@additional=\dimen294
+\pgf@shorten@end@additional=\dimen302
+\pgf@shorten@start@additional=\dimen303
 )
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basicla
 yer\pgfcorescopes.code.tex
 File: pgfcorescopes.code.tex 2026-08-01 v3.1.12 (3.1.12)
-\pgfpic=\box68
-\pgf@hbox=\box69
-\pgf@layerbox@main=\box70
-\pgf@picture@serial@count=\count343
+\pgfpic=\box70
+\pgf@hbox=\box71
+\pgf@layerbox@main=\box72
+\pgf@picture@serial@count=\count352
 )
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basicla
 yer\pgfcoregraphicstate.code.tex
 File: pgfcoregraphicstate.code.tex 2026-08-01 v3.1.12 (3.1.12)
-\pgflinewidth=\dimen295
+\pgflinewidth=\dimen304
 )
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basicla
 yer\pgfcoretransformations.code.tex
 File: pgfcoretransformations.code.tex 2026-08-01 v3.1.12 (3.1.12)
-\pgf@pt@x=\dimen296
-\pgf@pt@y=\dimen297
-\pgf@pt@temp=\dimen298
+\pgf@pt@x=\dimen305
+\pgf@pt@y=\dimen306
+\pgf@pt@temp=\dimen307
 )
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basicla
 yer\pgfcorequick.code.tex
@@ -690,14 +733,14 @@ File: pgfcorepathprocessing.code.tex 2026-08-01 v3.1.12 (3.1.12)
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basicla
 yer\pgfcorearrows.code.tex
 File: pgfcorearrows.code.tex 2026-08-01 v3.1.12 (3.1.12)
-\pgfarrowsep=\dimen299
+\pgfarrowsep=\dimen308
 )
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basicla
 yer\pgfcoreshade.code.tex
 File: pgfcoreshade.code.tex 2026-08-01 v3.1.12 (3.1.12)
-\pgf@max=\dimen300
-\pgf@sys@shading@range@num=\count344
-\pgf@shadingcount=\count345
+\pgf@max=\dimen309
+\pgf@sys@shading@range@num=\count353
+\pgf@shadingcount=\count354
 )
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basicla
 yer\pgfcoreimage.code.tex
@@ -706,7 +749,7 @@ File: pgfcoreimage.code.tex 2026-08-01 v3.1.12 (3.1.12)
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basicla
 yer\pgfcoreexternal.code.tex
 File: pgfcoreexternal.code.tex 2026-08-01 v3.1.12 (3.1.12)
-\pgfexternal@startupbox=\box71
+\pgfexternal@startupbox=\box73
 )
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basicla
 yer\pgfcorelayers.code.tex
@@ -727,7 +770,7 @@ File: pgfcorerdf.code.tex 2026-08-01 v3.1.12 (3.1.12)
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/generic/pgf/modules
 \pgfmoduleshapes.code.tex
 File: pgfmoduleshapes.code.tex 2026-08-01 v3.1.12 (3.1.12)
-\pgfnodeparttextbox=\box72
+\pgfnodeparttextbox=\box74
 )
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/generic/pgf/modules
 \pgfmoduleplot.code.tex
@@ -736,8 +779,8 @@ File: pgfmoduleplot.code.tex 2026-08-01 v3.1.12 (3.1.12)
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/latex/pgf/compatibi
 lity\pgfcomp-version-0-65.sty
 Package: pgfcomp-version-0-65 2026-08-01 v3.1.12 (3.1.12)
-\pgf@nodesepstart=\dimen301
-\pgf@nodesepend=\dimen302
+\pgf@nodesepstart=\dimen310
+\pgf@nodesepend=\dimen311
 )
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/latex/pgf/compatibi
 lity\pgfcomp-version-1-18.sty
@@ -756,10 +799,10 @@ fmath.code.tex))
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utiliti
 es\pgffor.code.tex
 Package: pgffor 2026-08-01 v3.1.12 (3.1.12)
-\pgffor@iter=\dimen303
-\pgffor@skip=\dimen304
-\pgffor@stack=\toks40
-\pgffor@toks=\toks41
+\pgffor@iter=\dimen312
+\pgffor@skip=\dimen313
+\pgffor@stack=\toks42
+\pgffor@toks=\toks43
 ))
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/generic/pgf/fronten
 dlayer/tikz\tikz.code.tex
@@ -768,34 +811,34 @@ Package: tikz 2026-08-01 v3.1.12 (3.1.12)
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/generic/pgf/librari
 es\pgflibraryplothandlers.code.tex
 File: pgflibraryplothandlers.code.tex 2026-08-01 v3.1.12 (3.1.12)
-\pgf@plot@mark@count=\count346
-\pgfplotmarksize=\dimen305
+\pgf@plot@mark@count=\count355
+\pgfplotmarksize=\dimen314
 )
-\tikz@lastx=\dimen306
-\tikz@lasty=\dimen307
-\tikz@lastxsaved=\dimen308
-\tikz@lastysaved=\dimen309
-\tikz@lastmovetox=\dimen310
-\tikz@lastmovetoy=\dimen311
-\tikzleveldistance=\dimen312
-\tikzsiblingdistance=\dimen313
-\tikz@figbox=\box73
-\tikz@figbox@bg=\box74
-\tikz@tempbox=\box75
-\tikz@tempbox@bg=\box76
-\tikztreelevel=\count347
-\tikznumberofchildren=\count348
-\tikznumberofcurrentchild=\count349
-\tikz@fig@count=\count350
+\tikz@lastx=\dimen315
+\tikz@lasty=\dimen316
+\tikz@lastxsaved=\dimen317
+\tikz@lastysaved=\dimen318
+\tikz@lastmovetox=\dimen319
+\tikz@lastmovetoy=\dimen320
+\tikzleveldistance=\dimen321
+\tikzsiblingdistance=\dimen322
+\tikz@figbox=\box75
+\tikz@figbox@bg=\box76
+\tikz@tempbox=\box77
+\tikz@tempbox@bg=\box78
+\tikztreelevel=\count356
+\tikznumberofchildren=\count357
+\tikznumberofcurrentchild=\count358
+\tikz@fig@count=\count359
 
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/generic/pgf/modules
 \pgfmodulematrix.code.tex
 File: pgfmodulematrix.code.tex 2026-08-01 v3.1.12 (3.1.12)
-\pgfmatrixcurrentrow=\count351
-\pgfmatrixcurrentcolumn=\count352
-\pgf@matrix@numberofcolumns=\count353
+\pgfmatrixcurrentrow=\count360
+\pgfmatrixcurrentcolumn=\count361
+\pgf@matrix@numberofcolumns=\count362
 )
-\tikz@expandcount=\count354
+\tikz@expandcount=\count363
 
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/generic/pgf/fronten
 dlayer/tikz/libraries\tikzlibrarytopaths.code.tex
@@ -804,10 +847,10 @@ File: tikzlibrarytopaths.code.tex 2026-08-01 v3.1.12 (3.1.12)
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/generic/pgf/librari
 es\pgflibraryarrows.meta.code.tex
 File: pgflibraryarrows.meta.code.tex 2026-08-01 v3.1.12 (3.1.12)
-\pgfarrowinset=\dimen314
-\pgfarrowlength=\dimen315
-\pgfarrowwidth=\dimen316
-\pgfarrowlinewidth=\dimen317
+\pgfarrowinset=\dimen323
+\pgfarrowlength=\dimen324
+\pgfarrowwidth=\dimen325
+\pgfarrowlinewidth=\dimen326
 )
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/generic/pgf/fronten
 dlayer/tikz/libraries\tikzlibrarycalc.code.tex
@@ -817,6 +860,25 @@ File: tikzlibrarycalc.code.tex 2026-08-01 v3.1.12 (3.1.12)
 dlayer/tikz/libraries\tikzlibrarybabel.code.tex
 File: tikzlibrarybabel.code.tex 2026-08-01 v3.1.12 (3.1.12)
 )
+(C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/generic/pgf/fronten
+dlayer/tikz/libraries\tikzlibrarydecorations.pathreplacing.code.tex
+(C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/generic/pgf/fronten
+dlayer/tikz/libraries\tikzlibrarydecorations.code.tex
+(C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/generic/pgf/modules
+\pgfmoduledecorations.code.tex
+\pgfdecoratedcompleteddistance=\dimen327
+\pgfdecoratedremainingdistance=\dimen328
+\pgfdecoratedinputsegmentcompleteddistance=\dimen329
+\pgfdecoratedinputsegmentremainingdistance=\dimen330
+\pgf@decorate@distancetomove=\dimen331
+\pgf@decorate@repeatstate=\count364
+\pgfdecorationsegmentamplitude=\dimen332
+\pgfdecorationsegmentlength=\dimen333
+)
+\tikz@lib@dec@box=\box79
+)
+(C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/generic/pgf/librari
+es/decorations\pgflibrarydecorations.pathreplacing.code.tex))
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/latex/pgfplots\pgfp
 lots.sty
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/generic/pgfplots\pg
@@ -827,12 +889,12 @@ Package: pgfplots 2026/08/26 v1.18.3 Data Visualization (1.18.3)
 fplots.code.tex
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/generic/pgfplots\pg
 fplotscore.code.tex
-\t@pgfplots@toka=\toks42
-\t@pgfplots@tokb=\toks43
-\t@pgfplots@tokc=\toks44
-\pgfplots@tmpa=\dimen318
-\c@pgfplots@coordindex=\count355
-\c@pgfplots@scanlineindex=\count356
+\t@pgfplots@toka=\toks44
+\t@pgfplots@tokb=\toks45
+\t@pgfplots@tokc=\toks46
+\pgfplots@tmpa=\dimen334
+\c@pgfplots@coordindex=\count365
+\c@pgfplots@scanlineindex=\count366
 
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/generic/pgfplots/sy
 s\pgfplotssysgeneric.code.tex))
@@ -852,14 +914,14 @@ ststructure\pgfplotsliststructure.code.tex)
 ststructure\pgfplotsliststructureext.code.tex)
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/generic/pgfplots/li
 ststructure\pgfplotsarray.code.tex
-\c@pgfplotsarray@tmp=\count357
+\c@pgfplotsarray@tmp=\count367
 )
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/generic/pgfplots/li
 ststructure\pgfplotsmatrix.code.tex)
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/generic/pgfplots/nu
 mtable\pgfplotstableshared.code.tex
-\c@pgfplotstable@counta=\count358
-\t@pgfplotstable@a=\toks45
+\c@pgfplotstable@counta=\count368
+\t@pgfplotstable@a=\toks47
 )
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/generic/pgfplots/li
 ststructure\pgfplotsdeque.code.tex)
@@ -871,7 +933,7 @@ il\pgfplotsbinary.data.code.tex))
 il\pgfplotsutil.verb.code.tex)
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/generic/pgfplots/li
 bs\pgflibrarypgfplots.surfshading.code.tex
-\c@pgfplotslibrarysurf@no=\count359
+\c@pgfplotslibrarysurf@no=\count369
 
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/generic/pgfplots/sy
 s\pgflibrarypgfplots.surfshading.pgfsys-pdftex.def)))
@@ -900,37 +962,18 @@ fplotsticks.code.tex)
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/generic/pgfplots\pg
 fplots.paths.code.tex)
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/generic/pgf/fronten
-dlayer/tikz/libraries\tikzlibrarydecorations.code.tex
-(C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/generic/pgf/modules
-\pgfmoduledecorations.code.tex
-\pgfdecoratedcompleteddistance=\dimen319
-\pgfdecoratedremainingdistance=\dimen320
-\pgfdecoratedinputsegmentcompleteddistance=\dimen321
-\pgfdecoratedinputsegmentremainingdistance=\dimen322
-\pgf@decorate@distancetomove=\dimen323
-\pgf@decorate@repeatstate=\count360
-\pgfdecorationsegmentamplitude=\dimen324
-\pgfdecorationsegmentlength=\dimen325
-)
-\tikz@lib@dec@box=\box77
-)
-(C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/generic/pgf/fronten
 dlayer/tikz/libraries\tikzlibrarydecorations.pathmorphing.code.tex
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/generic/pgf/librari
 es/decorations\pgflibrarydecorations.pathmorphing.code.tex))
-(C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/generic/pgf/fronten
-dlayer/tikz/libraries\tikzlibrarydecorations.pathreplacing.code.tex
-(C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/generic/pgf/librari
-es/decorations\pgflibrarydecorations.pathreplacing.code.tex))
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/generic/pgfplots/li
 bs\tikzlibrarypgfplots.contourlua.code.tex)
-\pgfplots@numplots=\count361
-\pgfplots@xmin@reg=\dimen326
-\pgfplots@xmax@reg=\dimen327
-\pgfplots@ymin@reg=\dimen328
-\pgfplots@ymax@reg=\dimen329
-\pgfplots@zmin@reg=\dimen330
-\pgfplots@zmax@reg=\dimen331
+\pgfplots@numplots=\count370
+\pgfplots@xmin@reg=\dimen335
+\pgfplots@xmax@reg=\dimen336
+\pgfplots@ymin@reg=\dimen337
+\pgfplots@ymax@reg=\dimen338
+\pgfplots@zmin@reg=\dimen339
+\pgfplots@zmax@reg=\dimen340
 )
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/generic/pgf/fronten
 dlayer/tikz/libraries\tikzlibraryplotmarks.code.tex
@@ -943,13 +986,13 @@ File: pgflibraryplotmarks.code.tex 2026-08-01 v3.1.12 (3.1.12)
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/latex/csquotes\csqu
 otes.sty
 Package: csquotes 2026-05-19 v5.2p context-sensitive quotations (JAW)
-\csq@reset=\count362
-\csq@gtype=\count363
-\csq@glevel=\count364
-\csq@qlevel=\count365
-\csq@maxlvl=\count366
-\csq@tshold=\count367
-\csq@ltx@everypar=\toks46
+\csq@reset=\count371
+\csq@gtype=\count372
+\csq@glevel=\count373
+\csq@qlevel=\count374
+\csq@maxlvl=\count375
+\csq@tshold=\count376
+\csq@ltx@everypar=\toks48
 
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/latex/csquotes\csqu
 otes.def
@@ -977,7 +1020,7 @@ Package: kvsetkeys 2022-10-05 v1.19 Key value parser (HO)
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/latex/logreq\logreq
 .sty
 Package: logreq 2010/08/04 v1.0 xml request logger
-\lrq@indent=\count368
+\lrq@indent=\count377
 
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/latex/logreq\logreq
 .def
@@ -991,49 +1034,49 @@ Package: ifthen 2024/03/16 v1.1e Standard LaTeX ifthen package (DPC)
 \Urlmuskip=\muskip18
 Package: url 2013/09/16  ver 3.4  Verb mode for urls, etc.
 )
-\c@tabx@nest=\count369
-\c@listtotal=\count370
-\c@listcount=\count371
-\c@liststart=\count372
-\c@liststop=\count373
-\c@citecount=\count374
-\c@citetotal=\count375
-\c@multicitecount=\count376
-\c@multicitetotal=\count377
-\c@instcount=\count378
-\c@maxnames=\count379
-\c@minnames=\count380
-\c@maxitems=\count381
-\c@minitems=\count382
-\c@citecounter=\count383
-\c@maxcitecounter=\count384
-\c@savedcitecounter=\count385
-\c@uniquelist=\count386
-\c@uniquename=\count387
-\c@refsection=\count388
-\c@refsegment=\count389
-\c@maxextratitle=\count390
-\c@maxextratitleyear=\count391
-\c@maxextraname=\count392
-\c@maxextradate=\count393
-\c@maxextraalpha=\count394
-\c@abbrvpenalty=\count395
-\c@highnamepenalty=\count396
-\c@lownamepenalty=\count397
-\c@maxparens=\count398
-\c@parenlevel=\count399
-\blx@tempcnta=\count400
-\blx@tempcntb=\count401
-\blx@tempcntc=\count402
-\c@blx@maxsection=\count403
-\blx@maxsegment@0=\count404
-\blx@notetype=\count405
-\blx@parenlevel@text=\count406
-\blx@parenlevel@foot=\count407
-\blx@sectionciteorder@0=\count408
-\blx@sectionciteorderinternal@0=\count409
-\blx@entrysetcounter=\count410
-\blx@biblioinstance=\count411
+\c@tabx@nest=\count378
+\c@listtotal=\count379
+\c@listcount=\count380
+\c@liststart=\count381
+\c@liststop=\count382
+\c@citecount=\count383
+\c@citetotal=\count384
+\c@multicitecount=\count385
+\c@multicitetotal=\count386
+\c@instcount=\count387
+\c@maxnames=\count388
+\c@minnames=\count389
+\c@maxitems=\count390
+\c@minitems=\count391
+\c@citecounter=\count392
+\c@maxcitecounter=\count393
+\c@savedcitecounter=\count394
+\c@uniquelist=\count395
+\c@uniquename=\count396
+\c@refsection=\count397
+\c@refsegment=\count398
+\c@maxextratitle=\count399
+\c@maxextratitleyear=\count400
+\c@maxextraname=\count401
+\c@maxextradate=\count402
+\c@maxextraalpha=\count403
+\c@abbrvpenalty=\count404
+\c@highnamepenalty=\count405
+\c@lownamepenalty=\count406
+\c@maxparens=\count407
+\c@parenlevel=\count408
+\blx@tempcnta=\count409
+\blx@tempcntb=\count410
+\blx@tempcntc=\count411
+\c@blx@maxsection=\count412
+\blx@maxsegment@0=\count413
+\blx@notetype=\count414
+\blx@parenlevel@text=\count415
+\blx@parenlevel@foot=\count416
+\blx@sectionciteorder@0=\count417
+\blx@sectionciteorderinternal@0=\count418
+\blx@entrysetcounter=\count419
+\blx@biblioinstance=\count420
 \labelnumberwidth=\skip57
 \labelalphawidth=\skip58
 \biblabelsep=\skip59
@@ -1045,9 +1088,9 @@ Package: url 2013/09/16  ver 3.4  Verb mode for urls, etc.
 \blx@bcfin=\read4
 \blx@bcfout=\write4
 \blx@langwohyphens=\language80
-\c@mincomprange=\count412
-\c@maxcomprange=\count413
-\c@mincompwidth=\count414
+\c@mincomprange=\count421
+\c@maxcomprange=\count422
+\c@mincompwidth=\count423
 Package biblatex Info: Trying to load biblatex default data model...
 Package biblatex Info: ... file 'blx-dm.def' found.
 
@@ -1059,74 +1102,74 @@ Package biblatex Info: Trying to load biblatex style data model...
 Package biblatex Info: ... file 'ieee.dbx' not found.
 Package biblatex Info: Trying to load biblatex custom data model...
 Package biblatex Info: ... file 'biblatex-dm.cfg' not found.
-\c@afterword=\count415
-\c@savedafterword=\count416
-\c@annotator=\count417
-\c@savedannotator=\count418
-\c@author=\count419
-\c@savedauthor=\count420
-\c@bookauthor=\count421
-\c@savedbookauthor=\count422
-\c@commentator=\count423
-\c@savedcommentator=\count424
-\c@editor=\count425
-\c@savededitor=\count426
-\c@editora=\count427
-\c@savededitora=\count428
-\c@editorb=\count429
-\c@savededitorb=\count430
-\c@editorc=\count431
-\c@savededitorc=\count432
-\c@foreword=\count433
-\c@savedforeword=\count434
-\c@holder=\count435
-\c@savedholder=\count436
-\c@introduction=\count437
-\c@savedintroduction=\count438
-\c@namea=\count439
-\c@savednamea=\count440
-\c@nameb=\count441
-\c@savednameb=\count442
-\c@namec=\count443
-\c@savednamec=\count444
-\c@translator=\count445
-\c@savedtranslator=\count446
-\c@shortauthor=\count447
-\c@savedshortauthor=\count448
-\c@shorteditor=\count449
-\c@savedshorteditor=\count450
-\c@labelname=\count451
-\c@savedlabelname=\count452
-\c@institution=\count453
-\c@savedinstitution=\count454
-\c@lista=\count455
-\c@savedlista=\count456
-\c@listb=\count457
-\c@savedlistb=\count458
-\c@listc=\count459
-\c@savedlistc=\count460
-\c@listd=\count461
-\c@savedlistd=\count462
-\c@liste=\count463
-\c@savedliste=\count464
-\c@listf=\count465
-\c@savedlistf=\count466
-\c@location=\count467
-\c@savedlocation=\count468
-\c@organization=\count469
-\c@savedorganization=\count470
-\c@origlocation=\count471
-\c@savedoriglocation=\count472
-\c@origpublisher=\count473
-\c@savedorigpublisher=\count474
-\c@publisher=\count475
-\c@savedpublisher=\count476
-\c@language=\count477
-\c@savedlanguage=\count478
-\c@origlanguage=\count479
-\c@savedoriglanguage=\count480
-\c@pageref=\count481
-\c@savedpageref=\count482
+\c@afterword=\count424
+\c@savedafterword=\count425
+\c@annotator=\count426
+\c@savedannotator=\count427
+\c@author=\count428
+\c@savedauthor=\count429
+\c@bookauthor=\count430
+\c@savedbookauthor=\count431
+\c@commentator=\count432
+\c@savedcommentator=\count433
+\c@editor=\count434
+\c@savededitor=\count435
+\c@editora=\count436
+\c@savededitora=\count437
+\c@editorb=\count438
+\c@savededitorb=\count439
+\c@editorc=\count440
+\c@savededitorc=\count441
+\c@foreword=\count442
+\c@savedforeword=\count443
+\c@holder=\count444
+\c@savedholder=\count445
+\c@introduction=\count446
+\c@savedintroduction=\count447
+\c@namea=\count448
+\c@savednamea=\count449
+\c@nameb=\count450
+\c@savednameb=\count451
+\c@namec=\count452
+\c@savednamec=\count453
+\c@translator=\count454
+\c@savedtranslator=\count455
+\c@shortauthor=\count456
+\c@savedshortauthor=\count457
+\c@shorteditor=\count458
+\c@savedshorteditor=\count459
+\c@labelname=\count460
+\c@savedlabelname=\count461
+\c@institution=\count462
+\c@savedinstitution=\count463
+\c@lista=\count464
+\c@savedlista=\count465
+\c@listb=\count466
+\c@savedlistb=\count467
+\c@listc=\count468
+\c@savedlistc=\count469
+\c@listd=\count470
+\c@savedlistd=\count471
+\c@liste=\count472
+\c@savedliste=\count473
+\c@listf=\count474
+\c@savedlistf=\count475
+\c@location=\count476
+\c@savedlocation=\count477
+\c@organization=\count478
+\c@savedorganization=\count479
+\c@origlocation=\count480
+\c@savedoriglocation=\count481
+\c@origpublisher=\count482
+\c@savedorigpublisher=\count483
+\c@publisher=\count484
+\c@savedpublisher=\count485
+\c@language=\count486
+\c@savedlanguage=\count487
+\c@origlanguage=\count488
+\c@savedoriglanguage=\count489
+\c@pageref=\count490
+\c@savedpageref=\count491
 \shorthandwidth=\skip65
 \shortjournalwidth=\skip66
 \shortserieswidth=\skip67
@@ -1154,19 +1197,19 @@ Package biblatex Info: ... file 'biblatex.def' found.
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/latex/biblatex\bibl
 atex.def
 File: biblatex.def 2026/09/24 v3.22a biblatex compatibility (PK/MW)
-\c@textcitecount=\count483
-\c@textcitetotal=\count484
-\c@textcitemaxnames=\count485
-\c@biburlbigbreakpenalty=\count486
-\c@biburlbreakpenalty=\count487
-\c@biburlnumpenalty=\count488
-\c@biburlucpenalty=\count489
-\c@biburllcpenalty=\count490
+\c@textcitecount=\count492
+\c@textcitetotal=\count493
+\c@textcitemaxnames=\count494
+\c@biburlbigbreakpenalty=\count495
+\c@biburlbreakpenalty=\count496
+\c@biburlnumpenalty=\count497
+\c@biburlucpenalty=\count498
+\c@biburllcpenalty=\count499
 \biburlbigskip=\muskip19
 \biburlnumskip=\muskip20
 \biburlucskip=\muskip21
 \biburllcskip=\muskip22
-\c@smartand=\count491
+\c@smartand=\count500
 )
 Package biblatex Info: Trying to load bibliography style 'ieee'...
 Package biblatex Info: ... file 'ieee.bbx' found.
@@ -1192,8 +1235,8 @@ Package biblatex Info: ... file 'standard.bbx' found.
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/latex/biblatex/bbx\
 standard.bbx
 File: standard.bbx 2026/09/24 v3.22a biblatex bibliography style (PK/MW)
-\c@bbx:relatedcount=\count492
-\c@bbx:relatedtotal=\count493
+\c@bbx:relatedcount=\count501
+\c@bbx:relatedtotal=\count502
 ))))
 Package biblatex Info: Trying to load citation style 'ieee'...
 Package biblatex Info: ... file 'ieee.cbx' found.
@@ -1235,7 +1278,7 @@ Package: expl3 2026-09-09 L3 programming layer (loader)
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/latex/l3kernel\l3ba
 ckend-pdftex.def
 File: l3backend-pdftex.def 2026-09-09 L3 backend support: PDF output (pdfTeX)
-\l__color_backend_stack_int=\count494
+\l__color_backend_stack_int=\count503
 ))
 Package biblatex Info: ... and expl3
 (biblatex)             2026-09-09 L3 programming layer (loader) 
@@ -1279,16 +1322,16 @@ Package: refcount 2019/12/15 v3.6 Data extraction from label references (HO)
 ing\gettitlestring.sty
 Package: gettitlestring 2019/12/15 v1.6 Cleanup title references (HO)
 )
-\c@section@level=\count495
+\c@section@level=\count504
 )
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/generic/stringenc\s
 tringenc.sty
 Package: stringenc 2019/11/29 v1.12 Convert strings between diff. encodings (HO
 )
 )
-\@linkdim=\dimen332
-\Hy@linkcounter=\count496
-\Hy@pagecounter=\count497
+\@linkdim=\dimen341
+\Hy@linkcounter=\count505
+\Hy@pagecounter=\count506
 
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\pd1e
 nc.def
@@ -1300,7 +1343,7 @@ Now handling font encoding PD1 ...
 calc.sty
 Package: intcalc 2019/12/15 v1.3 Expandable calculations with integers (HO)
 )
-\Hy@SavedSpaceFactor=\count498
+\Hy@SavedSpaceFactor=\count507
 
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\puen
 c.def
@@ -1315,9 +1358,9 @@ Package hyperref Info: Plain pages OFF on input line 4214.
 Package hyperref Info: Backreferencing OFF on input line 4219.
 Package hyperref Info: Implicit mode ON; LaTeX internals redefined.
 Package hyperref Info: Bookmarks ON on input line 4466.
-\c@Hy@tempcnt=\count499
+\c@Hy@tempcnt=\count508
 LaTeX Info: Redefining \url on input line 4805.
-\XeTeXLinkMargin=\dimen333
+\XeTeXLinkMargin=\dimen342
 
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/generic/bitset\bits
 et.sty
@@ -1328,9 +1371,9 @@ bigintcalc.sty
 Package: bigintcalc 2019/12/15 v1.5 Expandable calculations on big integers (HO
 )
 ))
-\Fld@menulength=\count500
-\Field@Width=\dimen334
-\Fld@charsize=\dimen335
+\Fld@menulength=\count509
+\Field@Width=\dimen343
+\Fld@charsize=\dimen344
 Package hyperref Info: Hyper figures OFF on input line 6091.
 Package hyperref Info: Link nesting OFF on input line 6096.
 Package hyperref Info: Hyper index ON on input line 6099.
@@ -1338,17 +1381,17 @@ Package hyperref Info: backreferencing OFF on input line 6106.
 Package hyperref Info: Link coloring OFF on input line 6111.
 Package hyperref Info: Link coloring with OCG OFF on input line 6116.
 Package hyperref Info: PDF/A mode OFF on input line 6121.
-\Hy@abspage=\count501
-\c@Item=\count502
-\c@Hfootnote=\count503
+\Hy@abspage=\count510
+\c@Item=\count511
+\c@Hfootnote=\count512
 )
 Package hyperref Info: Driver (autodetected): hpdftex.
 
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\hpdf
 tex.def
 File: hpdftex.def 2026-10-09 v7.01s Hyperref driver for pdfTeX
-\Fld@listcount=\count504
-\c@bookmark@seq@number=\count505
+\Fld@listcount=\count513
+\c@bookmark@seq@number=\count514
 
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/latex/rerunfilechec
 k\rerunfilecheck.sty
@@ -1377,53 +1420,60 @@ LaTeX Info: Redefining \cpagerefrange on input line 2370.
 LaTeX Info: Redefining \Cpagerefrange on input line 2370.
 LaTeX Info: Redefining \labelcref on input line 2370.
 LaTeX Info: Redefining \labelcpageref on input line 2370.
+Package cleveref Info: `listings' support loaded on input line 3131.
 Package cleveref Info: include cross-reference names in hyperlinks on input lin
 e 7836.
 Package cleveref Info: include cross-reference names in hyperlinks on input lin
 e 7852.
 )
 ==> First Aid for cleveref.sty applied!
+
+(C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/latex/listings\lstl
+ang1.sty
+File: lstlang1.sty 2025/11/14 1.11b listings language file
+)
 Package csquotes Info: Checking for multilingual support...
 Package csquotes Info: ... found 'babel' package.
 Package csquotes Info: Adjusting default style.
 Package csquotes Info: Redefining alias 'default' -> 'french'.
-LaTeX Font Info:    Trying to load font information for T1+lmr on input line 50
+LaTeX Font Info:    Trying to load font information for T1+lmr on input line 64
 .
+
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/latex/lm\t1lmr.fd
 File: t1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
 (main.aux
 Package babel Info: 'french' activates 'french' shorthands.
-(babel)             Reported on input line 14.
+(babel)             Reported on input line 22.
 )
 \openout1 = `main.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 50.
-LaTeX Font Info:    ... okay on input line 50.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 50.
-LaTeX Font Info:    ... okay on input line 50.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 50.
-LaTeX Font Info:    ... okay on input line 50.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 50.
-LaTeX Font Info:    ... okay on input line 50.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 50.
-LaTeX Font Info:    ... okay on input line 50.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 50.
-LaTeX Font Info:    ... okay on input line 50.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 50.
-LaTeX Font Info:    ... okay on input line 50.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 50.
-LaTeX Font Info:    ... okay on input line 50.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 50.
-LaTeX Font Info:    ... okay on input line 50.
-LaTeX Info: Redefining \degres on input line 50.
-LaTeX Info: Redefining \microtypecontext on input line 50.
-Package microtype Info: Applying patch `item' on input line 50.
-Package microtype Info: Applying patch `toc' on input line 50.
-Package microtype Info: Applying patch `eqnum' on input line 50.
-Package microtype Info: Applying patch `footnote' on input line 50.
-Package microtype Info: Applying patch `verbatim' on input line 50.
-LaTeX Info: Redefining \microtypesetup on input line 50.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 64.
+LaTeX Font Info:    ... okay on input line 64.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 64.
+LaTeX Font Info:    ... okay on input line 64.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 64.
+LaTeX Font Info:    ... okay on input line 64.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 64.
+LaTeX Font Info:    ... okay on input line 64.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 64.
+LaTeX Font Info:    ... okay on input line 64.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 64.
+LaTeX Font Info:    ... okay on input line 64.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 64.
+LaTeX Font Info:    ... okay on input line 64.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 64.
+LaTeX Font Info:    ... okay on input line 64.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 64.
+LaTeX Font Info:    ... okay on input line 64.
+LaTeX Info: Redefining \degres on input line 64.
+LaTeX Info: Redefining \microtypecontext on input line 64.
+Package microtype Info: Applying patch `item' on input line 64.
+Package microtype Info: Applying patch `toc' on input line 64.
+Package microtype Info: Applying patch `eqnum' on input line 64.
+Package microtype Info: Applying patch `footnote' on input line 64.
+Package microtype Info: Applying patch `verbatim' on input line 64.
+LaTeX Info: Redefining \microtypesetup on input line 64.
 Package microtype Info: Generating PDF output.
 Package microtype Info: Character protrusion enabled (level 2).
 Package microtype Info: Using default protrusion set `alltext'.
@@ -1448,15 +1498,15 @@ File: mt-cmr.cfg 2013/05/19 v2.2 microtype config. file: Computer Modern Roman
 * layout: <same size as paper>
 * layoutoffset:(h,v)=(0.0pt,0.0pt)
 * modes: 
-* h-part:(L,W,R)=(56.9055pt, 483.69687pt, 56.9055pt)
-* v-part:(T,H,B)=(56.9055pt, 731.23584pt, 56.9055pt)
+* h-part:(L,W,R)=(51.21504pt, 495.07779pt, 51.21504pt)
+* v-part:(T,H,B)=(51.21504pt, 742.61676pt, 51.21504pt)
 * \paperwidth=597.50787pt
 * \paperheight=845.04684pt
-* \textwidth=483.69687pt
-* \textheight=731.23584pt
-* \oddsidemargin=-15.36449pt
-* \evensidemargin=-15.36449pt
-* \topmargin=-52.36449pt
+* \textwidth=495.07779pt
+* \textheight=742.61676pt
+* \oddsidemargin=-21.05495pt
+* \evensidemargin=-21.05495pt
+* \topmargin=-58.05495pt
 * \headheight=12.0pt
 * \headsep=25.0pt
 * \topskip=10.0pt
@@ -1481,7 +1531,7 @@ File: translations-basic-dictionary-french.trsl (french translation file `trans
 lations-basic-dictionary')
 )
 Package translations Info: loading dictionary `translations-basic-dictionary' f
-or `french'. on input line 50.
+or `french'. on input line 64.
 
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/latex/translations/
 dicts\translations-basic-dictionary-english.trsl
@@ -1489,22 +1539,22 @@ File: translations-basic-dictionary-english.trsl (english translation file `tra
 nslations-basic-dictionary')
 )
 Package translations Info: loading dictionary `translations-basic-dictionary' f
-or `english'. on input line 50.
+or `english'. on input line 64.
 
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/context/base/mkii\s
 upp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
-\scratchcounter=\count506
-\scratchdimen=\dimen336
-\scratchbox=\box78
-\nofMPsegments=\count507
-\nofMParguments=\count508
-\everyMPshowfont=\toks47
-\MPscratchCnt=\count509
-\MPscratchDim=\dimen337
-\MPnumerator=\count510
-\makeMPintoPDFobject=\count511
-\everyMPtoPDFconversion=\toks48
+\scratchcounter=\count515
+\scratchdimen=\dimen345
+\scratchbox=\box80
+\nofMPsegments=\count516
+\nofMParguments=\count517
+\everyMPshowfont=\toks49
+\MPscratchCnt=\count518
+\MPscratchDim=\dimen346
+\MPnumerator=\count519
+\makeMPintoPDFobject=\count520
+\everyMPtoPDFconversion=\toks50
 )
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/latex/epstopdf-pkg\
 epstopdf-base.sty
@@ -1527,7 +1577,9 @@ File: epstopdf-sys.cfg 2021/03/18 v2.0 Configuration of epstopdf for MiKTeX
 ))
 Package caption Info: Begin \AtBeginDocument code.
 Package caption Info: hyperref package is loaded.
+Package caption Info: listings package is loaded.
 Package caption Info: End \AtBeginDocument code.
+\c@lstlisting=\count521
 
 Package pgfplots notification 'compat/show suggested version=true': document ha
 s been generated with the most recent feature set (\pgfplotsset{compat=1.18}).
@@ -1554,48 +1606,45 @@ Package biblatex Info: Automatic encoding selection.
 Package biblatex Info: Trying to load bibliographic data...
 Package biblatex Info: ... file 'main.bbl' found.
  (main.bbl)
-Package biblatex Info: Reference section=0 on input line 50.
-Package biblatex Info: Reference segment=0 on input line 50.
-Package hyperref Info: Link coloring OFF on input line 50.
+Package biblatex Info: Reference section=0 on input line 64.
+Package biblatex Info: Reference segment=0 on input line 64.
+Package hyperref Info: Link coloring OFF on input line 64.
  (main.out) (main.out)
 \@outlinefile=\write5
 \openout5 = `main.out'.
 
 Package babel Info: Main language set to 'french'.
-Package microtype Info: Character `029' is missing
-(microtype)             in font `T1/lmr/m/sc/12'.
-(microtype)             Ignoring protrusion settings for this character.
-LaTeX Font Info:    Trying to load font information for OT1+lmr on input line 5
-2.
+ (sections/01-defi.tex
+LaTeX Font Info:    Trying to load font information for OT1+lmr on input line 9
+.
 
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/latex/lm\ot1lmr.fd
 File: ot1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
-LaTeX Font Info:    Trying to load font information for OML+lmm on input line 5
-2.
+LaTeX Font Info:    Trying to load font information for OML+lmm on input line 9
+.
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/latex/lm\omllmm.fd
 File: omllmm.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
 LaTeX Font Info:    Trying to load font information for OMS+lmsy on input line 
-52.
+9.
 
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/latex/lm\omslmsy.fd
 File: omslmsy.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
 LaTeX Font Info:    Trying to load font information for OMX+lmex on input line 
-52.
+9.
 
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/latex/lm\omxlmex.fd
 File: omxlmex.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <12> on input line 52.
+(Font)              <10> on input line 9.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <8> on input line 52.
+(Font)              <7> on input line 9.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <6> on input line 52.
-LaTeX Font Info:    Trying to load font information for U+msa on input line 52.
-
+(Font)              <5> on input line 9.
+LaTeX Font Info:    Trying to load font information for U+msa on input line 9.
 
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\umsa
 .fd
@@ -1605,8 +1654,7 @@ File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 msa.cfg
 File: mt-msa.cfg 2006/02/04 v1.1 microtype config. file: AMS symbols (a) (RS)
 )
-LaTeX Font Info:    Trying to load font information for U+msb on input line 52.
-
+LaTeX Font Info:    Trying to load font information for U+msb on input line 9.
 
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\umsb
 .fd
@@ -1615,36 +1663,27 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/latex/microtype\mt-
 msb.cfg
 File: mt-msb.cfg 2005/06/01 v1.0 microtype config. file: AMS symbols (b) (RS)
-)
-LaTeX Font Info:    Trying to load font information for TS1+lmr on input line 5
-2.
-
-(C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/latex/lm\ts1lmr.fd
-File: ts1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
-)
+)) (sections/02-modele.tex
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <5> on input line 52.
-(sections/01-defi.tex
+(Font)              <8> on input line 43.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <10> on input line 7.
-LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <7> on input line 7.
-) (sections/02-modele.tex
+(Font)              <6> on input line 43.
 Package microtype Info: Character `029' is missing
 (microtype)             in font `T1/lmr/m/sc/10'.
 (microtype)             Ignoring protrusion settings for this character.
- [1
+) (sections/03-calcul.tex [1
 
 {C:/Users/Gheysens Arnaud/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map}{C:/
 Users/Gheysens Arnaud/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-ec.en
 c}{C:/Users/Gheysens Arnaud/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm
--ts1.enc}{C:/Users/Gheysens Arnaud/AppData/Local/Programs/MiKTeX/fonts/enc/dvip
-s/lm/lm-mathit.enc}{C:/Users/Gheysens Arnaud/AppData/Local/Programs/MiKTeX/font
-s/enc/dvips/lm/lm-rm.enc}{C:/Users/Gheysens Arnaud/AppData/Local/Programs/MiKTe
-X/fonts/enc/dvips/lm/lm-mathsy.enc}{C:/Users/Gheysens Arnaud/AppData/Local/Prog
-rams/MiKTeX/fonts/enc/dvips/lm/lm-mathex.enc}]) (sections/03-resolution.tex
-LaTeX Font Info:    Trying to load font information for T1+lmtt on input line 2
-8.
+-mathit.enc}{C:/Users/Gheysens Arnaud/AppData/Local/Programs/MiKTeX/fonts/enc/d
+vips/lm/lm-rm.enc}{C:/Users/Gheysens Arnaud/AppData/Local/Programs/MiKTeX/fonts
+/enc/dvips/lm/lm-mathsy.enc}{C:/Users/Gheysens Arnaud/AppData/Local/Programs/Mi
+KTeX/fonts/enc/dvips/lm/lm-mathex.enc}]
+Package hyperref Info: bookmark level for unknown lstlisting defaults to 0 on i
+nput line 75.
+LaTeX Font Info:    Trying to load font information for T1+lmtt on input line 7
+5.
 
 (C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/latex/lm\t1lmtt.fd
 File: t1lmtt.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
@@ -1653,96 +1692,97 @@ Package microtype Info: Loading generic protrusion settings for font family
 (microtype)             `lmtt' (encoding: T1).
 (microtype)             For optimal results, create family-specific settings.
 (microtype)             See the microtype manual for details.
-LaTeX Font Info:    Trying to load font information for OT1+lmss on input line 
-30.
-
-(C:\Users\Gheysens Arnaud\AppData\Local\Programs\MiKTeX\tex/latex/lm\ot1lmss.fd
-File: ot1lmss.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
-)
-Package microtype Info: Loading generic protrusion settings for font family
-(microtype)             `lmss' (encoding: OT1).
-(microtype)             For optimal results, create family-specific settings.
-(microtype)             See the microtype manual for details.
-) (sections/04-moteur.tex [2]) (sections/05-defis.tex)
-(sections/06-validation.tex [3]
-<figures/captures/jeu-elan.png, id=113, 2210.2575pt x 1642.135pt>
-File: figures/captures/jeu-elan.png Graphic file (type png)
-<use figures/captures/jeu-elan.png>
-Package pdftex.def Info: figures/captures/jeu-elan.png  used on input line 37.
-(pdftex.def)             Requested size: 237.01411pt x 176.07504pt.
-<figures/captures/jeu-lancer.png, id=114, 2210.2575pt x 1642.135pt>
+LaTeX Font Info:    Font shape `T1/lmtt/bx/n' in size <7> not available
+(Font)              Font shape `T1/lmtt/b/n' tried instead on input line 76.
+[2]) (sections/04-moteur.tex
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <14.4> on input line 3.
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <9> on input line 50.
+PGFPlots: reading {figures/donnees/tirs.csv}
+) (sections/05-comparaison.tex [3]
+PGFPlots: reading {figures/donnees/vitesse_seau.csv}
+PGFPlots: reading {figures/donnees/vitesse_seau.csv}
+PGFPlots: reading {figures/donnees/tension_seau.csv}
+PGFPlots: reading {figures/donnees/tension_seau.csv}
+<figures/captures/jeu-lancer.png, id=136, 2210.2575pt x 1642.135pt>
 File: figures/captures/jeu-lancer.png Graphic file (type png)
 <use figures/captures/jeu-lancer.png>
-Package pdftex.def Info: figures/captures/jeu-lancer.png  used on input line 41
-.
-(pdftex.def)             Requested size: 237.01411pt x 176.07504pt.
-<figures/captures/jeu-tour-libre.png, id=115, 2210.2575pt x 1642.135pt>
+Package pdftex.def Info: figures/captures/jeu-lancer.png  used on input line 12
+7.
+(pdftex.def)             Requested size: 158.42851pt x 117.6924pt.
+<figures/captures/jeu-tour-libre.png, id=137, 2210.2575pt x 1642.135pt>
 File: figures/captures/jeu-tour-libre.png Graphic file (type png)
 <use figures/captures/jeu-tour-libre.png>
 Package pdftex.def Info: figures/captures/jeu-tour-libre.png  used on input lin
-e 45.
-(pdftex.def)             Requested size: 237.01411pt x 176.07504pt.
-<figures/captures/jeu-rate.png, id=116, 2210.2575pt x 1642.135pt>
+e 131.
+(pdftex.def)             Requested size: 158.42851pt x 117.6924pt.
+<figures/captures/jeu-rate.png, id=138, 2210.2575pt x 1642.135pt>
 File: figures/captures/jeu-rate.png Graphic file (type png)
 <use figures/captures/jeu-rate.png>
-Package pdftex.def Info: figures/captures/jeu-rate.png  used on input line 49.
-(pdftex.def)             Requested size: 237.01411pt x 176.07504pt.
-LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <9> on input line 50.
-PGFPlots: reading {figures/donnees/tension_seau.csv}
-PGFPlots: reading {figures/donnees/tension_seau.csv}
- [4 <./figures/captures/jeu-elan.png (PNG copy)> <./figures/captures/jeu-lancer
-.png (PNG copy)> <./figures/captures/jeu-tour-libre.png (PNG copy)> <./figures/
-captures/jeu-rate.png (PNG copy)>]) [5]
-(main.aux)
+Package pdftex.def Info: figures/captures/jeu-rate.png  used on input line 135.
+
+(pdftex.def)             Requested size: 158.42851pt x 117.6924pt.
+ [4])
+Package microtype Info: Character `029' is missing
+(microtype)             in font `T1/lmr/m/sc/8'.
+(microtype)             Ignoring protrusion settings for this character.
+ [5 <./figures/captures/jeu-lancer.png (PNG copy)> <./figures/captures/jeu-tour
+-libre.png (PNG copy)> <./figures/captures/jeu-rate.png (PNG copy)>] (main.aux)
  ***********
 LaTeX2e <2026-06-01>
 L3 programming layer <2026-09-09>
  ***********
 Package rerunfilecheck Info: File `main.out' has not changed.
-(rerunfilecheck)             Checksum: 93C2755F420B2D98A67D5DCE0B626FEB;1235.
+(rerunfilecheck)             Checksum: 099299264E91F3F01346C25B99E2EDEE;1095.
 Package logreq Info: Writing requests to 'main.run.xml'.
 \openout1 = `main.run.xml'.
 
  ) 
 Here is how much of TeX's memory you used:
- 52309 strings out of 467392
- 1229714 string characters out of 5400742
- 2120063 words of memory out of 5000000
- 80632 multiletter control sequences out of 15000+600000
- 744029 words of font info for 239 fonts, out of 8000000 for 9000
+ 54169 strings out of 467392
+ 1254715 string characters out of 5400742
+ 2161650 words of memory out of 5000000
+ 82471 multiletter control sequences out of 15000+600000
+ 738699 words of font info for 240 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 92i,19n,96p,1003b,3156s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 92i,21n,96p,1199b,3189s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <C:/Users/Gheysens Arnaud/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm
 /lmbx10.pfb><C:/Users/Gheysens Arnaud/AppData/Local/Programs/MiKTeX/fonts/type1
 /public/lm/lmbx12.pfb><C:/Users/Gheysens Arnaud/AppData/Local/Programs/MiKTeX/f
-onts/type1/public/lm/lmcsc10.pfb><C:/Users/Gheysens Arnaud/AppData/Local/Progra
-ms/MiKTeX/fonts/type1/public/lm/lmex10.pfb><C:/Users/Gheysens Arnaud/AppData/Lo
-cal/Programs/MiKTeX/fonts/type1/public/lm/lmmi10.pfb><C:/Users/Gheysens Arnaud/
-AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmmi6.pfb><C:/Users/Gheysen
-s Arnaud/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmmi7.pfb><C:/User
-s/Gheysens Arnaud/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmmi8.pfb
-><C:/Users/Gheysens Arnaud/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/
-lmmi9.pfb><C:/Users/Gheysens Arnaud/AppData/Local/Programs/MiKTeX/fonts/type1/p
-ublic/lm/lmmib10.pfb><C:/Users/Gheysens Arnaud/AppData/Local/Programs/MiKTeX/fo
-nts/type1/public/lm/lmr10.pfb><C:/Users/Gheysens Arnaud/AppData/Local/Programs/
-MiKTeX/fonts/type1/public/lm/lmr12.pfb><C:/Users/Gheysens Arnaud/AppData/Local/
-Programs/MiKTeX/fonts/type1/public/lm/lmr17.pfb><C:/Users/Gheysens Arnaud/AppDa
-ta/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr5.pfb><C:/Users/Gheysens Arna
-ud/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr6.pfb><C:/Users/Gheys
-ens Arnaud/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr7.pfb><C:/Use
-rs/Gheysens Arnaud/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr8.pfb
-><C:/Users/Gheysens Arnaud/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/
-lmr9.pfb><C:/Users/Gheysens Arnaud/AppData/Local/Programs/MiKTeX/fonts/type1/pu
-blic/lm/lmri10.pfb><C:/Users/Gheysens Arnaud/AppData/Local/Programs/MiKTeX/font
-s/type1/public/lm/lmss8.pfb><C:/Users/Gheysens Arnaud/AppData/Local/Programs/Mi
-KTeX/fonts/type1/public/lm/lmsy10.pfb><C:/Users/Gheysens Arnaud/AppData/Local/P
-rograms/MiKTeX/fonts/type1/public/lm/lmsy7.pfb><C:/Users/Gheysens Arnaud/AppDat
-a/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy9.pfb><C:/Users/Gheysens Arna
-ud/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmtt10.pfb>
-Output written on main.pdf (5 pages, 1145536 bytes).
+onts/type1/public/lm/lmbx7.pfb><C:/Users/Gheysens Arnaud/AppData/Local/Programs
+/MiKTeX/fonts/type1/public/lm/lmcsc10.pfb><C:/Users/Gheysens Arnaud/AppData/Loc
+al/Programs/MiKTeX/fonts/type1/public/lm/lmex10.pfb><C:/Users/Gheysens Arnaud/A
+ppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmmi10.pfb><C:/Users/Gheysen
+s Arnaud/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmmi12.pfb><C:/Use
+rs/Gheysens Arnaud/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmmi5.pf
+b><C:/Users/Gheysens Arnaud/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm
+/lmmi6.pfb><C:/Users/Gheysens Arnaud/AppData/Local/Programs/MiKTeX/fonts/type1/
+public/lm/lmmi7.pfb><C:/Users/Gheysens Arnaud/AppData/Local/Programs/MiKTeX/fon
+ts/type1/public/lm/lmmi8.pfb><C:/Users/Gheysens Arnaud/AppData/Local/Programs/M
+iKTeX/fonts/type1/public/lm/lmmi9.pfb><C:/Users/Gheysens Arnaud/AppData/Local/P
+rograms/MiKTeX/fonts/type1/public/lm/lmmib10.pfb><C:/Users/Gheysens Arnaud/AppD
+ata/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr10.pfb><C:/Users/Gheysens Ar
+naud/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr17.pfb><C:/Users/Gh
+eysens Arnaud/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr5.pfb><C:/
+Users/Gheysens Arnaud/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr6.
+pfb><C:/Users/Gheysens Arnaud/AppData/Local/Programs/MiKTeX/fonts/type1/public/
+lm/lmr7.pfb><C:/Users/Gheysens Arnaud/AppData/Local/Programs/MiKTeX/fonts/type1
+/public/lm/lmr8.pfb><C:/Users/Gheysens Arnaud/AppData/Local/Programs/MiKTeX/fon
+ts/type1/public/lm/lmr9.pfb><C:/Users/Gheysens Arnaud/AppData/Local/Programs/Mi
+KTeX/fonts/type1/public/lm/lmri10.pfb><C:/Users/Gheysens Arnaud/AppData/Local/P
+rograms/MiKTeX/fonts/type1/public/lm/lmri8.pfb><C:/Users/Gheysens Arnaud/AppDat
+a/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy10.pfb><C:/Users/Gheysens Arn
+aud/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy5.pfb><C:/Users/Ghe
+ysens Arnaud/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy7.pfb><C:/
+Users/Gheysens Arnaud/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmtk1
+0.pfb><C:/Users/Gheysens Arnaud/AppData/Local/Programs/MiKTeX/fonts/type1/publi
+c/lm/lmtt10.pfb><C:/Users/Gheysens Arnaud/AppData/Local/Programs/MiKTeX/fonts/t
+ype1/public/lm/lmtt8.pfb><C:/Users/Gheysens Arnaud/AppData/Local/Programs/MiKTe
+X/fonts/type1/public/lm/lmtti10.pfb>
+Output written on main.pdf (5 pages, 1058388 bytes).
 PDF statistics:
- 282 PDF objects out of 1000 (max. 8388607)
- 46 named destinations out of 1000 (max. 500000)
- 68185 words of extra memory for PDF output out of 74296 (max. 10000000)
+ 310 PDF objects out of 1000 (max. 8388607)
+ 51 named destinations out of 1000 (max. 500000)
+ 59980 words of extra memory for PDF output out of 61914 (max. 10000000)
 

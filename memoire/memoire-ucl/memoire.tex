@@ -9,7 +9,7 @@
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
 \usepackage{lmodern}
-\usepackage[french]{babel}
+\usepackage[english, french]{babel}
 \usepackage{microtype}
 \usepackage[a4paper, margin=2.5cm, bindingoffset=0.5cm]{geometry}
 \usepackage{graphicx}
@@ -17,10 +17,13 @@
 \usepackage{amsmath, amssymb}
 \usepackage[locale=FR]{siunitx}
 \usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{enumitem}
 \usepackage{csquotes}
-\usepackage[backend=biber, style=ieee]{biblatex}
+\usepackage[backend=biber, style=ieee, autolang=other]{biblatex}
 \usepackage[hidelinks]{hyperref}
 \addbibresource{bibliographie.bib}
+\addto\captionsfrench{\renewcommand{\tablename}{Tableau}\renewcommand{\listtablename}{Liste des tableaux}}
 \graphicspath{{figures/}}
 
 \begin{document}

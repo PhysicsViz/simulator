@@ -1,91 +1,195 @@
 \babel@toc {french}{}\relax 
 \contentsline {chapter}{\numberline {1}Introduction}{1}{chapter.1}%
-\contentsline {section}{\numberline {1.1}Contexte}{1}{section.1.1}%
-\contentsline {section}{\numberline {1.2}Problématique}{1}{section.1.2}%
-\contentsline {section}{\numberline {1.3}Objectifs et questions de recherche}{1}{section.1.3}%
-\contentsline {section}{\numberline {1.4}Démarche}{1}{section.1.4}%
-\contentsline {section}{\numberline {1.5}Plan du mémoire}{1}{section.1.5}%
-\contentsline {part}{I\hspace {1em}État de l'art}{3}{part.1}%
-\contentsline {chapter}{\numberline {2}Apprendre la mécanique en première année}{5}{chapter.2}%
-\contentsline {section}{\numberline {2.1}Le cours de Physique~1 (BAC1 ingénieur civil)}{5}{section.2.1}%
-\contentsline {section}{\numberline {2.2}Conceptions erronées en dynamique}{5}{section.2.2}%
-\contentsline {section}{\numberline {2.3}Mesurer la compréhension conceptuelle}{5}{section.2.3}%
-\contentsline {chapter}{\numberline {3}Simulations interactives et apprentissage}{7}{chapter.3}%
-\contentsline {section}{\numberline {3.1}Effets des simulations sur l'apprentissage}{7}{section.3.1}%
-\contentsline {section}{\numberline {3.2}Charge cognitive et principes multimédias}{7}{section.3.2}%
-\contentsline {section}{\numberline {3.3}Représentations multiples : schéma, formules, graphes}{7}{section.3.3}%
-\contentsline {section}{\numberline {3.4}Outils existants}{7}{section.3.4}%
-\contentsline {chapter}{\numberline {4}Ludification}{9}{chapter.4}%
-\contentsline {section}{\numberline {4.1}Définitions et mécanismes}{9}{section.4.1}%
-\contentsline {section}{\numberline {4.2}Effets mesurés en sciences}{9}{section.4.2}%
-\contentsline {section}{\numberline {4.3}Risques et conditions d'efficacité}{9}{section.4.3}%
-\contentsline {chapter}{\numberline {5}Méthodes numériques pour la simulation en temps réel}{11}{chapter.5}%
-\contentsline {section}{\numberline {5.1}Intégration des équations du mouvement}{11}{section.5.1}%
-\contentsline {section}{\numberline {5.2}Contraintes et dynamique basée sur les positions}{11}{section.5.2}%
-\contentsline {section}{\numberline {5.3}Systèmes de particules et fluides}{11}{section.5.3}%
-\contentsline {section}{\numberline {5.4}Précision, stabilité et validation}{11}{section.5.4}%
-\contentsline {chapter}{\numberline {6}Intelligence artificielle et développement logiciel}{13}{chapter.6}%
-\contentsline {section}{\numberline {6.1}Assistants de programmation fondés sur des modèles de langage}{13}{section.6.1}%
-\contentsline {section}{\numberline {6.2}Fiabilité, vérification et responsabilité}{13}{section.6.2}%
-\contentsline {section}{\numberline {6.3}Usages en enseignement}{13}{section.6.3}%
-\contentsline {part}{II\hspace {1em}Réalisation}{15}{part.2}%
-\contentsline {chapter}{\numberline {7}Cahier des charges et choix techniques}{17}{chapter.7}%
-\contentsline {section}{\numberline {7.1}Public visé et contraintes pédagogiques}{17}{section.7.1}%
-\contentsline {section}{\numberline {7.2}Exigences fonctionnelles}{17}{section.7.2}%
-\contentsline {section}{\numberline {7.3}Exigences techniques}{17}{section.7.3}%
-\contentsline {section}{\numberline {7.4}Choix technologiques}{17}{section.7.4}%
-\contentsline {chapter}{\numberline {8}Architecture du site}{19}{chapter.8}%
-\contentsline {section}{\numberline {8.1}Organisation du projet}{19}{section.8.1}%
-\contentsline {section}{\numberline {8.2}Séparation calcul et affichage}{19}{section.8.2}%
-\contentsline {section}{\numberline {8.3}Éléments visuels partagés}{19}{section.8.3}%
-\contentsline {section}{\numberline {8.4}Mise en page et adaptation aux écrans}{19}{section.8.4}%
-\contentsline {chapter}{\numberline {9}Exercices réalisés}{21}{chapter.9}%
-\contentsline {section}{\numberline {9.1}Mouvement d'un projectile}{21}{section.9.1}%
-\contentsline {section}{\numberline {9.2}Pendule}{21}{section.9.2}%
-\contentsline {section}{\numberline {9.3}Mouvement circulaire uniforme}{21}{section.9.3}%
-\contentsline {section}{\numberline {9.4}Looping}{21}{section.9.4}%
-\contentsline {section}{\numberline {9.5}Looping avec wagon : cercle et clothoïde}{21}{section.9.5}%
-\contentsline {chapter}{\numberline {10}Mode jeu : le seau d'eau}{23}{chapter.10}%
-\contentsline {section}{\numberline {10.1}Principe et lien avec le looping}{23}{section.10.1}%
-\contentsline {section}{\numberline {10.2}Modèle physique}{23}{section.10.2}%
-\contentsline {section}{\numberline {10.3}Résolution numérique}{23}{section.10.3}%
-\contentsline {section}{\numberline {10.4}Pilotage par le moteur}{23}{section.10.4}%
-\contentsline {section}{\numberline {10.5}Défis toujours solubles}{23}{section.10.5}%
-\contentsline {chapter}{\numberline {11}Méthodologie de développement assistée par IA}{25}{chapter.11}%
-\contentsline {section}{\numberline {11.1}Cadre et règles du projet}{25}{section.11.1}%
-\contentsline {section}{\numberline {11.2}Cycle de développement}{25}{section.11.2}%
-\contentsline {section}{\numberline {11.3}Agents de test et de vérification}{25}{section.11.3}%
-\contentsline {section}{\numberline {11.4}Rôle de l'enseignant}{25}{section.11.4}%
-\contentsline {chapter}{\numberline {12}Validation}{27}{chapter.12}%
-\contentsline {section}{\numberline {12.1}Vérification de la physique}{27}{section.12.1}%
-\contentsline {section}{\numberline {12.2}Tests unitaires}{27}{section.12.2}%
-\contentsline {section}{\numberline {12.3}Tests d'intégration sur plusieurs appareils}{27}{section.12.3}%
-\contentsline {section}{\numberline {12.4}Erreurs détectées et corrigées}{27}{section.12.4}%
-\contentsline {part}{III\hspace {1em}Résultats}{29}{part.3}%
-\contentsline {chapter}{\numberline {13}Protocole d'évaluation}{31}{chapter.13}%
-\contentsline {section}{\numberline {13.1}Questions évaluées}{31}{section.13.1}%
-\contentsline {section}{\numberline {13.2}Participants et déroulement}{31}{section.13.2}%
-\contentsline {section}{\numberline {13.3}Instruments de mesure}{31}{section.13.3}%
-\contentsline {section}{\numberline {13.4}Analyse des données}{31}{section.13.4}%
-\contentsline {section}{\numberline {13.5}Aspects éthiques}{31}{section.13.5}%
-\contentsline {chapter}{\numberline {14}Résultats quantitatifs}{33}{chapter.14}%
-\contentsline {section}{\numberline {14.1}Gains d'apprentissage}{33}{section.14.1}%
-\contentsline {section}{\numberline {14.2}Utilisation du site}{33}{section.14.2}%
-\contentsline {section}{\numberline {14.3}Mode jeu}{33}{section.14.3}%
-\contentsline {chapter}{\numberline {15}Résultats qualitatifs}{35}{chapter.15}%
-\contentsline {section}{\numberline {15.1}Retours des étudiants}{35}{section.15.1}%
-\contentsline {section}{\numberline {15.2}Retours des enseignants}{35}{section.15.2}%
-\contentsline {section}{\numberline {15.3}Observations en classe}{35}{section.15.3}%
-\contentsline {chapter}{\numberline {16}Discussion}{37}{chapter.16}%
-\contentsline {section}{\numberline {16.1}Réponses aux questions de recherche}{37}{section.16.1}%
-\contentsline {section}{\numberline {16.2}Liens avec la littérature}{37}{section.16.2}%
-\contentsline {section}{\numberline {16.3}Limites}{37}{section.16.3}%
-\contentsline {section}{\numberline {16.4}Éthique, accessibilité et durabilité}{37}{section.16.4}%
-\contentsline {section}{\numberline {16.5}Recommandations}{37}{section.16.5}%
-\contentsline {chapter}{\numberline {17}Conclusion et perspectives}{39}{chapter.17}%
-\contentsline {section}{\numberline {17.1}Synthèse des contributions}{39}{section.17.1}%
-\contentsline {section}{\numberline {17.2}Perspectives}{39}{section.17.2}%
-\contentsline {chapter}{\numberline {A}Formulaire du cours}{41}{appendix.A}%
-\contentsline {chapter}{\numberline {B}Questionnaires}{43}{appendix.B}%
-\contentsline {chapter}{\numberline {C}Liste des exercices et du code}{45}{appendix.C}%
-\contentsline {chapter}{\numberline {D}Détails des tests}{47}{appendix.D}%
+\contentsline {section}{\numberline {1.1}Pourquoi ce travail}{1}{section.1.1}%
+\contentsline {section}{\numberline {1.2}Pour qui}{1}{section.1.2}%
+\contentsline {section}{\numberline {1.3}Comment}{2}{section.1.3}%
+\contentsline {section}{\numberline {1.4}Objectifs et questions de recherche}{3}{section.1.4}%
+\contentsline {section}{\numberline {1.5}Périmètre}{3}{section.1.5}%
+\contentsline {section}{\numberline {1.6}Plan du mémoire}{3}{section.1.6}%
+\contentsline {part}{I\hspace {1em}État de l'art}{5}{part.1}%
+\contentsline {chapter}{\numberline {2}Apprendre la mécanique en première année}{7}{chapter.2}%
+\contentsline {section}{\numberline {2.1}Le cours de Physique~1 (BAC1 ingénieur civil)}{7}{section.2.1}%
+\contentsline {section}{\numberline {2.2}Conceptions erronées en dynamique}{7}{section.2.2}%
+\contentsline {section}{\numberline {2.3}Mesurer la compréhension conceptuelle}{8}{section.2.3}%
+\contentsline {section}{\numberline {2.4}Ce que cela demande à une animation}{8}{section.2.4}%
+\contentsline {chapter}{\numberline {3}Simulations interactives et apprentissage}{9}{chapter.3}%
+\contentsline {section}{\numberline {3.1}Effets des simulations sur l'apprentissage}{9}{section.3.1}%
+\contentsline {section}{\numberline {3.2}Le guidage}{9}{section.3.2}%
+\contentsline {section}{\numberline {3.3}Charge cognitive et principes multimédias}{10}{section.3.3}%
+\contentsline {section}{\numberline {3.4}Représentations multiples : schéma, formules, graphes}{10}{section.3.4}%
+\contentsline {section}{\numberline {3.5}Outils existants}{10}{section.3.5}%
+\contentsline {chapter}{\numberline {4}Ludification}{13}{chapter.4}%
+\contentsline {section}{\numberline {4.1}Définitions et mécanismes}{13}{section.4.1}%
+\contentsline {section}{\numberline {4.2}Effets mesurés}{13}{section.4.2}%
+\contentsline {section}{\numberline {4.3}Risques et conditions d'efficacité}{13}{section.4.3}%
+\contentsline {chapter}{\numberline {5}Calculer et afficher une simulation dans le navigateur}{15}{chapter.5}%
+\contentsline {section}{\numberline {5.1}Intégration des équations du mouvement}{15}{section.5.1}%
+\contentsline {section}{\numberline {5.2}Contraintes et dynamique basée sur les positions}{16}{section.5.2}%
+\contentsline {section}{\numberline {5.3}Systèmes de particules et fluides}{16}{section.5.3}%
+\contentsline {section}{\numberline {5.4}Précision, stabilité et validation}{16}{section.5.4}%
+\contentsline {section}{\numberline {5.5}Afficher : Canvas, SVG ou WebGL}{16}{section.5.5}%
+\contentsline {section}{\numberline {5.6}Bibliothèques JavaScript}{17}{section.5.6}%
+\contentsline {chapter}{\numberline {6}Intelligence artificielle et développement logiciel}{19}{chapter.6}%
+\contentsline {section}{\numberline {6.1}Assistants de programmation fondés sur des modèles de langage}{19}{section.6.1}%
+\contentsline {section}{\numberline {6.2}Les gains mesurés}{19}{section.6.2}%
+\contentsline {section}{\numberline {6.3}Fiabilité, vérification et responsabilité}{20}{section.6.3}%
+\contentsline {section}{\numberline {6.4}Usages en enseignement}{20}{section.6.4}%
+\contentsline {section}{\numberline {6.5}Synthèse de l'état de l'art : exigences pour le site}{20}{section.6.5}%
+\contentsline {part}{II\hspace {1em}Réalisation}{23}{part.2}%
+\contentsline {chapter}{\numberline {7}Cahier des charges et choix techniques}{25}{chapter.7}%
+\contentsline {section}{\numberline {7.1}Public visé et contraintes pédagogiques}{25}{section.7.1}%
+\contentsline {section}{\numberline {7.2}Exigences fonctionnelles}{25}{section.7.2}%
+\contentsline {section}{\numberline {7.3}Exigences techniques}{25}{section.7.3}%
+\contentsline {section}{\numberline {7.4}Choix technologiques}{25}{section.7.4}%
+\contentsline {chapter}{\numberline {8}Architecture du site}{27}{chapter.8}%
+\contentsline {section}{\numberline {8.1}Organisation du projet}{27}{section.8.1}%
+\contentsline {section}{\numberline {8.2}Séparation calcul et affichage}{27}{section.8.2}%
+\contentsline {section}{\numberline {8.3}Éléments visuels partagés}{27}{section.8.3}%
+\contentsline {section}{\numberline {8.4}Mise en page et adaptation aux écrans}{27}{section.8.4}%
+\contentsline {chapter}{\numberline {9}Exercices réalisés}{29}{chapter.9}%
+\contentsline {section}{\numberline {9.1}Mouvement d'un projectile}{29}{section.9.1}%
+\contentsline {section}{\numberline {9.2}Pendule}{29}{section.9.2}%
+\contentsline {section}{\numberline {9.3}Mouvement circulaire uniforme}{29}{section.9.3}%
+\contentsline {section}{\numberline {9.4}Looping}{29}{section.9.4}%
+\contentsline {section}{\numberline {9.5}Looping avec wagon : cercle et clothoïde}{29}{section.9.5}%
+\contentsline {chapter}{\numberline {10}Mode jeu : le seau d'eau}{31}{chapter.10}%
+\contentsline {section}{\numberline {10.1}Principe et lien avec le looping}{31}{section.10.1}%
+\contentsline {section}{\numberline {10.2}Modèle physique}{31}{section.10.2}%
+\contentsline {section}{\numberline {10.3}Résolution numérique}{31}{section.10.3}%
+\contentsline {section}{\numberline {10.4}Pilotage par le moteur}{31}{section.10.4}%
+\contentsline {section}{\numberline {10.5}Défis toujours solubles}{31}{section.10.5}%
+\contentsline {chapter}{\numberline {11}Méthodologie de développement assistée par IA}{33}{chapter.11}%
+\contentsline {section}{\numberline {11.1}Cadre et règles du projet}{33}{section.11.1}%
+\contentsline {section}{\numberline {11.2}Cycle de développement}{33}{section.11.2}%
+\contentsline {section}{\numberline {11.3}Agents de test et de vérification}{33}{section.11.3}%
+\contentsline {section}{\numberline {11.4}Rôle de l'enseignant}{33}{section.11.4}%
+\contentsline {chapter}{\numberline {12}Validation}{35}{chapter.12}%
+\contentsline {section}{\numberline {12.1}Vérification de la physique}{35}{section.12.1}%
+\contentsline {section}{\numberline {12.2}Tests unitaires}{35}{section.12.2}%
+\contentsline {section}{\numberline {12.3}Tests d'intégration sur plusieurs appareils}{35}{section.12.3}%
+\contentsline {section}{\numberline {12.4}Erreurs détectées et corrigées}{35}{section.12.4}%
+\contentsline {part}{III\hspace {1em}Résultats}{37}{part.3}%
+\contentsline {chapter}{\numberline {13}Protocole d'évaluation}{39}{chapter.13}%
+\contentsline {section}{\numberline {13.1}Questions évaluées}{39}{section.13.1}%
+\contentsline {section}{\numberline {13.2}Participants et déroulement}{39}{section.13.2}%
+\contentsline {section}{\numberline {13.3}Instruments de mesure}{39}{section.13.3}%
+\contentsline {section}{\numberline {13.4}Analyse des données}{39}{section.13.4}%
+\contentsline {section}{\numberline {13.5}Aspects éthiques}{39}{section.13.5}%
+\contentsline {chapter}{\numberline {14}Résultats quantitatifs}{41}{chapter.14}%
+\contentsline {section}{\numberline {14.1}Gains d'apprentissage}{41}{section.14.1}%
+\contentsline {section}{\numberline {14.2}Utilisation du site}{41}{section.14.2}%
+\contentsline {section}{\numberline {14.3}Mode jeu}{41}{section.14.3}%
+\contentsline {chapter}{\numberline {15}Résultats qualitatifs}{43}{chapter.15}%
+\contentsline {section}{\numberline {15.1}Retours des étudiants}{43}{section.15.1}%
+\contentsline {section}{\numberline {15.2}Retours des enseignants}{43}{section.15.2}%
+\contentsline {section}{\numberline {15.3}Observations en classe}{43}{section.15.3}%
+\contentsline {chapter}{\numberline {16}Discussion}{45}{chapter.16}%
+\contentsline {section}{\numberline {16.1}Réponses aux questions de recherche}{45}{section.16.1}%
+\contentsline {section}{\numberline {16.2}Liens avec la littérature}{45}{section.16.2}%
+\contentsline {section}{\numberline {16.3}Limites}{45}{section.16.3}%
+\contentsline {section}{\numberline {16.4}Éthique, accessibilité et durabilité}{45}{section.16.4}%
+\contentsline {section}{\numberline {16.5}Recommandations}{45}{section.16.5}%
+\contentsline {chapter}{\numberline {17}Conclusion et perspectives}{47}{chapter.17}%
+\contentsline {section}{\numberline {17.1}Synthèse des contributions}{47}{section.17.1}%
+\contentsline {section}{\numberline {17.2}Perspectives}{47}{section.17.2}%
+\contentsline {chapter}{Bibliographie}{49}{chapter*.9}%
+\babel@toc {english}{}\relax 
+\babel@toc {french}{}\relax 
+\babel@toc {english}{}\relax 
+\babel@toc {french}{}\relax 
+\babel@toc {english}{}\relax 
+\babel@toc {french}{}\relax 
+\babel@toc {english}{}\relax 
+\babel@toc {french}{}\relax 
+\babel@toc {english}{}\relax 
+\babel@toc {french}{}\relax 
+\babel@toc {english}{}\relax 
+\babel@toc {french}{}\relax 
+\babel@toc {english}{}\relax 
+\babel@toc {french}{}\relax 
+\babel@toc {english}{}\relax 
+\babel@toc {french}{}\relax 
+\babel@toc {english}{}\relax 
+\babel@toc {french}{}\relax 
+\babel@toc {english}{}\relax 
+\babel@toc {french}{}\relax 
+\babel@toc {english}{}\relax 
+\babel@toc {french}{}\relax 
+\babel@toc {english}{}\relax 
+\babel@toc {french}{}\relax 
+\babel@toc {english}{}\relax 
+\babel@toc {french}{}\relax 
+\babel@toc {english}{}\relax 
+\babel@toc {french}{}\relax 
+\babel@toc {english}{}\relax 
+\babel@toc {french}{}\relax 
+\babel@toc {english}{}\relax 
+\babel@toc {french}{}\relax 
+\babel@toc {english}{}\relax 
+\babel@toc {french}{}\relax 
+\babel@toc {english}{}\relax 
+\babel@toc {french}{}\relax 
+\babel@toc {english}{}\relax 
+\babel@toc {french}{}\relax 
+\babel@toc {english}{}\relax 
+\babel@toc {french}{}\relax 
+\babel@toc {english}{}\relax 
+\babel@toc {french}{}\relax 
+\babel@toc {english}{}\relax 
+\babel@toc {french}{}\relax 
+\babel@toc {english}{}\relax 
+\babel@toc {french}{}\relax 
+\babel@toc {english}{}\relax 
+\babel@toc {french}{}\relax 
+\babel@toc {english}{}\relax 
+\babel@toc {french}{}\relax 
+\babel@toc {english}{}\relax 
+\babel@toc {french}{}\relax 
+\babel@toc {english}{}\relax 
+\babel@toc {french}{}\relax 
+\babel@toc {english}{}\relax 
+\babel@toc {french}{}\relax 
+\babel@toc {english}{}\relax 
+\babel@toc {french}{}\relax 
+\babel@toc {english}{}\relax 
+\babel@toc {french}{}\relax 
+\babel@toc {english}{}\relax 
+\babel@toc {french}{}\relax 
+\babel@toc {english}{}\relax 
+\babel@toc {french}{}\relax 
+\babel@toc {english}{}\relax 
+\babel@toc {french}{}\relax 
+\babel@toc {english}{}\relax 
+\babel@toc {french}{}\relax 
+\babel@toc {english}{}\relax 
+\babel@toc {french}{}\relax 
+\babel@toc {english}{}\relax 
+\babel@toc {french}{}\relax 
+\babel@toc {english}{}\relax 
+\babel@toc {french}{}\relax 
+\babel@toc {english}{}\relax 
+\babel@toc {french}{}\relax 
+\babel@toc {english}{}\relax 
+\babel@toc {french}{}\relax 
+\babel@toc {english}{}\relax 
+\babel@toc {french}{}\relax 
+\babel@toc {english}{}\relax 
+\babel@toc {french}{}\relax 
+\babel@toc {english}{}\relax 
+\babel@toc {french}{}\relax 
+\babel@toc {english}{}\relax 
+\babel@toc {french}{}\relax 
+\babel@toc {english}{}\relax 
+\babel@toc {french}{}\relax 
+\babel@toc {english}{}\relax 
+\babel@toc {french}{}\relax 
+\babel@toc {english}{}\relax 
+\babel@toc {french}{}\relax 
+\babel@toc {english}{}\relax 
+\babel@toc {french}{}\relax 
+\babel@toc {english}{}\relax 
+\babel@toc {french}{}\relax 
+\contentsline {chapter}{\numberline {A}Formulaire du cours}{53}{appendix.A}%
+\contentsline {chapter}{\numberline {B}Questionnaires}{55}{appendix.B}%
+\contentsline {chapter}{\numberline {C}Liste des exercices et du code}{57}{appendix.C}%
+\contentsline {chapter}{\numberline {D}Détails des tests}{59}{appendix.D}%

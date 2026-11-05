@@ -1,9 +1,129 @@
-% 06-ia-developpement.tex — squelette (titres seulement).
+% 06-ia-developpement.tex — État de l'art 5/5 : assistants de programmation,
+% gains mesurés, fiabilité et vérification, usages en enseignement, puis
+% synthèse de la partie I sous forme d'exigences pour le site.
 
 \chapter{Intelligence artificielle et développement logiciel}\label{chap:ia}
 
+Ce chapitre fait le point sur les assistants de programmation fondés sur des
+modèles de langage : ce qu'ils savent faire, ce que l'on a mesuré de leur
+apport, et leurs limites. Il se termine par la synthèse de l'état de l'art.
+
 \section{Assistants de programmation fondés sur des modèles de langage}
+
+Les assistants de programmation reposent sur des modèles de langage entraînés
+sur de grandes quantités de texte et de code. Codex, à l'origine de GitHub
+Copilot, a montré dès 2021 qu'un tel modèle pouvait écrire une fonction
+correcte à partir de sa description, sur un jeu d'exercices dont chaque
+solution est vérifiée par des tests \cite{chen2021codex}.
+
+Les premiers outils complétaient la ligne ou la fonction en cours
+d'écriture. Les assistants actuels, comme Claude Code ou ChatGPT Codex que
+nous avons utilisés, sont des \emph{agents} : ils lisent un dépôt entier,
+modifient plusieurs fichiers, lancent les tests et corrigent leurs erreurs
+avant de rendre compte. Ils peuvent aussi confier une sous-tâche à une autre
+instance, lancée dans un contexte séparé. Le banc d'essai SWE-bench mesure
+cette capacité sur de vrais tickets de projets à code ouvert ; à sa
+publication, en 2023, le meilleur modèle n'en résolvait qu'environ
+\SI{2}{\percent} \cite{jimenez2024swebench} [À COMPLÉTER : score actuel sur
+SWE-bench Verified, avec sa source]. Ces outils évoluent vite, ce qui rend
+toute mesure de leur apport datée.
+
+\section{Les gains mesurés}
+
+Les mesures de gain se contredisent, et la contradiction est instructive.
+Dans une expérience contrôlée, des développeurs devaient écrire un petit
+serveur web en JavaScript : ceux qui disposaient de Copilot ont terminé
+\SI{55,8}{\percent} plus vite que les autres \cite{peng2023copilot}. À
+l'inverse, une étude randomisée de METR, en 2025, a suivi seize développeurs
+expérimentés sur 246~tâches réelles dans des projets qu'ils connaissaient
+bien : avec l'IA, ils ont mis \SI{19}{\percent} de temps en plus, alors
+qu'ils pensaient avoir gagné environ \SI{20}{\percent} \cite{becker2025metr}.
+Vaithilingam et al.~ont aussi observé que Copilot n'améliorait pas toujours
+le temps ni le taux de réussite, bien que la plupart des participants
+préfèrent l'utiliser : le temps gagné à écrire est en partie perdu à
+comprendre et corriger le code proposé \cite{vaithilingam2022}.
+
+Ces études diffèrent par l'année, l'outil, les participants et la tâche, et
+ne permettent pas de trancher. Une explication possible est que le gain
+dépend de la tâche : grand pour du code neuf et bien délimité, plus faible
+dans un code existant où le développeur connaît déjà la solution. Une leçon,
+en revanche, est sûre : l'impression de gain ne suffit pas, il faut le
+mesurer. Pour ce mémoire, cela veut dire relever, tâche par tâche, ce que
+l'assistant a fait, ce qu'il a fallu corriger et combien de temps cela a
+pris.
 
 \section{Fiabilité, vérification et responsabilité}
 
+Un modèle de langage produit du code plausible, pas du code vérifié. Pearce
+et al.~ont fait générer environ \num{1700}~programmes par Copilot dans des
+situations à risque : environ \SI{40}{\percent} contenaient une faille de
+sécurité \cite{pearce2022asleep}. En physique, l'équivalent d'une faille est
+une formule fausse qui s'affiche avec assurance, un signe inversé ou une
+hypothèse ajoutée sans le dire. L'erreur est d'autant plus dangereuse qu'une
+animation fausse peut avoir l'air juste.
+
+La réponse habituelle du génie logiciel s'applique ici : des tests
+automatiques, une relecture humaine, et une vérification séparée de ce que
+l'outil affirme. Si cette vérification est confiée au même modèle, même lancé
+sans l'historique de la session, elle n'est pas pleinement indépendante : les
+deux peuvent partager la même erreur. La responsabilité de l'exactitude reste
+donc celle des auteurs, qui doivent comprendre et pouvoir justifier chaque
+formule affichée.
+
 \section{Usages en enseignement}
+
+La littérature sur l'IA en éducation porte surtout sur l'usage par les
+étudiants : aide à la rédaction, tutorat, risques pour l'évaluation et
+l'esprit critique \cite{kasneci2023}. L'usage étudié ici est différent :
+l'IA sert aux enseignants pour produire des ressources, et les étudiants
+n'interagissent qu'avec le résultat, vérifié. Nous n'avons pas trouvé
+d'étude qui mesure cet usage ; c'est l'objet de la deuxième question de ce
+mémoire.
+
+\section{Synthèse de l'état de l'art : exigences pour le site}
+
+Les cinq chapitres de cette partie donnent des exigences précises pour nos
+animations. Le tableau~\ref{tab:exigences} les rassemble, avec leur origine et
+la façon dont le site y répond ; la partie Réalisation les détaille.
+
+\begin{table}[ht]
+  \centering
+  \small
+  \caption{Exigences tirées de l'état de l'art et réponse du site.}
+  \label{tab:exigences}
+  \begin{tabularx}{\linewidth}{@{}l X X@{}}
+    \toprule
+    & Exigence (origine) & Réponse du site \\
+    \midrule
+    E1 & Montrer toutes les forces, la vitesse et l'accélération séparément
+         (chapitre~\ref{chap:mecanique}) &
+         vecteurs dans la scène et diagramme du corps libre toujours visible,
+         une couleur fixe par type de force \\
+    E2 & Parler la langue du cours (chapitre~\ref{chap:mecanique}) &
+         notations du formulaire, formules écrites avec leurs valeurs
+         substituées \\
+    E3 & Laisser prédire puis vérifier, avec un guidage
+         (chapitre~\ref{chap:simulations}) &
+         verdict explicite, hypothèses du modèle écrites sur la page, défis
+         du mode jeu \\
+    E4 & Relier les représentations sans surcharger
+         (chapitre~\ref{chap:simulations}) &
+         scène, formules et graphes synchronisés sur le même instant, sur un
+         seul écran quand c'est possible \\
+    E5 & Un jeu dont la règle est la physique
+         (chapitre~\ref{chap:ludification}) &
+         conditions de réussite égales aux relations du cours, réponses
+         masquées, défis tirés au hasard \\
+    E6 & Rester juste quand on intègre (chapitre~\ref{chap:numerique}) &
+         formule exacte quand elle existe, RK4 ou contraintes sinon, écart à
+         la théorie mesuré \\
+    E7 & Ouvrir partout et durer (chapitre~\ref{chap:numerique}) &
+         HTML, CSS et JavaScript sans dépendance, pages ouvrables sans
+         serveur, testées sur téléphone, tablette et ordinateur \\
+    E8 & Vérifier ce que l'IA produit et mesurer son apport
+         (chapitre~\ref{chap:ia}) &
+         tests automatiques, vérification séparée de la physique, relecture
+         humaine, journal des tâches \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
